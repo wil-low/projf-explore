@@ -9,10 +9,24 @@
 *.xpr
 webtalk.*
 
+# Quartus files
+*.bak
+*.qws
+filters.xml
+preferences.xml
+db/
+incremental_db/
+output_files/
+
 # IceStorm
 *yosys.log
 *.bin
 *.rpt
+*.asc
+*.json
+*.out
+*.vcd
+*.gtkw
 
 # Verilator
 obj_dir
