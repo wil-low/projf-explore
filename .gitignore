@@ -12,9 +12,20 @@ webtalk.*
 # Quartus files
 *.bak
 *.qws
+*description.txt
+*.cdf
+*.done
+*.smsg
+*.summary
+*.jdi
+*.pin
+*.qsf
+*.sld
+*.sof
 filters.xml
 preferences.xml
 db/
+greybox_tmp/
 incremental_db/
 output_files/
 
