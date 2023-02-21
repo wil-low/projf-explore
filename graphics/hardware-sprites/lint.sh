@@ -38,6 +38,22 @@ if [ -d "${DIR}/ice40" ]; then
     done
 fi
 
+# Lattice iCE40
+if [ -d "${DIR}/ice40_272p" ]; then
+    echo "## Linting top modules in ${DIR}/ice40_272p"
+    for f in ${DIR}/ice40_272p/top_*\.*v; do
+        echo "##   Checking ${f}";
+        verilator --lint-only -Wall -I${DIR} -I${DIR}/ice40 \
+            -I${LIB}/clock     -I${LIB}/clock/ice40 \
+            -I${LIB}/display   -I${LIB}/display/ice40 \
+            -I${LIB}/essential -I${LIB}/essential/ice40 \
+            -I${LIB}/graphics  -I${LIB}/graphics/ice40 \
+            -I${LIB}/maths     -I${LIB}/maths/ice40 \
+            -I${LIB}/memory    -I${LIB}/memory/ice40 \
+            -I${LIB}/null/ice40 $f;
+    done
+fi
+
 # Xilinx 7 Series
 if [ -d "${DIR}/xc7" ]; then
     echo "## Linting top modules in ${DIR}/xc7"
