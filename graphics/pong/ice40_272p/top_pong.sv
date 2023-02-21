@@ -26,10 +26,10 @@ module top_pong (
 	localparam BALL_SIZE  =  8;  // ball size in pixels
 	localparam BALL_ISPX  =  2;  // initial horizontal ball speed
 	localparam BALL_ISPY  =  1;  // initial vertical ball speed
-	localparam PAD_HEIGHT = 48;  // paddle height in pixels
-	localparam PAD_WIDTH  = 10;  // paddle width in pixels
-	localparam PAD_OFFS   = 32;  // paddle distance from edge of screen in pixels
-	localparam PAD_SPY	=  3;  // vertical paddle speed
+	localparam PAD_HEIGHT = 28;  // paddle height in pixels
+	localparam PAD_WIDTH  = 8;  // paddle width in pixels
+	localparam PAD_OFFS   = 24;  // paddle distance from edge of screen in pixels
+	localparam PAD_SPY	=  2;  // vertical paddle speed
 
 	// generate pixel clock
 	logic clk_pix;
