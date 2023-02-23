@@ -1,0 +1,38 @@
+## Project F: FPGA Graphics - iCESugar Board Constraints (VGA Pmod)
+## (C)2022 Will Green, open source hardware released under the MIT License
+## Learn more at https://projectf.io/posts/fpga-graphics/
+
+## Board Clock: 12 MHz
+
+set_io btn_rst    			18
+
+set_frequency  clk_12m      12
+set_io clk_12m     			35
+
+set_io vga_hsync 			34
+set_io vga_vsync 			31
+
+set_io vga_r[0] 			45
+set_io vga_r[1] 			43
+set_io vga_r[2] 			38
+set_io vga_r[3] 			36
+
+set_io vga_g[0] 			32
+set_io vga_g[1] 			28
+set_io vga_g[2] 			26
+set_io vga_g[3] 			23
+
+set_io vga_b[0] 			46
+set_io vga_b[1] 			44
+set_io vga_b[2] 			42
+set_io vga_b[3] 			37
+
+#> PMOD 1 PMOD_BLEDIR
+#set_io --warn-no-port LED1 10
+#set_io --warn-no-port LED2 6
+#set_io --warn-no-port LED3 3
+#set_io --warn-no-port LED4 48
+set_io --warn-no-port IR 47
+set_io --warn-no-port btn_fire 2
+set_io --warn-no-port btn_dn 4
+set_io --warn-no-port btn_up 9
