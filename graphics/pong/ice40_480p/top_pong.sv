@@ -1,4 +1,4 @@
-// Project F: FPGA Pong - Pong Game iCESugar 16-bit VGA Pmod)
+// Project F: FPGA Pong - Pong Game iCESugar 12-bit VGA Pmod)
 // (C)2022 Will Green, open source hardware released under the MIT License
 // Learn more at https://projectf.io/posts/fpga-pong/
 
@@ -13,9 +13,9 @@ module top_pong (
 	input  wire logic btn_dn,	   // down button
 	output	  logic vga_hsync,	// VGA horizontal sync
 	output	  logic vga_vsync,	// VGA vertical sync
-	output	  logic [3:0] vga_r,  // 5-bit VGA red
-	output	  logic [3:0] vga_g,  // 6-bit VGA green
-	output	  logic [3:0] vga_b   // 5-bit VGA blue
+	output	  logic [3:0] vga_r,  // 4-bit VGA red
+	output	  logic [3:0] vga_g,  // 4-bit VGA green
+	output	  logic [3:0] vga_b   // 4-bit VGA blue
 	);
 
 	// gameplay parameters
