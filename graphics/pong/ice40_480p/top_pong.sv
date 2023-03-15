@@ -19,7 +19,7 @@ module top_pong (
 	);
 
 	// gameplay parameters
-	localparam WIN        =  4;  // score needed to win a game (max 9)
+	localparam WIN        =  8;  // score needed to win a game (max 9)
 	localparam SPEEDUP    =  5;  // speed up ball after this many shots (max 16)
 	localparam BALL_SIZE  =  8;  // ball size in pixels
 	localparam BALL_ISPX  =  5;  // initial horizontal ball speed
@@ -27,7 +27,7 @@ module top_pong (
 	localparam PAD_HEIGHT = 48;  // paddle height in pixels
 	localparam PAD_WIDTH  = 10;  // paddle width in pixels
 	localparam PAD_OFFS   = 32;  // paddle distance from edge of screen in pixels
-	localparam PAD_SPY    =  3;  // vertical paddle speed
+	localparam PAD_SPY    =  4;  // vertical paddle speed
 
 	// generate pixel clock
 	logic clk_pix;
