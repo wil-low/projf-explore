@@ -16,18 +16,18 @@ module lc1602_i2c #(
 	input i_backlight,
 	input [DATA_WIDTH-1:0] i_mosi_data,
 	input [ADDR_WIDTH-1:0] i_device_addr,
-	input wire [15:0] i_divider,
+	input logic [15:0] i_divider,
 	output [DATA_WIDTH-1:0]	o_miso_data,
 	output o_busy,
 	inout io_sda,
 	inout io_scl
 );
 
-reg busy;
-reg enable = 0;
-reg [DATA_WIDTH-1:0] saved_mosi_data;
+logic busy;
+logic enable = 0;
+logic [DATA_WIDTH-1:0] saved_mosi_data;
 
-reg [DATA_WIDTH-1:0] mosi_data;
+logic [DATA_WIDTH-1:0] mosi_data;
 
 /* verilator lint_off PINCONNECTEMPTY */
 i2c_master #(.DATA_WIDTH(DATA_WIDTH), .REG_WIDTH(8), .ADDR_WIDTH(ADDR_WIDTH), .SEND_REG(0)) 
@@ -49,19 +49,10 @@ i2c_master #(.DATA_WIDTH(DATA_WIDTH), .REG_WIDTH(8), .ADDR_WIDTH(ADDR_WIDTH), .S
 
 localparam ONE_USEC = 12; // CLK / 1M
 
-reg [9:0] wait_counter;
-reg [9:0] wait_limit;
+logic [9:0] wait_counter;
+logic [9:0] wait_limit;
 
-localparam S_IDLE = 4'h0;
-localparam S_SEND_HI_0 = 4'h1;
-localparam S_SEND_HI_1 = 4'h2;
-localparam S_SEND_HI_2 = 4'h3;
-localparam S_SEND_LO_0 = 4'h4;
-localparam S_SEND_LO_1 = 4'h5;
-localparam S_SEND_LO_2 = 4'h6;
-localparam S_END = 4'h7;
-
-reg [3:0] sm_state = S_IDLE;
+enum {S_IDLE, S_SEND_HI_0, S_SEND_HI_1, S_SEND_HI_2, S_SEND_LO_0, S_SEND_LO_1, S_SEND_LO_2, S_END} sm_state;
 
 assign o_busy = busy || (sm_state != S_IDLE);
 
@@ -153,6 +144,6 @@ always @(posedge i_clk) begin
 	end
 end
 
-wire _unused_ok = &{1'b1, enable, saved_mosi_data, i_data_mode, 1'b0};
+logic _unused_ok = &{1'b1, enable, saved_mosi_data, i_data_mode, 1'b0};
 
 endmodule

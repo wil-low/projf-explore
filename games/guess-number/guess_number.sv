@@ -13,23 +13,23 @@ module guess_number
 	output LED1
 );
 
-reg [7:0] reset_counter = 0;
-wire rst_n = &reset_counter;
+logic [7:0] reset_counter = 0;
+logic rst_n = &reset_counter;
 
 always @(posedge CLK) begin
 	if (!rst_n)
 		reset_counter <= reset_counter + 1;
 end
 
-reg enable = 1'b0;
-reg rw = 1'b0;
-reg send_2nd_nibble;
-reg with_pulse;
-reg data_mode = 1'b0;
-reg backlight = 1'b0;
-reg [7:0] mosi_data = 8'h0;
-reg [7:0] miso_data;
-wire busy;
+logic enable = 1'b0;
+logic rw = 1'b0;
+logic send_2nd_nibble;
+logic with_pulse;
+logic data_mode = 1'b0;
+logic backlight = 1'b0;
+logic [7:0] mosi_data = 8'h0;
+logic [7:0] miso_data;
+logic busy;
 
 /* verilator lint_off PINCONNECTEMPTY */
 lc1602_i2c #(.DATA_WIDTH(8), .ADDR_WIDTH(7)) 
@@ -55,32 +55,28 @@ lc1602_i2c #(.DATA_WIDTH(8), .ADDR_WIDTH(7))
 assign LED = ~mosi_data;
 assign LED1 = ~busy;
 
-//wire dmode_up;
+//logic dmode_up;
 /* verilator lint_off PINCONNECTEMPTY */
 //debouncer dmode (.i_Clock(CLK), .i_Button(BTN1), .o_ButtonState(), .o_DownEvent(), .o_UpEvent(dmode_up));
 /* verilator lint_on PINCONNECTEMPTY */
 
 localparam ONE_USEC = 12; // CLK / 1M
 
-reg [24:0] wait_counter;
-reg [24:0] wait_limit;
+logic [24:0] wait_counter;
+logic [24:0] wait_limit;
 
-reg [4:0] substate;
+logic [4:0] substate;
 
-localparam S_IDLE = 4'h0;
-localparam S_PREINIT = 4'h1;
-localparam S_INIT = 4'h2;
-localparam S_PRINT = 4'h3;
-
-reg [3:0] sm_state = S_PREINIT;
+enum {S_IDLE, S_PREINIT, S_INIT, S_PRINT} sm_state;
 
 /* verilator lint_off LITENDIAN */
-reg [0 : 15 * 8 - 1] message0 = "Guess a number:";
+logic [0 : 15 * 8 - 1] message0 = "Guess a number:";
 /* verilator lint_on LITENDIAN */
 
 always @(posedge CLK) begin
 	if (!rst_n) begin
 		mosi_data <= 8'h0f;
+		sm_state <= S_PREINIT;
 	end
 	else begin
 		if (busy)
@@ -222,6 +218,6 @@ always @(posedge CLK) begin
 	end
 end
 
-wire _unused_ok = &{1'b1, enable, mosi_data, miso_data, BTN1, busy, 1'b0};
+logic _unused_ok = &{1'b1, enable, mosi_data, miso_data, BTN1, busy, 1'b0};
 
 endmodule
