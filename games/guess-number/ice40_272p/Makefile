@@ -16,6 +16,7 @@ ADD_SRC += ${PATH_LIB}/lc1602c/lc1602_i2c.sv
 ADD_SRC += ${PATH_LIB}/random/lfsr.sv
 ADD_SRC += ${PATH_LIB}/memory/rom_async.sv
 ADD_SRC += ${PATH_LIB}/infrared/infrared_rx.sv
+ADD_SRC += ${PATH_LIB}/essential/bin2bcd.sv
 ADD_SRC += ${PATH_LIB}/3rd_party/Tiny_But_Mighty_I2C_Master_Verilog/rtl/i2c_master.v
 ADD_SRC += ../guess_number.sv
 

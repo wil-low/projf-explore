@@ -15,7 +15,7 @@ module top_guess_number (
 	output LED4
 	);
 
-	guess_number guess_number_inst(.CLK, .BTN1, .IR_DATA(ir_data[15:8]), .IR_DATA_READY(data_ready), .SCL, .SDA, .LED, .LED1, .LED2);
+	guess_number #(12) guess_number_inst(.CLK, .BTN1, .IR_DATA(ir_data[15:8]), .IR_DATA_READY(data_ready), .SCL, .SDA, .LED, .LED1, .LED2);
 
 	logic data_ready;
 	logic idle;

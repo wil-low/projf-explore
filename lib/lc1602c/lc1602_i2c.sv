@@ -2,6 +2,7 @@
 `timescale 1ns / 1ps
 
 module lc1602_i2c #(
+	parameter CLOCK_FREQ_Mhz = 12,
 	parameter DATA_WIDTH = 8,
 	parameter ADDR_WIDTH = 7
 )
@@ -47,7 +48,7 @@ i2c_master #(.DATA_WIDTH(DATA_WIDTH), .REG_WIDTH(8), .ADDR_WIDTH(ADDR_WIDTH), .S
         );
 /* verilator lint_on PINCONNECTEMPTY */
 
-localparam ONE_USEC = 12; // CLK / 1M
+localparam ONE_USEC = CLOCK_FREQ_Mhz; // CLK / 1M
 
 logic [9:0] wait_counter;
 logic [9:0] wait_limit;
