@@ -3,7 +3,7 @@
 
 module generate_cmd();
 
-integer fd;
+integer fd, fdh;
 
 `include "cmd_flags.svh"
 
@@ -36,23 +36,39 @@ begin
 		delay_usec[7 -: 8]);
 	$fwrite(fd, "%x ", 8'(data.len()));
 	for (integer i = 0; i < data.len(); i = i + 1) begin
-		$fwrite(fd, "%x ", data[i]);
+		$fwrite(fd, "%x", data[i]);
+		if (i < data.len() - 1)
+			$fwrite(fd, " ");
 	end
 	$fwrite(fd, "\n");
 end
 endtask
 
-task instr_state;
-	input [7:0] state;
+task instr_return;
 begin
-	$fwrite(fd, "00 00 00 00 ");
-	$fwrite(fd, "%x\n", state);
+	$fwrite(fd, "00 00 00 00 00\n");
+end
+endtask
+
+task instr_label;
+	input string name;
+	input string comment;
+begin
+	$fwrite(fdh, "`define ");
+	$fwrite(fdh, name);
+	$fwrite(fdh, $ftell(fd) / 3);
+	$fwrite(fdh, "  // ");
+	$fwrite(fdh, comment);
+	$fwrite(fdh, "\n");
 end
 endtask
 
 initial begin
 	//cmd_offset = 0;
 	fd = $fopen("cmd.mem", "wb");
+	fdh = $fopen("cmd.mem.svh", "w");
+
+	instr_label("CmdInit", "Init LC and startup message");
 	instr(`SEND_2ND_NIBBLE, 1000 * 1000, 8'h00);  // reset expander and turn backlight off
 	instr(`WITH_PULSE, 4500, 8'h30);  // we start in 8bit mode, try to set 4 bit mode
 	instr(`WITH_PULSE, 4500, 8'h30);  // second try
@@ -67,8 +83,26 @@ initial begin
 	instr_data(`BACKLIGHT, 10, "Guess a number");
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor
 	instr_data(`BACKLIGHT, 10, {"from 0 to 256  ", 8'b01111110});
-	instr_state(8'h00);  // go to state IDLE
+	instr_return();  // return from cmd sequence
+
+	instr_label("CmdAttempt", "Attempt prompt");
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 2000, 8'h02);   // return home
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 2000, 8'h01);   // clear it off
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80);   // setCursor 0, 0
+	instr_data(`BACKLIGHT, 10, "Attempt #_: 000");
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor 1, 0
+	instr_return();  // return from cmd sequence
+
+	instr_label("CmdAttemptNumPos", "Position cursor into attempt #");
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h09);   // setCursor 0, 9
+	instr_return();  // return from cmd sequence
+
+	instr_label("CmdAttemptNum", "Position cursor into number input");
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'd12);   // setCursor 0, 12
+	instr_return();  // return from cmd sequence
+
 	$fclose(fd);
+	$fclose(fdh);
 end
 
 endmodule
