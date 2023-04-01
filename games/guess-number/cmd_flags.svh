@@ -1,0 +1,4 @@
+`define DATAMODE 4'b1000
+`define WITH_PULSE 4'b100
+`define BACKLIGHT 4'b0010
+`define SEND_2ND_NIBBLE 4'b001

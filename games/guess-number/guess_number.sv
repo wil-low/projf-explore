@@ -10,7 +10,8 @@ module guess_number
 	inout SDA,
 
 	output [7:0] LED,
-	output LED1
+	output LED1,
+	output LED2
 );
 
 logic [7:0] reset_counter = 0;
@@ -30,6 +31,8 @@ logic backlight = 1'b0;
 logic [7:0] mosi_data = 8'h0;
 logic [7:0] miso_data;
 logic busy;
+
+logic debug = 0;
 
 /* verilator lint_off PINCONNECTEMPTY */
 lc1602_i2c #(.DATA_WIDTH(8), .ADDR_WIDTH(7)) 
@@ -52,8 +55,9 @@ lc1602_i2c #(.DATA_WIDTH(8), .ADDR_WIDTH(7))
 		);
 /* verilator lint_on PINCONNECTEMPTY */
 
-assign LED = ~mosi_data;
+assign LED = debug ? ~{4'b0, flags} : ~cmd_rom_addr;
 assign LED1 = ~busy;
+assign LED2 = ~debug;
 
 //logic dmode_up;
 /* verilator lint_off PINCONNECTEMPTY */
@@ -62,21 +66,35 @@ assign LED1 = ~busy;
 
 localparam ONE_USEC = 12; // CLK / 1M
 
-logic [24:0] wait_counter;
-logic [24:0] wait_limit;
-
-logic [4:0] substate;
+logic [28:0] wait_counter;
+logic [28:0] wait_limit;
 
 enum {S_IDLE, S_PREINIT, S_INIT, S_PRINT} sm_state;
+enum {C_FLAGS, C_DELAY1, C_DELAY2, C_DELAY3, C_DATA, C_CHAR} cmd_state;
 
-/* verilator lint_off LITENDIAN */
-logic [0 : 15 * 8 - 1] message0 = "Guess a number:";
-/* verilator lint_on LITENDIAN */
+logic [7:0] cmd_rom_addr;
+logic [7:0] cmd_rom_data;
+
+`include "cmd_flags.svh"
+
+rom_async #(
+	.WIDTH(8),
+	.DEPTH(200),
+	.INIT_F("cmd.mem")
+) cmd_rom (
+	.addr(cmd_rom_addr),
+	.data(cmd_rom_data)
+);
+
+logic [3:0] flags;
+logic [27:0] delay_usec;
+logic [7:0] str_len;
 
 always @(posedge CLK) begin
 	if (!rst_n) begin
 		mosi_data <= 8'h0f;
 		sm_state <= S_PREINIT;
+		cmd_rom_addr <= 0;
 	end
 	else begin
 		if (busy)
@@ -86,7 +104,7 @@ always @(posedge CLK) begin
 				/*if (dmode_up && !busy) begin
 					wait_counter <= 0;
 					wait_limit <= ONE_USEC * 50 * 1000;
-					substate <= 0;
+					cmd_state <= 0;
 					sm_state <= S_INIT;
 				end*/
 			end
@@ -94,7 +112,7 @@ always @(posedge CLK) begin
 			S_PREINIT: begin
 				wait_counter <= 0;
 				wait_limit <= ONE_USEC * 50 * 1000;
-				substate <= 0;
+				cmd_state <= C_FLAGS;
 				sm_state <= S_INIT;
 			end
 
@@ -103,111 +121,61 @@ always @(posedge CLK) begin
 					wait_counter <= wait_counter + 1;
 					if (wait_counter == wait_limit) begin
 						wait_counter <= 0;
-						case (substate)
-							0: begin
-								enable <= 1;
-								with_pulse <= 0;
-								send_2nd_nibble <= 1;
-								backlight <= 0;
-								mosi_data <= 8'h00; // reset expander and turn backlight off
-								wait_limit <= ONE_USEC * 1000 * 1000;
-								substate <= substate + 1;
+						case (cmd_state)
+							C_FLAGS: begin
+								{flags, delay_usec[27 -: 4]} <= cmd_rom_data;
+								cmd_rom_addr <= cmd_rom_addr + 1;
+								wait_limit <= ONE_USEC;
+								cmd_state <= C_DELAY1;
 							end
-							1: begin
-								enable <= 1;
-								with_pulse <= 1;
-								send_2nd_nibble <= 0;
-								mosi_data <= 8'h30; // we start in 8bit mode, try to set 4 bit mode
-								wait_limit <= ONE_USEC * 4500;
-								substate <= substate + 1;
+							C_DELAY1: begin
+								delay_usec[23 -: 8] <= cmd_rom_data;
+								cmd_rom_addr <= cmd_rom_addr + 1;
+								cmd_state <= C_DELAY2;
 							end
-							2: begin
-								enable <= 1;
-								mosi_data <= 8'h30; // second try
-								wait_limit <= ONE_USEC * 4500;
-								substate <= substate + 1;
+							C_DELAY2: begin
+								delay_usec[15 -: 8] <= cmd_rom_data;
+								cmd_rom_addr <= cmd_rom_addr + 1;
+								cmd_state <= C_DELAY3;
 							end
-							3: begin
-								enable <= 1;
-								mosi_data <= 8'h30; // third go!
-								wait_limit <= ONE_USEC * 150;
-								substate <= substate + 1;
+							C_DELAY3: begin
+								delay_usec[7 -: 8] <= cmd_rom_data;
+								cmd_rom_addr <= cmd_rom_addr + 1;
+								cmd_state <= C_DATA;
 							end
-							4: begin
-								enable <= 1;
-								mosi_data <= 8'h20; // finally, set to 4-bit interface
-								wait_limit <= ONE_USEC * 150;
-								substate <= substate + 1;
+							C_DATA: begin
+								if (|(flags & `DATAMODE)) begin
+									// need to print data
+									str_len <= cmd_rom_data;
+									cmd_state <= C_CHAR;
+								end
+								else begin
+									if (delay_usec == 0) begin
+										sm_state <= cmd_rom_data;  // goto next sm_state
+									end
+									else begin
+										mosi_data <= cmd_rom_data;
+										cmd_state <= C_FLAGS;
+										enable <= 1;  // send command
+										{data_mode, with_pulse, backlight, send_2nd_nibble} <= flags;
+										wait_limit <= ONE_USEC * delay_usec;
+									end
+								end
+								cmd_rom_addr <= cmd_rom_addr + 1;
 							end
-							5: begin
-								enable <= 1;
-								send_2nd_nibble <= 1;
-								mosi_data <= 8'h28; // set # lines, font size, etc.
-								wait_limit <= ONE_USEC * 10;
-								substate <= substate + 1;
+							C_CHAR: begin
+								mosi_data <= cmd_rom_data;
+								enable <= 1;  // send char
+								{data_mode, with_pulse, backlight, send_2nd_nibble} <= flags;
+								wait_limit <= ONE_USEC * delay_usec;
+								cmd_rom_addr <= cmd_rom_addr + 1;
+								str_len <= str_len - 1;
+								if (str_len == 1) begin
+									cmd_state <= C_FLAGS;
+								end
 							end
-							6: begin
-								enable <= 1;
-								mosi_data <= 8'h0c; // turn the display on with no cursor or blinking default
-								wait_limit <= ONE_USEC * 10;
-								substate <= substate + 1;
-							end
-							7: begin
-								enable <= 1;
-								mosi_data <= 8'h01; // clear it off
-								wait_limit <= ONE_USEC * 2000;
-								substate <= substate + 1;
-							end
-							8: begin
-								enable <= 1;
-								mosi_data <= 8'h06; // // set the entry mode
-								wait_limit <= ONE_USEC * 2000;
-								substate <= substate + 1;
-							end
-							9: begin
-								enable <= 1;
-								mosi_data <= 8'h02; // return home
-								wait_limit <= ONE_USEC * 2000;
-								substate <= substate + 1;
-							end
-							10: begin
-								enable <= 1;
-								backlight <= 1;
-								with_pulse <= 0;
-								send_2nd_nibble <= 1;
-								mosi_data <= 8'h00; // backlight
-								wait_limit <= ONE_USEC * 10;
-								substate <= 0;
-								sm_state <= S_PRINT;
-							end
-							11: begin
-								enable <= 1;
-								with_pulse <= 1;
-								send_2nd_nibble <= 0;
-								mosi_data <= 8'h80; // setCursor
-								wait_limit <= ONE_USEC * 10;
-								substate <= 0;
-								sm_state <= S_PRINT;
-							end
-						endcase
-					end
-				end
-			end
 
-			S_PRINT: begin
-				if (!busy) begin
-					wait_counter <= wait_counter + 1;
-					if (wait_counter == wait_limit) begin
-						wait_counter <= 0;
-						enable <= 1;
-						with_pulse <= 1;
-						send_2nd_nibble <= 1;
-						data_mode <= 1;
-						mosi_data <= message0[substate * 8 +: 8];
-						wait_limit <= ONE_USEC * 1000 * 100;
-						substate <= substate + 1;
-						if (substate == 14)
-							sm_state <= S_IDLE;
+						endcase
 					end
 				end
 			end

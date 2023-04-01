@@ -9,9 +9,10 @@ module top_guess_number (
 	inout SDA,
 
 	output [7:0] LED,
-	output LED1
+	output LED1,
+	output LED2
 	);
 
-	guess_number guess_number_inst(.CLK, .BTN1, .SCL, .SDA, .LED, .LED1);
+	guess_number guess_number_inst(.CLK, .BTN1, .SCL, .SDA, .LED, .LED1, .LED2);
 
 endmodule
