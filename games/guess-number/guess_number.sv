@@ -34,19 +34,19 @@ module guess_number
 	input [7:0] IR_DATA,
 	input IR_DATA_READY,
 
-	inout SCL,
-	inout SDA,
+	inout wire SCL,
+	inout wire SDA,
 
 	output [7:0] LED,
-	output LED1,
-	output LED2,
-	output LED3
+	output reg LED1,
+	output reg LED2,
+	output reg LED3
 );
 
 localparam ONE_USEC = CLOCK_FREQ_Mhz; // CLK / 1M
 
 //// Game variables
-localparam MAX_ATTEMPTS = 2;
+localparam MAX_ATTEMPTS = 20;
 
 logic [15:0] goal_number;
 assign goal_number = {6'b0, lfsr_data[14:5]};
@@ -195,7 +195,7 @@ rom_async #(
 
 //// Main cycle
 always @(posedge CLK) begin
-	if (!RST_N) begin
+	if (RST_N == 0) begin
 		sm_state <= S_PREINIT;
 	end
 	else begin

@@ -20,8 +20,8 @@ module lc1602_i2c #(
 	input logic [15:0] i_divider,
 	output [DATA_WIDTH-1:0]	o_miso_data,
 	output o_busy,
-	inout io_sda,
-	inout io_scl
+	inout wire io_sda,
+	inout wire io_scl
 );
 
 logic busy;
@@ -64,7 +64,7 @@ always @(posedge i_clk) begin
 		wait_counter <= wait_counter + 1;
 		case (sm_state)
 			S_IDLE: begin
-				if (i_enable && !o_busy) begin
+				if (i_enable == 1 && o_busy == 0) begin
 					saved_mosi_data <= i_mosi_data;
 					if (i_with_pulse)
 						sm_state <= S_SEND_HI_0;
