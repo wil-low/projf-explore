@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Mon Feb 20 17:06:45 2023
+# Generated on: Sun Apr  2 16:06:00 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -47,39 +47,60 @@ if {$make_assignments} {
 	set_global_assignment -name ORIGINAL_QUARTUS_VERSION 22.1STD.0
 	set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:03:04  лютого 20, 2023"
 	set_global_assignment -name LAST_QUARTUS_VERSION "22.1std.0 Lite Edition"
+	set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+	set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+	set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+	set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+	set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+	set_global_assignment -name EDA_SIMULATION_TOOL "Questa Intel FPGA (Verilog)"
+	set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+	set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+	set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_timing
+	set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_symbol
+	set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_signal_integrity
+	set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_board_design_boundary_scan
+	set_global_assignment -name ENABLE_OCT_DONE OFF
+	set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+	set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
+	set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+	set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+	set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
+	set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+	set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+	set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+	set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+	set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+	set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+	set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-	set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
-	set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
-	set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
-	set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-	set_global_assignment -name SYSTEMVERILOG_FILE ../simple_score.sv
-	set_global_assignment -name SDC_FILE top.sdc
+	set_global_assignment -name SEARCH_PATH ../../../../lib/memory
+	set_global_assignment -name SEARCH_PATH ../../../../lib/3rd_party/Tiny_But_Mighty_I2C_Master_Verilog/rtl
+	set_global_assignment -name SEARCH_PATH ../../../../lib/essential
+	set_global_assignment -name SEARCH_PATH ../../../../lib/lc1602c
+	set_global_assignment -name SEARCH_PATH ../../../../lib/random
+	set_global_assignment -name SEARCH_PATH ../../ice40_272p
+	set_global_assignment -name SEARCH_PATH ../../../../lib/infrared
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../guess_number.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../top_guess_number.sv
-	set_location_assignment PIN_L6 -to vga_hsync
-	set_location_assignment PIN_N3 -to vga_vsync
-	set_location_assignment PIN_C3 -to vga_b[0]
-	set_location_assignment PIN_D4 -to vga_b[1]
-	set_location_assignment PIN_D3 -to vga_b[2]
-	set_location_assignment PIN_E5 -to vga_b[3]
-	set_location_assignment PIN_F6 -to vga_b[4]
-	set_location_assignment PIN_F5 -to vga_g[0]
-	set_location_assignment PIN_G5 -to vga_g[1]
-	set_location_assignment PIN_F7 -to vga_g[2]
-	set_location_assignment PIN_K8 -to vga_g[3]
-	set_location_assignment PIN_L8 -to vga_g[4]
-	set_location_assignment PIN_J6 -to vga_g[5]
-	set_location_assignment PIN_K6 -to vga_r[0]
-	set_location_assignment PIN_K5 -to vga_r[1]
-	set_location_assignment PIN_L7 -to vga_r[2]
-	set_location_assignment PIN_L3 -to vga_r[3]
-	set_location_assignment PIN_L4 -to vga_r[4]
-	set_location_assignment PIN_E1 -to clk_50m
-	set_location_assignment PIN_N13 -to btn_rst_n
-	set_location_assignment PIN_M15 -to btn_fire
-	set_location_assignment PIN_E16 -to btn_up
-	set_location_assignment PIN_M16 -to btn_dn
+	set_location_assignment PIN_T10 -to LED2
+	set_location_assignment PIN_T11 -to LED1
+	set_location_assignment PIN_T9 -to LED3
+	set_location_assignment PIN_T8 -to LED4
+	set_location_assignment PIN_E1 -to CLK
+	set_location_assignment PIN_N13 -to rst_n
+	set_location_assignment PIN_T14 -to SCL
+	set_location_assignment PIN_T13 -to SDA
+	set_location_assignment PIN_T12 -to IR
+	set_location_assignment PIN_T7 -to LED[0]
+	set_location_assignment PIN_T6 -to LED[1]
+	set_location_assignment PIN_T5 -to LED[2]
+	set_location_assignment PIN_R13 -to LED[3]
+	set_location_assignment PIN_R12 -to LED[4]
+	set_location_assignment PIN_R11 -to LED[5]
+	set_location_assignment PIN_R10 -to LED[6]
+	set_location_assignment PIN_R9 -to LED[7]
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments

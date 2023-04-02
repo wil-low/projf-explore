@@ -3,7 +3,7 @@
 
 module top_guess_number (
 	input CLK,
-	input BTN1,
+	input rst_n,
 	input IR,
 
 	inout SCL,
@@ -16,17 +16,8 @@ module top_guess_number (
 	output LED4
 );
 
-//// Reset emulation for ice40
-logic [7:0] reset_counter = 0;
-logic rst_n = &reset_counter;
-
-always @(posedge CLK) begin
-	if (!rst_n)
-		reset_counter <= reset_counter + 1;
-end
-
 guess_number #(50)
-	guess_number_inst(.CLK, .RST_N(rst_n), .BTN1, .IR_DATA(ir_data[15:8]), .IR_DATA_READY(ir_data_ready), .SCL, .SDA, .LED, .LED1, .LED2, .LED3);
+	guess_number_inst(.CLK, .RST_N(rst_n), .IR_DATA(ir_data[15:8]), .IR_DATA_READY(ir_data_ready), .SCL, .SDA, .LED, .LED1, .LED2, .LED3);
 
 logic ir_data_ready;
 logic ir_idle;
