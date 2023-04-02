@@ -26,7 +26,7 @@ always @(posedge CLK) begin
 end
 
 guess_number #(12)
-	guess_number_inst(.CLK, .RST_N(rst_n), .BTN1, .IR_DATA(ir_data[15:8]), .IR_DATA_READY(ir_data_ready), .SCL, .SDA, .LED, .LED1, .LED2, .LED3);
+	guess_number_inst(.CLK, .RST_N(rst_n), .IR_DATA(ir_data[15:8]), .IR_DATA_READY(ir_data_ready), .SCL, .SDA, .LED, .LED1, .LED2, .LED3);
 
 logic ir_data_ready;
 logic ir_idle;
