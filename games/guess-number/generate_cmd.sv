@@ -9,12 +9,6 @@ integer fd, fdh;
 
 `define RIGHT_ARROW 8'b01111110
 
-function label;
-begin
-	//label = cmd_offset;
-end
-endfunction
-
 task instr;
 	input [3:0] flags;
 	input [27:0] delay_usec;
@@ -65,8 +59,22 @@ begin
 end
 endtask
 
+task instr_cursor;
+	input [6:0] x;
+	input [3:0] y;
+begin
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40 * y + x);
+end
+endtask
+
+task instr_print;
+	input string s;
+begin
+	instr_data(`BACKLIGHT, 1, s);
+end
+endtask
+
 initial begin
-	//cmd_offset = 0;
 	fd = $fopen("cmd.mem", "wb");
 	fdh = $fopen("cmd.mem.svh", "w");
 
@@ -78,46 +86,48 @@ initial begin
 	instr(`WITH_PULSE, 150, 8'h20);  // finally, set to 4-bit interface
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 10, 8'h28);  // set # lines, font size, etc.
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 10, 8'h0c);   // turn the display on with no cursor or blinking default
-	instr_label("CmdShowGameTitle", "Show game title");
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h01);   // clear it off
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h06);   // set the entry mode
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h02);   // return home
 	instr(`SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h00);   // backlight
-	instr_data(`BACKLIGHT, 10, "Guess a number");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor
-	instr_data(`BACKLIGHT, 10, {"from 0 to 1023 ", `RIGHT_ARROW});
+	instr_print("   NumberGame   ");
+	instr_cursor(0, 1);
+	instr_print({"  by wil_low   ", `RIGHT_ARROW});
+	instr_return();  // return from cmd sequence
+
+	instr_label("CmdShowRules", "Show game rules");
+	instr_cursor(0, 0);
+	instr_print("Guess a number  ");
+	instr_cursor(0, 1);
+	instr_print({"from 0 to 1023 ", `RIGHT_ARROW});
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdShowAttemptPrompt", "Attempt prompt");
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 2000, 8'h02);   // return home
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 2000, 8'h01);   // clear it off
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80);   // setCursor 0, 0
-	instr_data(`BACKLIGHT, 10, "Attempt __: 0000");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h08);   // setCursor 0, 8
-	instr_return();  // return from cmd sequence
-
-	instr_label("CmdMoveToNumInput", "Position cursor into number input");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'd12);   // setCursor 0, 12
+	instr_cursor(0, 0);
+	instr_print("Attempt 01: 0000");
+	instr_cursor(8, 0);
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdSayLesser", "Say the goal number is lesser");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor 1, 0
-	instr_data(`BACKLIGHT, 10, "Mine is lesser  ");
+	instr_cursor(0, 1);
+	instr_print("Mine is lesser  ");
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdSayGreater", "Say the goal number is greater");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor 1, 0
-	instr_data(`BACKLIGHT, 10, "Mine is greater ");
+	instr_cursor(0, 1);
+	instr_print("Mine is greater ");
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdSayVictory", "Say You win");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor 1, 0
-	instr_data(`BACKLIGHT, 10, "You win!!!      ");
+	instr_cursor(0, 1);
+	instr_print("You win!!!      ");
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdSayLost", "Say You lost");
-	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h80 + 8'h40);   // setCursor 1, 0
-	instr_data(`BACKLIGHT, 10, "You lost :(     ");
+	instr_cursor(0, 1);
+	instr_print("You lost :(     ");
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdMaxSize", "Max file size");

@@ -9,6 +9,7 @@ module guess_number
 )
 (
 	input CLK,
+	input RST_N,
 	input BTN1,
 	input [7:0] IR_DATA,
 	input IR_DATA_READY,
@@ -19,38 +20,25 @@ module guess_number
 	output [7:0] LED,
 	output LED1,
 	output LED2,
-	output LED4
+	output LED3
 );
 
-logic [7:0] reset_counter = 0;
-logic rst_n = &reset_counter;
+localparam ONE_USEC = CLOCK_FREQ_Mhz; // CLK / 1M
 
-always @(posedge CLK) begin
-	if (!rst_n)
-		reset_counter <= reset_counter + 1;
-end
+//// Game variables
+localparam MAX_ATTEMPTS = 2;
 
-logic enable = 1'b0;
-logic rw = 1'b0;
-logic send_2nd_nibble;
-logic with_pulse;
-logic data_mode = 1'b0;
-logic backlight = 1'b0;
-logic [7:0] mosi_data = 8'h0;
-logic [7:0] miso_data;
-logic busy;
+logic [15:0] goal_number = {6'b0, lfsr_data[14:5]};
+logic [15:0] user_number;
+logic digit_entered;
+logic [6:0] attempt_count;
 
-logic debug = 0;
-
+//// Randomizer
 logic [31:0] lfsr_seed = 0;
 logic lfsr_seed_set = 0;
 logic lfsr_en = 0;
 logic lfsr_done;
 logic [31:0] lfsr_data;
-
-logic [15:0] goal_number = {6'b0, lfsr_data[14:5]};
-logic [15:0] user_number;
-logic [6:0] attempt_count;
 
 lfsr #(.NUM_BITS(32))
 	lfsr_inst(
@@ -62,6 +50,7 @@ lfsr #(.NUM_BITS(32))
 		.o_LFSR_Done(lfsr_done)
  	);
 
+//// BCD convertor for Attempts
 logic bcd_en = 0;
 logic [4 * 2 - 1:0] bcd_out;
 logic bcd_ready;
@@ -75,11 +64,22 @@ bin2bcd #(.INPUT_WIDTH(7), .DECIMAL_DIGITS(2))
 		.o_DV(bcd_ready)
 	);
 
+//// Liquid Crystal Display
+logic enable = 1'b0;
+logic rw = 1'b0;
+logic send_2nd_nibble;
+logic with_pulse;
+logic data_mode = 1'b0;
+logic backlight = 1'b0;
+logic [7:0] mosi_data = 8'h0;
+logic [7:0] miso_data;
+logic busy;
+
 /* verilator lint_off PINCONNECTEMPTY */
 lc1602_i2c #(.DATA_WIDTH(8), .ADDR_WIDTH(7)) 
 	lc1602_i2c_inst(
 		.i_clk(CLK),
-		.i_rst(~rst_n),
+		.i_rst(~RST_N),
 		.i_enable(enable),
 		.i_rw(rw),
 		.i_send_2nd_nibble(send_2nd_nibble),
@@ -97,30 +97,35 @@ lc1602_i2c #(.DATA_WIDTH(8), .ADDR_WIDTH(7))
 
 /* verilator lint_on PINCONNECTEMPTY */
 
-assign LED = ~user_number[7:0];
-//assign LED1 = ~ir_data_ready;
-assign LED2 = ~debug;
+//// LEDs
+assign LED = (sm_state == S_SET_SEED) ? ~lfsr_seed[25 -: 8] : ~{1'b0, attempt_count};
 
-localparam ONE_USEC = 12; // CLK / 1M
+//// State machine definitions
 
 logic [28:0] wait_counter;
 logic [28:0] wait_limit;
 
-enum {
+typedef enum {
 	S_IDLE,
 	S_PREINIT,
 	S_PROC_EXEC_CMD,
-	S_AFTER_INIT,
-	S_CLEAR_INPUT,
-	S_NUM_INPUT,
+	S_PROC_EXEC_CMD_READ,
 	S_PROC_PRINT_OUTPUT_BUF,
-	S_SHOW_USER_INPUT,
+	S_AFTER_INIT,
+	S_SET_SEED,
+	S_RANDOMIZE,
 	S_CONVERT_ATTEMPT,
+	S_AFTER_CONVERT_ATTEMPT,
+	S_NUM_INPUT,
+	S_CALC_USER_INPUT,
+	S_MOVE_TO_OUTPUT,
 	S_OUTPUT_ATTEMPT,
 	S_CHECK_GUESS,
 	S_AFTER_CHECK,
-	S_AFTER_VICTORY
-} sm_state, next_sm_state;
+	S_AFTER_GAME_END
+} SM_STATE;
+
+SM_STATE sm_state, next_sm_state;
 
 enum {
 	C_FLAGS,
@@ -131,17 +136,31 @@ enum {
 	C_CHAR
 } cmd_state;
 
-logic [8:0] cmd_rom_addr;
-logic [7:0] cmd_rom_data;
+task ExecCmd;
+	input [8:0] cmd_addr;
+	input SM_STATE next_state;
+begin
+	sm_state <= S_PROC_EXEC_CMD;
+	cmd_rom_addr <= cmd_addr;
+	next_sm_state <= next_state;
+end
+endtask
 
+//// Output buffer
 logic [7:0] char_count;
 logic [7:0] char_index;
+logic [0 : 8 * 8 - 1] output_buf = "01: 0000";
 
-localparam OUTPUT_WIDTH = 4;
-logic [0 : 8 * OUTPUT_WIDTH - 1] output_buf = {OUTPUT_WIDTH{"0"}};
-
+//// Command memory file
 `include "cmd_flags.svh"
 `include "cmd.mem.svh"
+
+logic [3:0] flags;
+logic [27:0] delay_usec;
+logic [7:0] str_len;
+
+logic [8:0] cmd_rom_addr;
+logic [7:0] cmd_rom_data;
 
 rom_async #(
 	.WIDTH(8),
@@ -152,12 +171,10 @@ rom_async #(
 	.data(cmd_rom_data)
 );
 
-logic [3:0] flags;
-logic [27:0] delay_usec;
-logic [7:0] str_len;
 
+//// Main cycle
 always @(posedge CLK) begin
-	if (!rst_n) begin
+	if (!RST_N) begin
 		sm_state <= S_PREINIT;
 	end
 	else begin
@@ -170,15 +187,17 @@ always @(posedge CLK) begin
 			end
 
 			S_PREINIT: begin
-				wait_counter <= 0;
-				wait_limit <= ONE_USEC * 50 * 1000;
-				cmd_state <= C_FLAGS;
-				sm_state <= S_PROC_EXEC_CMD;
-				next_sm_state <= S_AFTER_INIT;
-				cmd_rom_addr <= `CmdInitAndWelcome;
+				ExecCmd(`CmdInitAndWelcome, S_AFTER_INIT);
 			end
 
 			S_PROC_EXEC_CMD: begin
+				wait_counter <= 0;
+				wait_limit <= ONE_USEC * 50 * 1000;
+				cmd_state <= C_FLAGS;
+				sm_state <= S_PROC_EXEC_CMD_READ;
+			end
+
+			S_PROC_EXEC_CMD_READ: begin
 				if (!busy) begin
 					wait_counter <= wait_counter + 1;
 					if (wait_counter == wait_limit) begin
@@ -243,89 +262,97 @@ always @(posedge CLK) begin
 			end
 
 			S_AFTER_INIT: begin
+				{LED1, LED2, LED3} = ~3'b0;
+				sm_state <= S_SET_SEED;
+			end
+
+			S_SET_SEED: begin
 				lfsr_seed <= lfsr_seed + 1;
 				if (IR_DATA_READY) begin
 					if (IR_DATA == `KEY_OK) begin
-						attempt_count = 1;
 						lfsr_seed_set <= 1;
 						lfsr_en <= 1;
-						wait_counter <= 0;
-						wait_limit <= ONE_USEC * 50 * 1000;
-						cmd_state <= C_FLAGS;
-						sm_state <= S_PROC_EXEC_CMD;
-						next_sm_state <= S_CONVERT_ATTEMPT;
-						cmd_rom_addr <= `CmdShowAttemptPrompt;
+						ExecCmd(`CmdShowRules, S_RANDOMIZE);
+					end
+				end
+			end
+
+			S_RANDOMIZE: begin
+				if (IR_DATA_READY) begin
+					if (IR_DATA == `KEY_OK) begin
+						lfsr_en <= 0;
+						attempt_count <= 1;
+						digit_entered <= 0;
+						ExecCmd(`CmdShowAttemptPrompt, S_CONVERT_ATTEMPT);
 					end
 				end
 			end
 
 			S_CONVERT_ATTEMPT: begin
-				lfsr_en <= 0;
 				bcd_en <= 1;
-				sm_state <= S_OUTPUT_ATTEMPT;
-				output_buf <= {OUTPUT_WIDTH{"0"}};
+				digit_entered <= 0;
+				sm_state <= S_AFTER_CONVERT_ATTEMPT;
 			end
 
-			S_OUTPUT_ATTEMPT: begin
+			S_AFTER_CONVERT_ATTEMPT: begin
 				bcd_en <= 0;
 				if (bcd_ready) begin
-					debug <= ~debug;
 					integer i;
 					for (i = 0; i < 2; i = i + 1) begin
 						output_buf[(2 - i) * 8 - 1 -: 8] <= {4'h3, bcd_out[i * 4 + 4 - 1 -: 4]};
 					end
-					next_sm_state <= S_CLEAR_INPUT;
-					sm_state <= S_PROC_PRINT_OUTPUT_BUF;
-					char_index <= 0;
-					char_count <= 2;
+					sm_state <= S_NUM_INPUT;
 				end
 			end
-
-			S_CLEAR_INPUT: begin
-				output_buf <= {OUTPUT_WIDTH{"0"}};
-				sm_state <= S_NUM_INPUT;
-			end
-
+			
 			S_NUM_INPUT: begin
 				if (IR_DATA_READY) begin
 					if (IR_DATA == `KEY_OK) begin
-						sm_state <= S_CHECK_GUESS;
+						if (digit_entered)
+							sm_state <= S_CHECK_GUESS;
 					end
 					else begin
+						digit_entered <= 1;
+						sm_state <= S_CALC_USER_INPUT;
 						case (IR_DATA)
-							`KEY_0: output_buf[0:31] <= {output_buf[8:31], "0"};
-							`KEY_1: output_buf[0:31] <= {output_buf[8:31], "1"};
-							`KEY_2: output_buf[0:31] <= {output_buf[8:31], "2"};
-							`KEY_3: output_buf[0:31] <= {output_buf[8:31], "3"};
-							`KEY_4: output_buf[0:31] <= {output_buf[8:31], "4"};
-							`KEY_5: output_buf[0:31] <= {output_buf[8:31], "5"};
-							`KEY_6: output_buf[0:31] <= {output_buf[8:31], "6"};
-							`KEY_7: output_buf[0:31] <= {output_buf[8:31], "7"};
-							`KEY_8: output_buf[0:31] <= {output_buf[8:31], "8"};
-							`KEY_9: output_buf[0:31] <= {output_buf[8:31], "9"};
-							default: output_buf <= output_buf;
+							`KEY_0: output_buf[32:63] <= {output_buf[40:63], "0"};
+							`KEY_1: output_buf[32:63] <= {output_buf[40:63], "1"};
+							`KEY_2: output_buf[32:63] <= {output_buf[40:63], "2"};
+							`KEY_3: output_buf[32:63] <= {output_buf[40:63], "3"};
+							`KEY_4: output_buf[32:63] <= {output_buf[40:63], "4"};
+							`KEY_5: output_buf[32:63] <= {output_buf[40:63], "5"};
+							`KEY_6: output_buf[32:63] <= {output_buf[40:63], "6"};
+							`KEY_7: output_buf[32:63] <= {output_buf[40:63], "7"};
+							`KEY_8: output_buf[32:63] <= {output_buf[40:63], "8"};
+							`KEY_9: output_buf[32:63] <= {output_buf[40:63], "9"};
+							default: begin
+								digit_entered <= 0;
+								sm_state <= S_NUM_INPUT;
+							end
 						endcase
-						wait_counter <= 0;
-						wait_limit <= ONE_USEC * 50 * 1000;
-						cmd_state <= C_FLAGS;
-						sm_state <= S_PROC_EXEC_CMD;
-						next_sm_state <= S_SHOW_USER_INPUT;
-						cmd_rom_addr <= `CmdMoveToNumInput;
 					end
 				end
 				else
 					char_count <= 0;
 			end
 
-			S_SHOW_USER_INPUT: begin
-				user_number <=  (output_buf[0:7] - "0") * 1000 +
-								(output_buf[8:15] - "0")  * 100 +
-								(output_buf[16:23] - "0")  * 10 +
-								(output_buf[24:31] - "0");
+			S_CALC_USER_INPUT: begin
+				user_number <=  (output_buf[4 * 8 +: 8] - "0") * 1000 +
+								(output_buf[5 * 8 +: 8] - "0")  * 100 +
+								(output_buf[6 * 8 +: 8] - "0")  * 10 +
+								(output_buf[7 * 8 +: 8] - "0");
+				sm_state <= S_MOVE_TO_OUTPUT;
+			end
+
+			S_MOVE_TO_OUTPUT: begin
+				ExecCmd(`CmdShowAttemptPrompt, S_OUTPUT_ATTEMPT);
+			end
+
+			S_OUTPUT_ATTEMPT: begin
 				next_sm_state <= S_NUM_INPUT;
 				sm_state <= S_PROC_PRINT_OUTPUT_BUF;
 				char_index <= 0;
-				char_count <= 4;
+				char_count <= 8;
 			end
 
 			S_PROC_PRINT_OUTPUT_BUF: begin
@@ -350,44 +377,37 @@ always @(posedge CLK) begin
 			end
 
 			S_CHECK_GUESS: begin
-				next_sm_state <= S_AFTER_CHECK;
-				if (goal_number < user_number)
-					cmd_rom_addr <= `CmdSayLesser;
-				else if (goal_number > user_number)
-					cmd_rom_addr <= `CmdSayGreater;
-				else begin
-					cmd_rom_addr <= `CmdSayVictory;
-					next_sm_state <= S_AFTER_VICTORY;
+				if (goal_number == user_number) begin
+					{LED1, LED2, LED3} = ~3'b111;
+					ExecCmd(`CmdSayVictory, S_AFTER_GAME_END);
 				end
-				wait_counter <= 0;
-				wait_limit <= ONE_USEC * 50 * 1000;
-				cmd_state <= C_FLAGS;
-				sm_state <= S_PROC_EXEC_CMD;
+				else if (attempt_count >= MAX_ATTEMPTS) begin
+					{LED1, LED2, LED3} = ~3'b101;
+					ExecCmd(`CmdSayLost, S_AFTER_GAME_END);
+				end
+				else if (goal_number < user_number) begin
+					{LED1, LED2, LED3} = ~3'b100;
+					ExecCmd(`CmdSayLesser, S_AFTER_CHECK);
+				end
+				else if (goal_number > user_number) begin
+					{LED1, LED2, LED3} = ~3'b001;
+					ExecCmd(`CmdSayGreater, S_AFTER_CHECK);
+				end
 			end
 
 			S_AFTER_CHECK: begin
-				if (IR_DATA_READY) begin
-					if (IR_DATA == `KEY_OK) begin
-						attempt_count = attempt_count + 1;
-						wait_counter <= 0;
-						wait_limit <= ONE_USEC * 50 * 1000;
-						cmd_state <= C_FLAGS;
-						sm_state <= S_PROC_EXEC_CMD;
-						next_sm_state <= S_CONVERT_ATTEMPT;
-						cmd_rom_addr <= `CmdShowAttemptPrompt;
-					end
-				end
+				attempt_count <= attempt_count + 1;
+				output_buf[32:63] <= "0000";
+				sm_state <= S_CONVERT_ATTEMPT;
 			end
 			
-			S_AFTER_VICTORY: begin
+			S_AFTER_GAME_END: begin
 				if (IR_DATA_READY) begin
 					if (IR_DATA == `KEY_OK) begin
-						wait_counter <= 0;
-						wait_limit <= ONE_USEC * 50 * 1000;
-						cmd_state <= C_FLAGS;
-						cmd_rom_addr <= `CmdShowGameTitle;
-						sm_state <= S_PROC_EXEC_CMD;
-						next_sm_state <= S_AFTER_INIT;
+						lfsr_en <= 1;
+						attempt_count <= 0;
+						{LED1, LED2, LED3} = ~3'b0;
+						ExecCmd(`CmdShowRules, S_RANDOMIZE);
 					end
 				end
 			end

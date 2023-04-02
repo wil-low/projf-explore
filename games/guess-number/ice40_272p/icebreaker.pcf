@@ -9,7 +9,7 @@ set_io --warn-no-port SCL  3
 #> PMOD 2 PMOD_BLEDIR
 set_io --warn-no-port LED1 46
 set_io --warn-no-port LED2 44
-#set_io --warn-no-port LED3 42
+set_io --warn-no-port LED3 42
 set_io --warn-no-port LED4 37
 set_io --warn-no-port IR   36
 #set_io --warn-no-port BTN3 38

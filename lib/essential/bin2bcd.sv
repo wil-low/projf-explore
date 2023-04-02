@@ -1,6 +1,7 @@
 // parametric Verilog implementation of the double dabble binary to BCD converter
 
 `default_nettype none
+`timescale 1ns / 1ps
 
 ///////////////////////////////////////////////////////////////////////////////
 // File Downloaded from http://www.nandland.com
