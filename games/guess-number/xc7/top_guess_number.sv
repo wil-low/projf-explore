@@ -24,7 +24,7 @@ logic ir_idle;
 reg [4 * 8 - 1:0] ir_data;
 wire [7:0] ir_error_code;
 
-infrared_rx rx (CLK, IR, ir_data, ir_idle, ir_data_ready, ir_error_code);
+infrared_rx #(50) rx (CLK, IR, ir_data, ir_idle, ir_data_ready, ir_error_code);
 
 assign LED4 = IR;
 
