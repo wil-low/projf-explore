@@ -101,6 +101,18 @@ begin
 end
 endtask
 
+`define BELL  64'h04_0e_0e_0e_1f_00_04_00
+`define NOTE  64'h02_03_02_0e_1e_0c_00_00
+`define CLOCK 64'h00_0e_15_17_11_0e_00_00
+`define HEART 64'h00_0a_1f_1f_0e_04_00_00
+`define DUCK  64'h00_0c_1d_0f_0f_06_00_00
+`define CHECK 64'h00_01_03_16_1c_08_00_00
+`define CROSS 64'h00_1b_0e_04_0e_1b_00_00
+`define ENTER 64'h01_01_05_09_1f_08_04_00
+`define SKULL 64'h0e_15_1f_0e_00_11_0e_11
+`define SOUND 64'h01_03_05_09_09_0b_1b_18 
+`define SMILE 64'h0e_1f_0a_00_04_04_11_0e 
+
 initial begin
 	fd = $fopen("cmd.mem", "wb");
 	fdh = $fopen("cmd.mem.svh", "w");
@@ -116,20 +128,15 @@ initial begin
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h01);   // clear it off
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h06);   // set the entry mode
 
-	//instr_create_char(`CCHAR0, 64'h04_0e_0e_0e_1f_00_04_00);  // bell
-	//instr_create_char(`CCHAR1, 64'h02_03_02_0e_1e_0c_00_00);  // note
-	//instr_create_char(`CCHAR2, 64'h00_0e_15_17_11_0e_00_00);  // clock
-	//instr_create_char(`CCHAR3, 64'h00_0a_1f_1f_0e_04_00_00);  // heart
-	//instr_create_char(`CCHAR4, 64'h00_0c_1d_0f_0f_06_00_00);  // duck
-	//instr_create_char(`CCHAR5, 64'h00_01_03_16_1c_08_00_00);  // check
-	//instr_create_char(`CCHAR6, 64'h00_1b_0e_04_0e_1b_00_00);  // cross
-	//instr_create_char(`CCHAR7, 64'h01_01_05_09_1f_08_04_00);  // retarrow
+	instr_create_char(`CCHAR0, `HEART);
+	instr_create_char(`CCHAR1, `SMILE);
+	instr_create_char(`CCHAR2, `SKULL);
 
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h02);   // return home
 	instr(`SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h00);   // backlight
 	
 	//instr_print({`CCHAR0, `CCHAR1, `CCHAR2, `CCHAR3, `CCHAR4, `CCHAR5, `CCHAR6, `CCHAR7});
-	instr_print({"   NumberGame   "});
+	instr_print({" ", `CCHAR0, " NumberGame ", `CCHAR0, " "});
 	
 	instr_cursor(0, 1);
 	instr_print({"  by wil_low   ", `RIGHT_ARROW});
@@ -162,12 +169,12 @@ initial begin
 
 	instr_label("CmdSayVictory", "Say You win");
 	instr_cursor(0, 1);
-	instr_print("You win!!!      ");
+	instr_print({"You win!!! ", `CCHAR1, "    "});
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdSayLost", "Say You lost");
 	instr_cursor(0, 1);
-	instr_print("You lost :(     ");
+	instr_print({"You lost! ", `CCHAR2, "     "});
 	instr_return();  // return from cmd sequence
 
 	instr_label("CmdMaxSize", "Max file size");
