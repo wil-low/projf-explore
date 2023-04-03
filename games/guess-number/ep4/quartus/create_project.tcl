@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Sun Apr  2 16:06:00 2023
+# Generated on: Mon Apr  3 06:39:21 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -84,23 +84,23 @@ if {$make_assignments} {
 	set_global_assignment -name SEARCH_PATH ../../../../lib/infrared
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../guess_number.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../top_guess_number.sv
-	set_location_assignment PIN_T10 -to LED2
-	set_location_assignment PIN_T11 -to LED1
-	set_location_assignment PIN_T9 -to LED3
-	set_location_assignment PIN_T8 -to LED4
+	set_location_assignment PIN_E7 -to LED2
+	set_location_assignment PIN_D6 -to LED1
+	set_location_assignment PIN_C8 -to LED3
+	set_location_assignment PIN_E8 -to LED4
 	set_location_assignment PIN_E1 -to CLK
 	set_location_assignment PIN_N13 -to rst_n
-	set_location_assignment PIN_T14 -to SCL
-	set_location_assignment PIN_T13 -to SDA
-	set_location_assignment PIN_T12 -to IR
-	set_location_assignment PIN_T7 -to LED[0]
-	set_location_assignment PIN_T6 -to LED[1]
-	set_location_assignment PIN_T5 -to LED[2]
-	set_location_assignment PIN_R13 -to LED[3]
-	set_location_assignment PIN_R12 -to LED[4]
-	set_location_assignment PIN_R11 -to LED[5]
-	set_location_assignment PIN_R10 -to LED[6]
-	set_location_assignment PIN_R9 -to LED[7]
+	set_location_assignment PIN_A9 -to SCL
+	set_location_assignment PIN_A12 -to SDA
+	set_location_assignment PIN_A13 -to IR
+	set_location_assignment PIN_C6 -to LED[0]
+	set_location_assignment PIN_F8 -to LED[1]
+	set_location_assignment PIN_D8 -to LED[2]
+	set_location_assignment PIN_E9 -to LED[3]
+	set_location_assignment PIN_B12 -to LED[4]
+	set_location_assignment PIN_B13 -to LED[5]
+	set_location_assignment PIN_D5 -to LED[6]
+	set_location_assignment PIN_B11 -to LED[7]
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments
