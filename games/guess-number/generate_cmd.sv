@@ -6,6 +6,7 @@ module generate_cmd();
 integer fd, fdh;
 
 `include "cmd_flags.svh"
+`include "custom_chars.svh"
 
 `define RIGHT_ARROW 8'b01111110
 
@@ -32,7 +33,11 @@ begin
 		delay_usec[7 -: 8]);
 	$fwrite(fd, "%x ", 8'(data.len()));
 	for (integer i = 0; i < data.len(); i = i + 1) begin
-		$fwrite(fd, "%x", data[i]);
+		if (data[i] == `CCHAR0 || data[i] == `CCHAR1 || data[i] == `CCHAR2 || data[i] == `CCHAR3 ||
+			data[i] == `CCHAR4 || data[i] == `CCHAR5 || data[i] == `CCHAR6 || data[i] == `CCHAR7 )
+				$fwrite(fd, "%x", data[i] & 8'h7f);
+			else
+				$fwrite(fd, "%x", data[i]);
 		if (i < data.len() - 1)
 			$fwrite(fd, " ");
 	end
@@ -74,6 +79,28 @@ begin
 end
 endtask
 
+task instr_create_char;
+	input [7:0] char_index;
+	input [0 : 8 * 8 - 1] char_data;
+begin
+	localparam [27:0] delay_usec = 1;
+	instr(`WITH_PULSE | `SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h40 | ((char_index & 8'h7f) << 3));
+	$fwrite(fd, "%x %x %x %x ",
+		{`BACKLIGHT | `DATAMODE | `WITH_PULSE | `SEND_2ND_NIBBLE,
+		delay_usec[27 -: 4]},
+		delay_usec[23 -: 8],
+		delay_usec[15 -: 8],
+		delay_usec[7 -: 8]);
+	$fwrite(fd, "%x ", 8'd8);
+	for (integer i = 0; i < 8; i = i + 1) begin
+		$fwrite(fd, "%x", char_data[i * 8 +: 8]);
+		if (i < 8 - 1)
+			$fwrite(fd, " ");
+	end
+	$fwrite(fd, "\n");
+end
+endtask
+
 initial begin
 	fd = $fopen("cmd.mem", "wb");
 	fdh = $fopen("cmd.mem.svh", "w");
@@ -88,9 +115,22 @@ initial begin
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 10, 8'h0c);   // turn the display on with no cursor or blinking default
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h01);   // clear it off
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h06);   // set the entry mode
+
+	//instr_create_char(`CCHAR0, 64'h04_0e_0e_0e_1f_00_04_00);  // bell
+	//instr_create_char(`CCHAR1, 64'h02_03_02_0e_1e_0c_00_00);  // note
+	//instr_create_char(`CCHAR2, 64'h00_0e_15_17_11_0e_00_00);  // clock
+	//instr_create_char(`CCHAR3, 64'h00_0a_1f_1f_0e_04_00_00);  // heart
+	//instr_create_char(`CCHAR4, 64'h00_0c_1d_0f_0f_06_00_00);  // duck
+	//instr_create_char(`CCHAR5, 64'h00_01_03_16_1c_08_00_00);  // check
+	//instr_create_char(`CCHAR6, 64'h00_1b_0e_04_0e_1b_00_00);  // cross
+	//instr_create_char(`CCHAR7, 64'h01_01_05_09_1f_08_04_00);  // retarrow
+
 	instr(`WITH_PULSE | `SEND_2ND_NIBBLE, 2000, 8'h02);   // return home
 	instr(`SEND_2ND_NIBBLE | `BACKLIGHT, 10, 8'h00);   // backlight
-	instr_print("   NumberGame   ");
+	
+	//instr_print({`CCHAR0, `CCHAR1, `CCHAR2, `CCHAR3, `CCHAR4, `CCHAR5, `CCHAR6, `CCHAR7});
+	instr_print({"   NumberGame   "});
+	
 	instr_cursor(0, 1);
 	instr_print({"  by wil_low   ", `RIGHT_ARROW});
 	instr_return();  // return from cmd sequence
