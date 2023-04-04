@@ -1,0 +1,35 @@
+# iCESugar-v1.5
+
+# J1 (CLK) on
+# J3 always in Prog Flash mode (iCE not supported)
+# J5 both on
+
+# using PMOD1 (4 pins) and PMOD2 (8 pins)
+# no resistors required (already 200 Ohm in PMODs)
+
+set_io BTN 10
+
+set_io AN1 43
+set_io AN2 38
+set_io AN3 3
+set_io AN4 48
+set_io CA 47
+set_io CB 2
+set_io CC 36
+set_io CD 45
+set_io CE 46
+set_io CF 44
+set_io CG 42
+set_io DP 37
+
+set_io CLK 35
+
+#> PMOD 3
+set_io --warn-no-port LED0 25
+set_io --warn-no-port LED1 27
+set_io --warn-no-port LED2 31
+set_io --warn-no-port LED3 34
+set_io --warn-no-port LED4 23
+set_io --warn-no-port LED5 26
+set_io --warn-no-port LED6 28
+set_io --warn-no-port LED7 32
