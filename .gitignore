@@ -1,6 +1,7 @@
 # Xilinx Vivado
 *.cache
 *.hw
+*.ioplanning
 *.ip_user_files
 *.runs
 *.sim
@@ -19,9 +20,12 @@ webtalk.*
 *.summary
 *.jdi
 *.pin
+*.qpf
 *.qsf
+*.sft
 *.sld
 *.sof
+*.vo
 filters.xml
 preferences.xml
 db/
