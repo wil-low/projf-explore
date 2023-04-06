@@ -11,9 +11,9 @@ module mc14500b_demo
 	parameter FLGF_LOOP = 1'b0
 )
 (
-	input RST,
-	input CLK,
-	input [7:1] INPUT,
+	input logic RST,
+	input logic CLK,
+	input logic [7:1] INPUT,
 	output reg [7:0] OUTPUT,
 	output reg [7:0] TRACE
 );

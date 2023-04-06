@@ -5,10 +5,10 @@
 
 module mc14500b
 (
-	input RST,
-	input X2,
-	input [3:0] INSTR,
-	input DATA_IN,
+	input logic RST,
+	input logic X2,
+	input logic [3:0] INSTR,
+	input logic DATA_IN,
 	output logic DATA_OUT,
 	output logic X1,
 	output logic RR,
