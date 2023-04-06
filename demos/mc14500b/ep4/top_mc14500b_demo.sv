@@ -10,6 +10,7 @@ module top_mc14500b_demo
 	input RST,
 	input BTN1,
 	input BTN2,
+	input BTN3,
 	output [7:0] LED,
 	output LED1,
 	output LED2,
@@ -36,14 +37,21 @@ debounce debounce_inst1 (
 	.onup()
 );
 
+debounce debounce_inst2 (
+	.clk(CLK),
+	.in(BTN3),
+	.out(inputs[3]),
+	.ondn(),
+	.onup()
+);
 /* verilator lint_on PINCONNECTEMPTY */
 
 wire [7:0] out;
 
-assign LED1 = ~out[0];
-assign LED2 = ~out[1];
-assign LED3 = ~out[2];
-assign LED4 = ~out[3];
+assign LED1 = out[0];
+assign LED2 = out[1];
+assign LED3 = out[2];
+assign LED4 = out[3];
 
 wire [7:0] trace;
 assign LED = ~trace;
@@ -68,7 +76,7 @@ mc14500b_demo #(
 mc14500b_demo_inst (
 	.RST(~RST),
 	.CLK(X2),
-	.INPUT(inputs),
+	.INPUT(~inputs),
 	.OUTPUT(out),
 	.TRACE(trace)
 );
