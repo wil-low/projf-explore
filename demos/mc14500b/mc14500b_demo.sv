@@ -26,7 +26,7 @@ logic	JMP;
 logic	RTN;
 logic	FLG0;
 logic	FLGF;
-logic	[7:0] SCRATCHPAD;
+logic	[7:0] TMP;
 
 logic [7:0] cmd_rom_addr;
 logic [7:0] cmd_rom_data;
@@ -47,7 +47,7 @@ mc14500b mc14500b_inst (.RST, .X2(CLK & ~RST & ~halted), .INSTR(cmd_rom_data[7:4
 /* verilator lint_on PINCONNECTEMPTY */
 
 wire [15:0] inputs;
-assign inputs = {SCRATCHPAD, INPUT, RR};
+assign inputs = {TMP, INPUT, RR};
 
 assign DATA_IN = inputs[saved_operand];
 
@@ -59,7 +59,7 @@ always @(posedge CLK) begin
 		$display("RESET demo");
 		cmd_rom_addr <= START_ADDRESS;
 		saved_operand <= cmd_rom_data[3:0];
-		SCRATCHPAD <= 0;
+		TMP <= 0;
 		OUTPUT <= 0;
 	end
 	else if (FLG0_HALT && FLG0) begin
@@ -78,7 +78,7 @@ always @(posedge CLK) begin
 		if (WRITE) begin
 			$display("posedge CLK, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA_IN %b, DATA_OUT %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA_IN, DATA_OUT, WRITE);
 			if (saved_operand[3])
-				SCRATCHPAD[saved_operand[2:0]] <= DATA_OUT;
+				TMP[saved_operand[2:0]] <= DATA_OUT;
 			else
 				OUTPUT[saved_operand[2:0]] <= DATA_OUT;
 		end

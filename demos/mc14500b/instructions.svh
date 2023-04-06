@@ -33,11 +33,11 @@
 `define OUTPUT_6 4'h6
 `define OUTPUT_7 4'h7
 
-`define SCRATCHPAD_0 4'h8
-`define SCRATCHPAD_1 4'h9
-`define SCRATCHPAD_2 4'ha
-`define SCRATCHPAD_3 4'hb
-`define SCRATCHPAD_4 4'hc
-`define SCRATCHPAD_5 4'hd
-`define SCRATCHPAD_6 4'he
-`define SCRATCHPAD_7 4'hf
+`define TMP_0 4'h8
+`define TMP_1 4'h9
+`define TMP_2 4'ha
+`define TMP_3 4'hb
+`define TMP_4 4'hc
+`define TMP_5 4'hd
+`define TMP_6 4'he
+`define TMP_7 4'hf

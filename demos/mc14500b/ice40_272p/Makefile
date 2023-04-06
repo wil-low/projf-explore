@@ -19,6 +19,7 @@ ADD_SRC += ../mc14500b.sv
 ADD_SRC += ../mc14500b_demo.sv
 
 mc14500b_demo: mc14500b_demo.rpt mc14500b_demo.bin mc14500b_demo.link
+killbits: killbits.rpt killbits.bin killbits.link
 
 %.json: top_%.sv $(ADD_SRC) cmd.mem
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
