@@ -44,33 +44,37 @@ assign inputs = {SCRATCHPAD, INPUT, RR};
 
 assign DATA = WRITE ? 1'bz : inputs[cmd_rom_data[3:0]];
 
-/* verilator lint_off MULTIDRIVEN */
+logic [3:0] saved_operand;
+
 always @(posedge CLK) begin
+	$display("posedge CLK, cmd_rom_data %x, addr %b, saved_operand %h, WRITE %b", cmd_rom_data, cmd_rom_addr, saved_operand, WRITE);
 	if (RST) begin
-		cmd_rom_addr <= 0;
+		SCRATCHPAD <= 0;
+		OUTPUT <= 0;
 	end
-	else begin
-		if (JMP)
-			cmd_rom_addr <= cmd_rom_data;
-		//$display("posedge CLK, cmd_rom_data %x, addr %x, JMP %b", cmd_rom_data, cmd_rom_addr, JMP);
+	else if (WRITE) begin
+		$display("posedge CLK, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA, WRITE);
+		if (saved_operand[3])
+			SCRATCHPAD[saved_operand[2:0]] <= DATA;
+		else
+			OUTPUT[saved_operand[2:0]] <= DATA;
 	end
 end
 
 always @(negedge CLK) begin
-	if (!RST) begin
-		//$display("negedge CLK, cmd_rom_data %x, addr %x, JMP %b", cmd_rom_data, cmd_rom_addr, JMP);
+	if (RST) begin
+		cmd_rom_addr <= 0;
+		saved_operand <= cmd_rom_data[3:0];
+	end
+	else begin
 		if (!JMP) begin
 			cmd_rom_addr <= cmd_rom_addr + 1;
-			if (WRITE) begin
-				if (cmd_rom_data[3])
-					SCRATCHPAD[cmd_rom_data[2:0]] <= DATA;
-				else
-					OUTPUT[cmd_rom_data[2:0]] <= DATA;
-			end
 		end
+		else
+			cmd_rom_addr <= cmd_rom_data;
+		saved_operand <= cmd_rom_data[3:0];
 	end
 end
-/* verilator lint_on MULTIDRIVEN */
 
 logic _unused_ok = &{1'b1, RTN, FLG0, FLGF, 1'b0};
 

@@ -48,9 +48,12 @@ initial begin
 	labelBegin = instr(`I_ORC, `INPUT_RR);
 	instr(`I_IEN, `INPUT_RR);
 	instr(`I_OEN, `INPUT_RR);
-	labelLD1 = instr(`I_LD, `INPUT_1);
-	instr(`I_OR, `INPUT_2);
-	instr(`I_STO, `OUTPUT_0);
+	//labelLD1 = instr(`I_LD, `INPUT_1);
+	//instr(`I_OR, `INPUT_2);
+	instr(`I_STOC, `OUTPUT_0);
+	instr(`I_STOC, `OUTPUT_1);
+	instr(`I_STOC, `OUTPUT_2);
+	instr(`I_STOC, `OUTPUT_3);
 	instr_jmp(labelLD1);
 	instr(`I_NOP0, 0);
 

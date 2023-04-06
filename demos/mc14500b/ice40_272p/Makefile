@@ -42,6 +42,8 @@ mc14500b_demo: mc14500b_demo.rpt mc14500b_demo.bin mc14500b_demo.link
 
 all: mc14500b
 
+mc14500b_demo.sim: top_mc14500b_demo_tb.vcd cmd.mem
+
 %.vcd: %.sv $(ADD_SRC)
 
 	#-- Compile
@@ -62,6 +64,6 @@ cmd.mem: ../generate_cmd.sv
 	./generate_cmd.out
 
 clean:
-	rm -f *.json *.asc *.rpt *.bin *yosys.log
+	rm -f *.json *.asc *.rpt *.bin *yosys.log *.out *.vcd
 
 .PHONY: all clean
