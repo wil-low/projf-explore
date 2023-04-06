@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Mon Apr  3 06:39:21 2023
+# Generated on: Thu Apr  6 17:48:17 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -43,7 +43,7 @@ if {[is_project_open]} {
 if {$make_assignments} {
 	set_global_assignment -name FAMILY "Cyclone IV E"
 	set_global_assignment -name DEVICE EP4CE6F17C8
-	set_global_assignment -name TOP_LEVEL_ENTITY top_guess_number
+	set_global_assignment -name TOP_LEVEL_ENTITY top_mc14500b_demo
 	set_global_assignment -name ORIGINAL_QUARTUS_VERSION 22.1STD.0
 	set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:03:04  лютого 20, 2023"
 	set_global_assignment -name LAST_QUARTUS_VERSION "22.1std.0 Lite Edition"
@@ -72,27 +72,20 @@ if {$make_assignments} {
 	set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 	set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 	set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../mc14500b.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../top_mc14500b_demo.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../mc14500b_demo.sv
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 	set_global_assignment -name SEARCH_PATH ../../../../lib/memory
-	set_global_assignment -name SEARCH_PATH ../../../../lib/3rd_party/Tiny_But_Mighty_I2C_Master_Verilog/rtl
 	set_global_assignment -name SEARCH_PATH ../../../../lib/essential
-	set_global_assignment -name SEARCH_PATH ../../../../lib/lc1602c
-	set_global_assignment -name SEARCH_PATH ../../../../lib/random
 	set_global_assignment -name SEARCH_PATH ../../ice40_272p
-	set_global_assignment -name SEARCH_PATH ../../../../lib/infrared
-	set_global_assignment -name SYSTEMVERILOG_FILE ../../mc14500b_demo.sv
-	set_global_assignment -name SYSTEMVERILOG_FILE ../top_guess_number.sv
-	set_location_assignment PIN_E7 -to LED2
-	set_location_assignment PIN_D6 -to LED1
-	set_location_assignment PIN_C8 -to LED3
-	set_location_assignment PIN_E8 -to LED4
+	set_location_assignment PIN_F9 -to LED2
+	set_location_assignment PIN_E10 -to LED1
+	set_location_assignment PIN_C9 -to LED3
+	set_location_assignment PIN_D9 -to LED4
 	set_location_assignment PIN_E1 -to CLK
-	set_location_assignment PIN_N13 -to rst_n
-	set_location_assignment PIN_A9 -to SCL
-	set_location_assignment PIN_A12 -to SDA
-	set_location_assignment PIN_A13 -to IR
 	set_location_assignment PIN_C6 -to LED[0]
 	set_location_assignment PIN_F8 -to LED[1]
 	set_location_assignment PIN_D8 -to LED[2]
@@ -101,6 +94,9 @@ if {$make_assignments} {
 	set_location_assignment PIN_B13 -to LED[5]
 	set_location_assignment PIN_D5 -to LED[6]
 	set_location_assignment PIN_B11 -to LED[7]
+	set_location_assignment PIN_N13 -to RST
+	set_location_assignment PIN_M15 -to BTN1
+	set_location_assignment PIN_M16 -to BTN2
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments
