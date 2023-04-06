@@ -37,7 +37,9 @@ initial begin
 	RST = 1;
 	X2 = 1;
 
+	INPUT[1] = 1;
 	#4 RST = 0;
+
 
 	#50 $finish;
 end

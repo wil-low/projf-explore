@@ -26,7 +26,7 @@ always @(posedge CLK) begin
 		reset_counter <= reset_counter + 1;
 end
 
-wire [7:1] inputs;
+logic [7:1] inputs;
 
 /* verilator lint_off PINCONNECTEMPTY */
 debounce debounce_inst0 (
@@ -64,7 +64,7 @@ assign LED4 = ~out[3];
 wire [7:0] trace;
 assign LED = ~trace;
 
-localparam CLOCK_DIVIDER = 19;
+localparam CLOCK_DIVIDER = 18;
 
 logic [CLOCK_DIVIDER:0] counter = 0;
 logic X2 = 1;
@@ -78,13 +78,13 @@ end
 mc14500b_demo #(
 	.INIT_F("cmd.mem"),
 	.START_ADDRESS(`CmdFPGA),
-	.FLG0_HALT(1'b0),
+	.FLG0_HALT(1'b1),
 	.FLGF_LOOP(1'b1)
 )
 mc14500b_demo_inst (
 	.RST(~rst_n),
 	.CLK(X2),
-	.INPUT(inputs),
+	.INPUT(~inputs),
 	.OUTPUT(out),
 	.TRACE(trace)
 );

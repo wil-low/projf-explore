@@ -27,11 +27,14 @@ assign X1 = RST | X2;
 
 always @(posedge X2) begin
 	saved_instr <= INSTR;
+	$display("posedge X2, saved_instr %x, RR %b", INSTR, RR);
 end
 
 always @(negedge X2) begin
-	if (RST)
+	if (RST) begin
 		{RR, JMP, RTN, FLG0, FLGF, WRITE, skz, ien, oen, DATA_OUT} <= 0;
+		$display("RESET");
+	end
 	else begin
 		{JMP, RTN, FLG0, FLGF, WRITE, skz} <= 0;
 		if (!JMP && !RTN && !skz) begin
@@ -107,7 +110,7 @@ always @(negedge X2) begin
 					FLGF <= 1;
 				end
 			endcase
-			$display("negedge X2, saved_instr %x", saved_instr);
+			$display("negedge X2, saved_instr %x, RR %b", saved_instr, RR);
 		end
 		else
 			$display("negedge X2, skip instr");

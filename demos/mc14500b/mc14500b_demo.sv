@@ -49,50 +49,47 @@ mc14500b mc14500b_inst (.RST, .X2(CLK & ~RST & ~halted), .INSTR(cmd_rom_data[7:4
 wire [15:0] inputs;
 assign inputs = {SCRATCHPAD, INPUT, RR};
 
-assign DATA_IN = inputs[cmd_rom_data[3:0]];
+assign DATA_IN = inputs[saved_operand];
 
 logic [3:0] saved_operand;
 
 always @(posedge CLK) begin
 	$display("posedge CLK, cmd_rom_data %x, addr %b, saved_operand %h, WRITE %b", cmd_rom_data, cmd_rom_addr, saved_operand, WRITE);
 	if (RST) begin
-		SCRATCHPAD <= 0;
-		OUTPUT <= 0;
-	end
-	else if (WRITE) begin
-		$display("posedge CLK, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA_OUT %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA_OUT, WRITE);
-		if (saved_operand[3])
-			SCRATCHPAD[saved_operand[2:0]] <= DATA_OUT;
-		else
-			OUTPUT[saved_operand[2:0]] <= DATA_OUT;
-	end
-end
-
-always @(negedge CLK) begin
-	if (RST) begin
+		$display("RESET demo");
 		cmd_rom_addr <= START_ADDRESS;
 		saved_operand <= cmd_rom_data[3:0];
+		SCRATCHPAD <= 0;
+		OUTPUT <= 0;
 	end
 	else if (FLG0_HALT && FLG0) begin
 		halted <= 1'b1;
 		$display("negedge CLK, HALT");
 	end
-	else begin
-		if (JMP) begin
-			cmd_rom_addr <= cmd_rom_data;
-			$display("negedge CLK, JMP to %x", cmd_rom_data);
-		end
-		else if (FLGF_LOOP && FLGF) begin
-			cmd_rom_addr <= START_ADDRESS;
-			$display("negedge CLK, LOOP to %x", START_ADDRESS);
-		end
-		else
-			cmd_rom_addr <= cmd_rom_addr + 1;
-		saved_operand <= cmd_rom_data[3:0];
+	else if (FLGF_LOOP && FLGF) begin
+		cmd_rom_addr <= START_ADDRESS;
+		$display("negedge CLK, LOOP to %x", START_ADDRESS);
 	end
+	else if (JMP) begin
+		cmd_rom_addr <= cmd_rom_data;
+		$display("negedge CLK, JMP to %x", cmd_rom_data);
+	end
+	else begin
+		if (WRITE) begin
+			$display("posedge CLK, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA_IN %b, DATA_OUT %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA_IN, DATA_OUT, WRITE);
+			if (saved_operand[3])
+				SCRATCHPAD[saved_operand[2:0]] <= DATA_OUT;
+			else
+				OUTPUT[saved_operand[2:0]] <= DATA_OUT;
+		end
+		$display("INPUT, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA_IN %b, DATA_OUT %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA_IN, DATA_OUT, WRITE);
+		cmd_rom_addr <= cmd_rom_addr + 1;
+	end
+
+	saved_operand <= cmd_rom_data[3:0];
 	TRACE <= cmd_rom_addr;
 end
 
-logic _unused_ok = &{1'b1, RTN, FLG0, FLGF, 1'b0};
+logic _unused_ok = &{1'b1, RTN, 1'b0};
 
 endmodule
