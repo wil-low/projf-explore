@@ -8,7 +8,8 @@ module mc14500b
 	input RST,
 	input X2,
 	input [3:0] INSTR,
-	inout wire DATA,
+	input DATA_IN,
+	output logic DATA_OUT,
 	output logic X1,
 	output logic RR,
 	output logic WRITE,
@@ -19,11 +20,8 @@ module mc14500b
 );
 
 logic skz, ien, oen;
-logic data_oen = 0, data_out, data_in;
 
 logic [3:0] saved_instr;
-
-sb_inout inout_inst(DATA, data_oen, data_out, data_in);
 
 assign X1 = RST | X2;
 
@@ -33,9 +31,9 @@ end
 
 always @(negedge X2) begin
 	if (RST)
-		{RR, JMP, RTN, FLG0, FLGF, WRITE, skz, ien, oen, data_out} <= 0;
+		{RR, JMP, RTN, FLG0, FLGF, WRITE, skz, ien, oen, DATA_OUT} <= 0;
 	else begin
-		{JMP, RTN, FLG0, FLGF, WRITE, skz, data_oen} <= 0;
+		{JMP, RTN, FLG0, FLGF, WRITE, skz} <= 0;
 		if (!JMP && !RTN && !skz) begin
 			case (saved_instr)
 				`I_NOP0: begin
@@ -43,56 +41,54 @@ always @(negedge X2) begin
 				end
 
 				`I_LD: begin
-					RR <= ien & data_in;
-					$display("LD, DATA=%b, data_in=%b, RR=%b", DATA, data_in, RR);
+					RR <= ien & DATA_IN;
+					$display("LD, DATA_IN=%b, RR=%b", DATA_IN, RR);
 				end
 
 				`I_LDC: begin
-					RR <= ~(ien & data_in);
+					RR <= ~(ien & DATA_IN);
 				end
 
 				`I_AND: begin
-					RR <= RR & (ien & data_in);
+					RR <= RR & (ien & DATA_IN);
 				end
 
 				`I_ANDC: begin
-					RR <= RR & ~(ien & data_in);
+					RR <= RR & ~(ien & DATA_IN);
 				end
 
 				`I_OR: begin
-					RR <= RR | (ien & data_in);
+					RR <= RR | (ien & DATA_IN);
 				end
 
 				`I_ORC: begin
-					RR <= RR | ~(ien & data_in);
+					RR <= RR | ~(ien & DATA_IN);
 				end
 
 				`I_XNOR: begin
-					RR <= RR ^ ~(ien & data_in);
+					RR <= RR ^ ~(ien & DATA_IN);
 				end
 
 				`I_STO: begin
 					if (oen) begin
-						data_out <= RR;
-						data_oen <= 1;
+						DATA_OUT <= RR;
 						WRITE <= 1;
 					end
 				end
 
 				`I_STOC: begin
 					if (oen) begin
-						data_out <= ~RR;
-						data_oen <= 1;
+						DATA_OUT <= ~RR;
 						WRITE <= 1;
 					end
 				end
 
 				`I_IEN: begin
-					ien <= data_in;
+					ien <= DATA_IN;
 				end
 
 				`I_OEN: begin
-					oen <= data_in;
+					oen <= DATA_IN;
 				end
 
 				`I_JMP: begin

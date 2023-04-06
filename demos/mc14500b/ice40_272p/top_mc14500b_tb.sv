@@ -10,7 +10,8 @@ module top_mc14500b_tb();
 logic	RST;
 logic	X2;
 logic	[3:0] INSTR;
-wire	DATA;
+logic	DATA_IN;
+logic	DATA_OUT;
 logic	X1;
 logic	RR;
 logic	WRITE;
@@ -19,11 +20,7 @@ logic	RTN;
 logic	FLG0;
 logic	FLGF;
 
-logic	data_in;
-
-assign DATA = data_in;
-
-mc14500b mc14500b_inst (.RST, .X2, .INSTR, .DATA, .X1, .RR, .WRITE, .JMP, .RTN, .FLG0, .FLGF);
+mc14500b mc14500b_inst (.RST, .X2, .INSTR, .DATA_IN, .DATA_OUT, .X1, .RR, .WRITE, .JMP, .RTN, .FLG0, .FLGF);
 
 // generate clock
 always #(CLK_PERIOD / 2) X2 <= ~X2;
@@ -31,10 +28,10 @@ always #(CLK_PERIOD / 2) X2 <= ~X2;
 initial begin
 	$dumpfile("top_mc14500b_tb.vcd");
 	$dumpvars(0, top_mc14500b_tb);
-	data_in = 0;
+	DATA_IN = 0;
 	RST = 1;
 	X2 = 1;
-	data_in = 1;
+	DATA_IN = 1;
 
 	#4 RST = 0;
 
@@ -46,54 +43,54 @@ initial begin
 	#2 INSTR = `I_NOP0;
 
 	#2 INSTR = `I_LD;
-	data_in = 1;
+	DATA_IN = 1;
 
 	#2 INSTR = `I_LD;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_LDC;
-	data_in = 1;
+	DATA_IN = 1;
 
 	#2 INSTR = `I_LDC;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_AND;
-	data_in = 1;
+	DATA_IN = 1;
 
 	#2 INSTR = `I_AND;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_ANDC;
-	data_in = 1;
+	DATA_IN = 1;
 
 	#2 INSTR = `I_ANDC;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_OR;
-	data_in = 1;
+	DATA_IN = 1;
 
 	#2 INSTR = `I_OR;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_STO;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_STOC;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_JMP;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_RTN;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 INSTR = `I_NOPF; // this is skipped after RTN
 
 	#2 INSTR = `I_SKZ;
-	data_in = 0;
+	DATA_IN = 0;
 
 	//#2 INSTR = `I_NOPF;
-	data_in = 0;
+	DATA_IN = 0;
 
 	#2 $finish;
 end

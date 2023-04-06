@@ -18,7 +18,8 @@ module mc14500b_demo
 	output reg [7:0] TRACE
 );
 
-wire	DATA;
+logic	DATA_IN;
+logic	DATA_OUT;
 logic	RR;
 logic	WRITE;
 logic	JMP;
@@ -42,13 +43,13 @@ rom_async #(
 );
 
 /* verilator lint_off PINCONNECTEMPTY */
-mc14500b mc14500b_inst (.RST, .X2(CLK & ~RST & ~halted), .INSTR(cmd_rom_data[7:4]), .DATA, .X1(), .RR, .WRITE, .JMP, .RTN, .FLG0, .FLGF);
+mc14500b mc14500b_inst (.RST, .X2(CLK & ~RST & ~halted), .INSTR(cmd_rom_data[7:4]), .DATA_IN, .DATA_OUT, .X1(), .RR, .WRITE, .JMP, .RTN, .FLG0, .FLGF);
 /* verilator lint_on PINCONNECTEMPTY */
 
 wire [15:0] inputs;
 assign inputs = {SCRATCHPAD, INPUT, RR};
 
-assign DATA = WRITE ? 1'bz : inputs[cmd_rom_data[3:0]];
+assign DATA_IN = inputs[cmd_rom_data[3:0]];
 
 logic [3:0] saved_operand;
 
@@ -59,15 +60,11 @@ always @(posedge CLK) begin
 		OUTPUT <= 0;
 	end
 	else if (WRITE) begin
-		$display("posedge CLK, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA, WRITE);
-		/*if (saved_operand[3])
-			SCRATCHPAD[saved_operand[2:0]] <= DATA;
-		else
-			OUTPUT[saved_operand[2:0]] <= DATA;*/
+		$display("posedge CLK, cmd_rom_data %x, addr %b, JMP %b, saved_operand %h, DATA_OUT %h, WRITE %b", cmd_rom_data, cmd_rom_addr, JMP, saved_operand, DATA_OUT, WRITE);
 		if (saved_operand[3])
-			SCRATCHPAD[saved_operand[2:0]] <= DATA;
+			SCRATCHPAD[saved_operand[2:0]] <= DATA_OUT;
 		else
-			OUTPUT[saved_operand[2:0]] <= DATA;
+			OUTPUT[saved_operand[2:0]] <= DATA_OUT;
 	end
 end
 
