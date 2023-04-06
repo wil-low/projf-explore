@@ -41,7 +41,7 @@ LIB="${DIR}/../../lib"
 # Lattice iCE40 iCESugar
 if [ -d "${DIR}/ice40_272p" ]; then
 	echo "## Linting top modules in ${DIR}/ice40_272p"
-	for f in ${DIR}/ice40_272p/top_mc14500b_demo.sv; do
+	for f in ${DIR}/ice40_272p/top_*.sv; do
 		echo "##   Checking ${f}";
 		verilator --lint-only --timing -Wall -I${DIR} -I${DIR}/ice40_272p \
 			-I${LIB}/3rd_party/Tiny_But_Mighty_I2C_Master_Verilog/rtl \

@@ -42,12 +42,12 @@ mc14500b_demo: mc14500b_demo.rpt mc14500b_demo.bin mc14500b_demo.link
 
 all: mc14500b
 
-mc14500b_demo.sim: top_mc14500b_demo_tb.vcd cmd.mem
+mc14500b_demo.sim: top_mc14500b_demo_tb.vcd
 
-%.vcd: %.sv $(ADD_SRC)
+%.vcd: %.sv $(ADD_SRC) cmd.mem
 
 	#-- Compile
-	iverilog -g2012 -Wall -I.. $^ -o $(basename $@).out
+	iverilog -g2012 -Wall -I.. $< $(ADD_SRC) -o $(basename $@).out
 	
 	#-- Simulate
 	./$(basename $@).out
