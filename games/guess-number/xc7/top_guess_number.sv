@@ -2,22 +2,22 @@
 `timescale 1ns / 1ps
 
 module top_guess_number (
-	input CLK,
-	input rst_n,
-	input IR,
+	input logic CLK,
+	input logic rst_n,
+	input logic IR,
 
 	inout wire SCL,
 	inout wire SDA,
 
-	output [7:0] LED,
-	output LED1,
-	output LED2,
-	output LED3,
-	output LED4
+	//output logic [7:0] LED,
+	output logic LED1,
+	output logic LED2,
+	output logic LED3,
+	output logic LED4
 );
 
 guess_number #(50)
-	guess_number_inst(.CLK, .RST_N(rst_n), .IR_DATA(ir_data[15:8]), .IR_DATA_READY(ir_data_ready), .SCL, .SDA, .LED, .LED1, .LED2, .LED3);
+	guess_number_inst(.CLK, .RST_N(rst_n), .IR_DATA(ir_data[15:8]), .IR_DATA_READY(ir_data_ready), .SCL, .SDA, .LED(), .LED1, .LED2, .LED3);
 
 logic ir_data_ready;
 logic ir_idle;
