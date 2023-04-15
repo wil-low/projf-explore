@@ -8,8 +8,7 @@
 module bram_sdp #(
     parameter WIDTH=8, 
     parameter DEPTH=256, 
-    parameter INIT_F="",
-    localparam ADDRW=$clog2(DEPTH)
+    parameter INIT_F=""
     ) (
     input wire logic clk_write,                 // write clock (port a)
     input wire logic clk_read,                  // read clock (port b)
@@ -19,6 +18,8 @@ module bram_sdp #(
     input wire logic [WIDTH-1:0] data_in,       // data in (port a)
     output     logic [WIDTH-1:0] data_out       // data out (port b)
     );
+
+    localparam ADDRW=$clog2(DEPTH);
 
     /* verilator lint_off MULTIDRIVEN */
     logic [WIDTH-1:0] memory [DEPTH];
