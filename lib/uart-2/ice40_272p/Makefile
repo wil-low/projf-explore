@@ -15,6 +15,7 @@ PATH_LIB = ../../../lib
 ADD_SRC += ../uart_rx.sv
 ADD_SRC += ../uart_tx.sv
 ADD_SRC += ${PATH_LIB}/container/fifo.sv
+ADD_SRC += ${PATH_LIB}/memory/ice40/bram_sdp.sv
 
 
 uart: uart.rpt uart.bin uart.link

@@ -4,10 +4,18 @@
 # J3 always in Prog Flash mode (iCE not supported)
 # J5 both on
 
+set_frequency  CLK      12
+
 set_io --warn-no-port RX 4
 set_io --warn-no-port TX 6
 
 set_io CLK 35
+
+#> PMOD 2 PMOD_BLEDIR
+set_io --warn-no-port LED1 46
+set_io --warn-no-port LED2 44
+set_io --warn-no-port LED3 42
+set_io --warn-no-port LED4 37
 
 #> PMOD 3
 set_io --warn-no-port LED[0] 32
