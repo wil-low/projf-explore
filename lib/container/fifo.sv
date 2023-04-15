@@ -4,22 +4,23 @@
 module fifo
 #(
 	parameter WIDTH = 8, 
-	parameter DEPTH = 256, 
-	localparam ADDRW = $clog2(DEPTH)
+	parameter DEPTH = 256
 )
 (
-	input wire logic clk,
-	input wire logic rst_n,					// reset
+	input logic clk,
+	input logic rst_n,					// reset
 
-	input wire logic push_en,			  	// push enable (port a)
-	input wire logic [WIDTH-1:0] push_data,	// data to push (port a)
+	input logic push_en,			  	// push enable (port a)
+	input logic [WIDTH-1:0] push_data,	// data to push (port a)
 
-	input wire logic pop_en,			  	// pop enable (port a)
-	output logic [WIDTH-1:0] pop_data, 		// data to pop (port b)
+	input logic pop_en,			  		// pop enable (port a)
+	output logic [WIDTH-1:0] pop_data, 	// data to pop (port b)
 
-	output wire logic full,					// buffer is full
-	output wire logic empty					// buffer is empty
+	output logic full,					// buffer is full
+	output logic empty					// buffer is empty
 );
+
+localparam ADDRW = $clog2(DEPTH);
 
 logic [ADDRW - 1:0] addr_write = 0, addr_read = 0;
 logic signed [ADDRW + 1:0] fifo_count = 0;
@@ -55,12 +56,6 @@ always_ff @(posedge clk) begin
 				addr_read <= (addr_read == DEPTH - 1) ? 0 : addr_read + 1;
 			end
 		end
-
-		assert (!(push_en && full))
-			else $error("Assertion full_test failed (push %d)", push_data);
-
-		assert (!(pop_en && empty))
-			else $error("Assertion empty_test failed!");
 	end
 end
 

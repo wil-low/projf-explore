@@ -20,8 +20,8 @@ logic [WIDTH-1:0] push_data;		// data to push (port a)
 logic pop_en = 0;			  		// pop enable (port a)
 logic [WIDTH-1:0] pop_data; 		// data to pop (port b)
 
-wire logic full;					// buffer is full
-wire logic empty;					// buffer is empty
+logic full;					// buffer is full
+logic empty;					// buffer is empty
 
 fifo #(.WIDTH(WIDTH), .DEPTH(DEPTH))
 fifo_inst(
@@ -29,6 +29,9 @@ fifo_inst(
 	.push_en, .push_data, .pop_en, .pop_data,
 	.full, .empty
 );
+
+assert (!(push_en && full));// else $error("Assertion full_test failed (push %d)", push_data);
+assert (!(pop_en && empty));// else $error("Assertion empty_test failed!");
 
 initial begin
 	$dumpfile("top_fifo_tb.vcd");
