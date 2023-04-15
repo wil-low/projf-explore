@@ -7,6 +7,8 @@
 DIR=`dirname $0`
 LIB="${DIR}/../../lib"
 
+clear
+
 # Verilator Simulation
 #if [ -d "${DIR}/sim" ]; then
 #	echo "## Linting top modules in ${DIR}/sim"

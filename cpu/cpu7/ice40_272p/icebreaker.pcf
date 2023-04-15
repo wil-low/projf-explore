@@ -1,0 +1,23 @@
+## Board Clock: 12 MHz
+set_frequency  CLK      12
+set_io CLK 35
+
+#> PMOD 2 PMOD_BLEDIR
+set_io --warn-no-port LED1 46
+set_io --warn-no-port LED2 44
+set_io --warn-no-port LED3 42
+set_io --warn-no-port LED4 37
+#set_io --warn-no-port IR   36
+set_io --warn-no-port BTN3 38
+set_io --warn-no-port BTN2 43
+set_io --warn-no-port BTN1 45
+
+#> PMOD 3 PMOD_LED
+set_io --warn-no-port LED[0] 32
+set_io --warn-no-port LED[1] 28
+set_io --warn-no-port LED[2] 26
+set_io --warn-no-port LED[3] 23
+set_io --warn-no-port LED[4] 34
+set_io --warn-no-port LED[5] 31
+set_io --warn-no-port LED[6] 27
+set_io --warn-no-port LED[7] 25
