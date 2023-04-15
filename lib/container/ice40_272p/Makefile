@@ -1,4 +1,4 @@
-## crc - iCESugar Makefile
+## fifo - iCESugar Makefile
 
 # configuration
 SHELL = /bin/sh
@@ -12,10 +12,11 @@ ICELINK_DIR = /tmp/iCELink
 
 # included modules
 PATH_LIB = ../../../lib
-ADD_SRC += ../crc.sv
+ADD_SRC += ../fifo.sv
+ADD_SRC += ${PATH_LIB}/memory/ice40/bram_sdp.sv
 
 
-crc: crc.rpt crc.bin crc.link
+fifo: fifo.rpt fifo.bin fifo.link
 
 %.json: top_%.sv $(ADD_SRC)
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
@@ -37,7 +38,7 @@ crc: crc.rpt crc.bin crc.link
 	sudo sync
 	sudo umount $(ICELINK_DIR)
 
-all: crc
+all: fifo
 
 %.sim: %_tb.vcd
 

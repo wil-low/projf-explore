@@ -23,7 +23,7 @@ logic [WIDTH-1:0] pop_data; 		// data to pop (port b)
 wire logic full;					// buffer is full
 wire logic empty;					// buffer is empty
 
-fifo #(.WIDTH, .DEPTH)
+fifo #(.WIDTH(WIDTH), .DEPTH(DEPTH))
 fifo_inst(
 	.clk_write(clk), .clk_read(clk), .rst_n(rst_n),
 	.push_en, .push_data, .pop_en, .pop_data,
@@ -38,12 +38,43 @@ initial begin
 	pop_en = 0;
 
 	rst_n = 1;
-	#2 rst_n = 0;
-	#2 rst_n = 1;
+	#CLK_PERIOD rst_n = 0;
+	#CLK_PERIOD rst_n = 1;
 
-	#1;
+	#CLK_PERIOD;
 	push_data = 1;
 	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 2;
+	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 3;
+	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 4;
+	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 5;
+	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 6;
+	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 7;
+	push_en = 1;
+
+	#CLK_PERIOD;
+	push_data = 0;
+	push_en = 0;
+
+	#CLK_PERIOD;
+	pop_en = 1;
 
 	#300 $finish;
 end

@@ -23,13 +23,13 @@ module fifo
 	output wire logic empty					// buffer is empty
 );
 
-logic [ADDRW-1:0] addr_write, addr_read;
+logic [ADDRW:0] addr_write, addr_read;
 logic do_push;
 
 assign full = addr_write == DEPTH;
 assign empty = addr_write == 0;
 
-bram_sdp #(.WIDTH, .DEPTH)
+bram_sdp #(.WIDTH(WIDTH), .DEPTH(DEPTH))
 bram_sdp_inst (
 	.clk_write, .clk_read, .we(do_push),
 	.addr_write, .addr_read,
@@ -56,7 +56,7 @@ end
 always_ff @(posedge clk_read) begin
 	if (pop_en && !empty) begin
 		addr_write <= addr_write - 1;
-		addr_read <= addr_write;
+		addr_read <= addr_read - 1;
 	end
 end
 
