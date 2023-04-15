@@ -1,0 +1,89 @@
+#!/bin/sh
+
+# Project F: Lint Script
+# (C)2022 Will Green, open source software released under the MIT License
+# Learn more at https://projectf.io/posts/fpga-graphics/
+
+DIR=`dirname $0`
+LIB="${DIR}/../../lib"
+
+# Verilator Simulation
+#if [ -d "${DIR}/sim" ]; then
+#	echo "## Linting top modules in ${DIR}/sim"
+#	for f in ${DIR}/sim/top_*\.*v; do
+#		echo "##   Checking ${f}";
+#		verilator --lint-only -Wall -I${DIR} -I${DIR}/sim \
+#			-I${LIB}/clock \
+#			-I${LIB}/display \
+#			-I${LIB}/essential \
+#			-I${LIB}/graphics \
+#			-I${LIB}/maths \
+#			-I${LIB}/memory $f;
+#	done
+#fi
+
+# Lattice iCE40
+#if [ -d "${DIR}/ice40" ]; then
+#	echo "## Linting top modules in ${DIR}/ice40"
+#	for f in ${DIR}/ice40/top_*\.*v; do
+#		echo "##   Checking ${f}";
+#		verilator --lint-only -Wall -I${DIR} -I${DIR}/ice40 \
+#			-I${LIB}/clock	 -I${LIB}/clock/ice40 \
+#			-I${LIB}/display   -I${LIB}/display/ice40 \
+#			-I${LIB}/essential -I${LIB}/essential/ice40 \
+#			-I${LIB}/graphics  -I${LIB}/graphics/ice40 \
+#			-I${LIB}/maths	 -I${LIB}/maths/ice40 \
+#			-I${LIB}/memory	-I${LIB}/memory/ice40 \
+#			-I${LIB}/null/ice40 $f;
+#	done
+#fi
+
+# Lattice iCE40 iCESugar
+if [ -d "${DIR}/ice40_272p" ]; then
+	echo "## Linting top modules in ${DIR}/ice40_272p"
+	for f in ${DIR}/ice40_272p/top_*.sv; do
+		echo "##   Checking ${f}";
+		verilator --lint-only --timing -Wall -I${DIR} -I${DIR}/ice40_272p \
+			-I${LIB}/3rd_party/Tiny_But_Mighty_I2C_Master_Verilog/rtl \
+			-I${LIB}/clock	 -I${LIB}/clock/ice40 \
+			-I${LIB}/display   -I${LIB}/display/ice40 \
+			-I${LIB}/essential -I${LIB}/essential/ice40 \
+			-I${LIB}/graphics  -I${LIB}/graphics/ice40 \
+			-I${LIB}/lc1602c   -I${LIB}/lc1602c/ice40 \
+			-I${LIB}/maths	 -I${LIB}/maths/ice40 \
+			-I${LIB}/memory	-I${LIB}/memory/ice40 \
+			-I${LIB}/null/ice40 $f;
+	done
+fi
+
+# Xilinx 7 Series
+#if [ -d "${DIR}/xc7" ]; then
+#	echo "## Linting top modules in ${DIR}/xc7"
+#	for f in ${DIR}/xc7/top_*\.*v; do
+#		echo "##   Checking ${f}";
+#		verilator --lint-only -Wall -I${DIR} -I${DIR}/xc7 \
+#			-I${LIB}/clock	 -I${LIB}/clock/xc7 \
+#			-I${LIB}/display   -I${LIB}/display/xc7 \
+#			-I${LIB}/essential -I${LIB}/essential/xc7 \
+#			-I${LIB}/graphics  -I${LIB}/graphics/xc7 \
+#			-I${LIB}/maths	 -I${LIB}/maths/xc7 \
+#			-I${LIB}/memory	-I${LIB}/memory/xc7 \
+#			-I${LIB}/null/xc7 $f;
+#	done
+#fi
+
+# Xilinx 7 Series (HD with HDMI)
+#if [ -d "${DIR}/xc7-hd" ]; then
+#	echo "## Linting top modules in ${DIR}/xc7-hd"
+#	for f in ${DIR}/xc7-hd/top_*\.*v; do
+#		echo "##   Checking ${f}";
+#		verilator --lint-only -Wall -I${DIR} -I${DIR}/xc7-hd \
+#			-I${LIB}/clock	 -I${LIB}/clock/xc7 \
+#			-I${LIB}/display   -I${LIB}/display/xc7 \
+#			-I${LIB}/essential -I${LIB}/essential/xc7 \
+#			-I${LIB}/graphics  -I${LIB}/graphics/xc7 \
+#			-I${LIB}/maths	 -I${LIB}/maths/xc7 \
+#			-I${LIB}/memory	-I${LIB}/memory/xc7 \
+#			-I${LIB}/null/xc7 $f;
+#	done
+#fi
