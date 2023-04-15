@@ -8,9 +8,7 @@ module fifo
 	localparam ADDRW = $clog2(DEPTH)
 )
 (
-	input wire logic clk_write,			   	// write clock (port a)
-	input wire logic clk_read,				// read clock (port b)
-
+	input wire logic clk,
 	input wire logic rst_n,					// reset
 
 	input wire logic push_en,			  	// push enable (port a)
@@ -23,40 +21,46 @@ module fifo
 	output wire logic empty					// buffer is empty
 );
 
-logic [ADDRW:0] addr_write, addr_read;
-logic do_push;
+logic [ADDRW - 1:0] addr_write = 0, addr_read = 0;
+logic signed [ADDRW + 1:0] fifo_count = 0;
 
-assign full = addr_write == DEPTH;
-assign empty = addr_write == 0;
+assign full = fifo_count >= DEPTH;
+assign empty = fifo_count <= 0;
 
 bram_sdp #(.WIDTH(WIDTH), .DEPTH(DEPTH))
 bram_sdp_inst (
-	.clk_write, .clk_read, .we(do_push),
+	.clk_write(clk), .clk_read(clk), .we(push_en && !full),
 	.addr_write, .addr_read,
 	.data_in(push_data), .data_out(pop_data)
 );
 
-always_ff @(negedge rst_n) begin
+always_ff @(posedge clk) begin
 	if (!rst_n) begin
+		fifo_count <= 0;
 		addr_write <= 0;
-	end
-end
-
-always_ff @(posedge clk_write) begin
-	if (push_en && !full) begin
-		addr_write <= addr_write + 1;
-		addr_read <= addr_write;
-		do_push <= 1;
+		addr_read <= 0;
 	end
 	else begin
-		do_push <= 0;
-	end
-end
+		if (!(push_en && full) && !(pop_en && empty)) begin
+			if (push_en && !pop_en)
+				fifo_count <= fifo_count + 1;
+			else if (!push_en && pop_en)
+				fifo_count <= fifo_count - 1;
 
-always_ff @(posedge clk_read) begin
-	if (pop_en && !empty) begin
-		addr_write <= addr_write - 1;
-		addr_read <= addr_read - 1;
+			if (push_en) begin
+				addr_write <= (addr_write == DEPTH - 1) ? 0 : addr_write + 1;
+			end
+
+			if (pop_en) begin
+				addr_read <= (addr_read == DEPTH - 1) ? 0 : addr_read + 1;
+			end
+		end
+
+		assert (!(push_en && full))
+			else $error("Assertion full_test failed (push %d)", push_data);
+
+		assert (!(pop_en && empty))
+			else $error("Assertion empty_test failed!");
 	end
 end
 

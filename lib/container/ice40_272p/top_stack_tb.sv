@@ -14,10 +14,10 @@ always #(CLK_PERIOD / 2) clk <= ~clk;
 
 logic rst_n;						// reset
 
-logic push_en;						// push enable (port a)
+logic push_en = 0;					// push enable (port a)
 logic [WIDTH-1:0] push_data;		// data to push (port a)
 
-logic pop_en;			  			// pop enable (port a)
+logic pop_en = 0;		  			// pop enable (port a)
 logic [WIDTH-1:0] pop_data; 		// data to pop (port b)
 
 wire logic full;					// buffer is full

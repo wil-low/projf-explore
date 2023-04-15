@@ -12,12 +12,12 @@ logic clk;
 // generate clock
 always #(CLK_PERIOD / 2) clk <= ~clk;
 
-logic rst_n;						// reset
+logic rst_n = 1;					// reset
 
-logic push_en;						// push enable (port a)
+logic push_en = 0;					// push enable (port a)
 logic [WIDTH-1:0] push_data;		// data to push (port a)
 
-logic pop_en;			  			// pop enable (port a)
+logic pop_en = 0;			  		// pop enable (port a)
 logic [WIDTH-1:0] pop_data; 		// data to pop (port b)
 
 wire logic full;					// buffer is full
@@ -25,7 +25,7 @@ wire logic empty;					// buffer is empty
 
 fifo #(.WIDTH(WIDTH), .DEPTH(DEPTH))
 fifo_inst(
-	.clk_write(clk), .clk_read(clk), .rst_n(rst_n),
+	.clk, .rst_n,
 	.push_en, .push_data, .pop_en, .pop_data,
 	.full, .empty
 );
@@ -34,10 +34,7 @@ initial begin
 	$dumpfile("top_fifo_tb.vcd");
 	$dumpvars(0, top_fifo_tb);
 	clk = 1;
-	push_en = 0;
-	pop_en = 0;
 
-	rst_n = 1;
 	#CLK_PERIOD rst_n = 0;
 	#CLK_PERIOD rst_n = 1;
 
@@ -76,7 +73,7 @@ initial begin
 	#CLK_PERIOD;
 	pop_en = 1;
 
-	#300 $finish;
+	#(CLK_PERIOD * 20) $finish;
 end
 
 endmodule
