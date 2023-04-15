@@ -13,10 +13,12 @@ ICELINK_DIR = /tmp/iCELink
 # included modules
 PATH_LIB = ../../../lib
 ADD_SRC += ../fifo.sv
+ADD_SRC += ../stack.sv
 ADD_SRC += ${PATH_LIB}/memory/ice40/bram_sdp.sv
 
 
 fifo: fifo.rpt fifo.bin fifo.link
+stack: stack.rpt stack.bin stack.link
 
 %.json: top_%.sv $(ADD_SRC)
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
