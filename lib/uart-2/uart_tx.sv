@@ -1,110 +1,161 @@
-// UART TX
+//////////////////////////////////////////////////////////////////////////////////
+//                                                                              //
+//                                                                              //
+//  Author: meisq                                                               //
+//          msq@qq.com                                                          //
+//          ALINX(shanghai) Technology Co.,Ltd                                  //
+//          heijin                                                              //
+//     WEB: http://www.alinx.cn/                                                //
+//     BBS: http://www.heijin.org/                                              //
+//                                                                              //
+//////////////////////////////////////////////////////////////////////////////////
+//                                                                              //
+// Copyright (c) 2017,ALINX(shanghai) Technology Co.,Ltd                        //
+//                    All rights reserved                                       //
+//                                                                              //
+// This source file may be used and distributed without restriction provided    //
+// that this copyright statement is not removed from the file and that any      //
+// derivative work contains the original copyright notice and the associated    //
+// disclaimer.                                                                  //
+//                                                                              //
+//////////////////////////////////////////////////////////////////////////////////
 
-`default_nettype none
-`timescale 1ns / 1ps
-
+//================================================================================
+//  Revision History:
+//  Date          By            Revision    Change Description
+//--------------------------------------------------------------------------------
+//2017/8/1                    1.0          Original
+//*******************************************************************************/
 module uart_tx
 #(
-	parameter CLOCK_FREQ_Mhz = 12,
-	parameter BAUD_RATE = 9600,
-	parameter PARITY_MODE = 2'b00  // 00 - none, 01 - odd, 10 - even
+	parameter CLK_FRE = 50,      //clock frequency(Mhz)
+	parameter BAUD_RATE = 115200 //serial baud rate
 )
 (
-	input logic i_Clock,
-	input logic [7:0] i_Data,
-	input logic i_Start,
-	//
-	output logic o_Data,
-	output logic o_Idle,
-
-	output logic [2:0] sm_state,
-	output logic [2:0] bit_counter
+	input                        clk,              //clock input
+	input                        rst_n,            //asynchronous reset input, low active 
+	input[7:0]                   tx_data,          //data to send
+	input                        tx_data_valid,    //data to be sent is valid
+	output logic                   tx_data_ready,    //send ready
+	output                       tx_pin            //serial data output
 );
-/* verilator lint_off WIDTH */
-localparam COUNTER_LIMIT = CLOCK_FREQ_Mhz * 1_000_000 / BAUD_RATE;
+//calculates the clock cycle for baud rate 
+localparam                       CYCLE = CLK_FRE * 1000000 / BAUD_RATE;
+//state machine code
+localparam                       S_IDLE       = 1;
+localparam                       S_START      = 2;//start bit
+localparam                       S_SEND_BYTE  = 3;//data bits
+localparam                       S_STOP       = 4;//stop bit
+logic[2:0]                         state;
+logic[2:0]                         next_state;
+logic[15:0]                        cycle_cnt; //baud counter
+logic[2:0]                         bit_cnt;//bit counter
+logic[7:0]                         tx_data_latch; //latch data to send
+logic                              tx_reg; //serial data output
+assign tx_pin = tx_reg;
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		state <= S_IDLE;
+	else
+		state <= next_state;
+end
 
-logic [7:0] tx_buffer;
-logic [$clog2(COUNTER_LIMIT) - 1:0] counter;
-//logic [2:0] bit_counter;
-
-localparam s_IDLE = 3'b000;
-localparam s_WORKING = 3'b001;
-localparam s_PARITY = 3'b010;
-localparam s_STOP = 3'b011;
-localparam s_DONE = 3'b100;
-
-always @(posedge i_Clock) begin
-
-	case (sm_state)
-
-	s_IDLE: begin
-		if (i_Start) begin
-			tx_buffer <= i_Data;  // save input into buffer
-			o_Data <= 0; // send start bit
-			counter <= 0;
-			bit_counter <= 0;
-			o_Idle <= 0; // busy
-			sm_state <= s_WORKING;
-		end
-		else begin
-			o_Idle <= 1;
-			o_Data <= 1;
-		end
-	end
-
-	s_WORKING: begin
-		if (counter == COUNTER_LIMIT) begin
-			// send next bit
-			o_Data <= tx_buffer[bit_counter];
-			counter <= 0;
-			if (bit_counter == 7) begin
-				sm_state <= (PARITY_MODE != 0) ? s_PARITY : s_STOP;
-			end
+always@(*)
+begin
+	case(state)
+		S_IDLE:
+			if(tx_data_valid == 1'b1)
+				next_state <= S_START;
 			else
-				bit_counter <= bit_counter + 1;
-		end
-		else
-			counter <= counter + 1;
-	end
-	
-	s_PARITY: begin
-		bit_counter <= 0; // delete
-		if (counter == COUNTER_LIMIT) begin
-			// send parity bit
-			counter <= 0;
-			o_Data <= (^tx_buffer ^ PARITY_MODE[0]);
-			sm_state <= s_STOP;
-		end
-		else
-			counter <= counter + 1;
-	end
-	
-	s_STOP: begin
-		bit_counter <= 0; // delete
-		if (counter == COUNTER_LIMIT) begin
-			// send stop bit
-			counter <= 0;
-			o_Data <= 1;
-			sm_state <= s_DONE;
-		end
-		else
-			counter <= counter + 1;
-	end
-	
-	s_DONE: begin
-		if (counter == COUNTER_LIMIT) begin
-			o_Idle <= 1;
-			sm_state <= s_IDLE;
-		end
-		else
-			counter <= counter + 1;
-	end
-	
-	default: begin
-		sm_state <= s_IDLE;
-	end
-	
+				next_state <= S_IDLE;
+		S_START:
+			if(cycle_cnt == CYCLE - 1)
+				next_state <= S_SEND_BYTE;
+			else
+				next_state <= S_START;
+		S_SEND_BYTE:
+			if(cycle_cnt == CYCLE - 1  && bit_cnt == 3'd7)
+				next_state <= S_STOP;
+			else
+				next_state <= S_SEND_BYTE;
+		S_STOP:
+			if(cycle_cnt == CYCLE - 1)
+				next_state <= S_IDLE;
+			else
+				next_state <= S_STOP;
+		default:
+			next_state <= S_IDLE;
 	endcase
 end
-/* verilator lint_on WIDTH */
-endmodule
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			tx_data_ready <= 1'b0;
+		end
+	else if(state == S_IDLE)
+		if(tx_data_valid == 1'b1)
+			tx_data_ready <= 1'b0;
+		else
+			tx_data_ready <= 1'b1;
+	else if(state == S_STOP && cycle_cnt == CYCLE - 1)
+			tx_data_ready <= 1'b1;
+end
+
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			tx_data_latch <= 8'd0;
+		end
+	else if(state == S_IDLE && tx_data_valid == 1'b1)
+			tx_data_latch <= tx_data;
+		
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			bit_cnt <= 3'd0;
+		end
+	else if(state == S_SEND_BYTE)
+		if(cycle_cnt == CYCLE - 1)
+			bit_cnt <= bit_cnt + 3'd1;
+		else
+			bit_cnt <= bit_cnt;
+	else
+		bit_cnt <= 3'd0;
+end
+
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		cycle_cnt <= 16'd0;
+	else if((state == S_SEND_BYTE && cycle_cnt == CYCLE - 1) || next_state != state)
+		cycle_cnt <= 16'd0;
+	else
+		cycle_cnt <= cycle_cnt + 16'd1;	
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		tx_reg <= 1'b1;
+	else
+		case(state)
+			S_IDLE,S_STOP:
+				tx_reg <= 1'b1; 
+			S_START:
+				tx_reg <= 1'b0; 
+			S_SEND_BYTE:
+				tx_reg <= tx_data_latch[bit_cnt];
+			default:
+				tx_reg <= 1'b1; 
+		endcase
+end
+
+endmodule 

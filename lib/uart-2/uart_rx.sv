@@ -1,113 +1,171 @@
-// UART RX
+//////////////////////////////////////////////////////////////////////////////////
+//                                                                              //
+//                                                                              //
+//  Author: meisq                                                               //
+//          msq@qq.com                                                          //
+//          ALINX(shanghai) Technology Co.,Ltd                                  //
+//          heijin                                                              //
+//     WEB: http://www.alinx.cn/                                                //
+//     BBS: http://www.heijin.org/                                              //
+//                                                                              //
+//////////////////////////////////////////////////////////////////////////////////
+//                                                                              //
+// Copyright (c) 2017,ALINX(shanghai) Technology Co.,Ltd                        //
+//                    All rights reserved                                       //
+//                                                                              //
+// This source file may be used and distributed without restriction provided    //
+// that this copyright statement is not removed from the file and that any      //
+// derivative work contains the original copyright notice and the associated    //
+// disclaimer.                                                                  //
+//                                                                              //
+//////////////////////////////////////////////////////////////////////////////////
 
-`default_nettype none
-`timescale 1ns / 1ps
-
+//================================================================================
+//  Revision History:
+//  Date          By            Revision    Change Description
+//--------------------------------------------------------------------------------
+//2017/8/1                    1.0          Original
+//*******************************************************************************/
 module uart_rx
 #(
-	parameter CLOCK_FREQ_Mhz = 12,
-	parameter BAUD_RATE = 9600,
-	parameter PARITY_MODE = 2'b00  // 00 - none, 01 - odd, 10 - even
+	parameter CLK_FRE = 50,      //clock frequency(Mhz)
+	parameter BAUD_RATE = 115200 //serial baud rate
 )
 (
-	input logic i_Clock,
-	input logic i_Data,
-	//
-	output logic [7:0] o_Data,
-	output wire o_Idle,
-	output logic o_DataReady,
-
-	output logic [2:0] sm_state,
-	output logic [3:0] bit_counter
+	input                        clk,              //clock input
+	input                        rst_n,            //asynchronous reset input, low active 
+	output logic[7:0]              rx_data,          //received serial data
+	output logic                   rx_data_valid,    //received serial data is valid
+	input                        rx_data_ready,    //data receiver module ready
+	input                        rx_pin            //serial data input
 );
-/* verilator lint_off WIDTH */
-localparam COUNTER_LIMIT = CLOCK_FREQ_Mhz * 1_000_000 / BAUD_RATE;
+//calculates the clock cycle for baud rate 
+localparam                       CYCLE = CLK_FRE * 1000000 / BAUD_RATE;
+//state machine code
+localparam                       S_IDLE      = 1;
+localparam                       S_START     = 2; //start bit
+localparam                       S_REC_BYTE  = 3; //data bits
+localparam                       S_STOP      = 4; //stop bit
+localparam                       S_DATA      = 5;
 
-logic [$clog2(COUNTER_LIMIT) - 1:0] counter;
-//logic [2:0] bit_counter;
+logic[2:0]                         state;
+logic[2:0]                         next_state;
+logic                              rx_d0;            //delay 1 clock for rx_pin
+logic                              rx_d1;            //delay 1 clock for rx_d0
+wire                             rx_negedge;       //negedge of rx_pin
+logic[7:0]                         rx_bits;          //temporary storage of received data
+logic[15:0]                        cycle_cnt;        //baud counter
+logic[2:0]                         bit_cnt;          //bit counter
 
-localparam s_IDLE = 3'b000;
-localparam s_WORKING = 3'b001;
-localparam s_PARITY = 3'b010;
-localparam s_STOP = 3'b011;
+assign rx_negedge = rx_d1 && ~rx_d0;
 
-//logic [2:0] sm_state = s_IDLE;
-//sm_state = s_IDLE;
-
-logic prev_idle_data = 1;
-
-assign o_Idle = sm_state == s_IDLE;
-
-logic input_temp = 1;
-logic input_sync = 1;
-
-// Double-register the incoming data.
-// This allows it to be used in the UART RX Clock Domain.
-// (It removes problems caused by metastability)
-always @(posedge i_Clock) begin
-	input_temp <= i_Data;
-	input_sync <= input_temp;
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+	begin
+		rx_d0 <= 1'b0;
+		rx_d1 <= 1'b0;	
+	end
+	else
+	begin
+		rx_d0 <= rx_pin;
+		rx_d1 <= rx_d0;
+	end
 end
 
-always @(posedge i_Clock) begin
 
-	case (sm_state)
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		state <= S_IDLE;
+	else
+		state <= next_state;
+end
 
-	s_IDLE: begin
-		if (input_sync == 0 && prev_idle_data == 1) begin
-			// start bit
-			o_Data <= 0;
-			o_DataReady <= 0;
-			counter <= COUNTER_LIMIT / 2;  // wait a half
-			bit_counter <= 0;
-			sm_state <= s_WORKING;
-		end
-		prev_idle_data <= input_sync;
-	end
-
-	s_WORKING: begin
-		if (counter == 0) begin
-			counter <= COUNTER_LIMIT;
-			if (bit_counter == 9) begin
-				sm_state <= (PARITY_MODE != 0) ? s_PARITY : s_STOP;
-			end
-			else begin
-				o_Data <= (o_Data >> 1) | {input_sync, 7'b0};
-				bit_counter <= bit_counter + 1;
-			end
-		end
-		else
-			counter <= counter - 1;
-	end
-	
-	s_PARITY: begin
-		if (counter == 0) begin
-			//TODO: check parity bit
-			//counter <= 0;
-			//o_Data <= (^rx_buffer ^ PARITY_MODE[0]);
-			counter <= COUNTER_LIMIT;
-			sm_state <= s_STOP;
-		end
-		else
-			counter <= counter - 1;
-	end
-	
-	s_STOP: begin
-		prev_idle_data <= input_sync;
-		if (counter == 0) begin
-			//TODO: check stop bit
-			o_DataReady <= 1;
-			sm_state <= s_IDLE;
-		end
-		else
-			counter <= counter - 1;
-	end
-	
-	default: begin
-		sm_state <= s_IDLE;
-	end
-	
+always@(*)
+begin
+	case(state)
+		S_IDLE:
+			if(rx_negedge)
+				next_state <= S_START;
+			else
+				next_state <= S_IDLE;
+		S_START:
+			if(cycle_cnt == CYCLE - 1)//one data cycle 
+				next_state <= S_REC_BYTE;
+			else
+				next_state <= S_START;
+		S_REC_BYTE:
+			if(cycle_cnt == CYCLE - 1  && bit_cnt == 3'd7)  //receive 8bit data
+				next_state <= S_STOP;
+			else
+				next_state <= S_REC_BYTE;
+		S_STOP:
+			if(cycle_cnt == CYCLE/2 - 1)//half bit cycle,to avoid missing the next byte receiver
+				next_state <= S_DATA;
+			else
+				next_state <= S_STOP;
+		S_DATA:
+			if(rx_data_ready)    //data receive complete
+				next_state <= S_IDLE;
+			else
+				next_state <= S_DATA;
+		default:
+			next_state <= S_IDLE;
 	endcase
 end
-/* verilator lint_on WIDTH */
-endmodule
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		rx_data_valid <= 1'b0;
+	else if(state == S_STOP && next_state != state)
+		rx_data_valid <= 1'b1;
+	else if(state == S_DATA && rx_data_ready)
+		rx_data_valid <= 1'b0;
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		rx_data <= 8'd0;
+	else if(state == S_STOP && next_state != state)
+		rx_data <= rx_bits;//latch received data
+end
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		begin
+			bit_cnt <= 3'd0;
+		end
+	else if(state == S_REC_BYTE)
+		if(cycle_cnt == CYCLE - 1)
+			bit_cnt <= bit_cnt + 3'd1;
+		else
+			bit_cnt <= bit_cnt;
+	else
+		bit_cnt <= 3'd0;
+end
+
+
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		cycle_cnt <= 16'd0;
+	else if((state == S_REC_BYTE && cycle_cnt == CYCLE - 1) || next_state != state)
+		cycle_cnt <= 16'd0;
+	else
+		cycle_cnt <= cycle_cnt + 16'd1;	
+end
+//receive serial data bit data
+always@(posedge clk or negedge rst_n)
+begin
+	if(rst_n == 1'b0)
+		rx_bits <= 8'd0;
+	else if(state == S_REC_BYTE && cycle_cnt == CYCLE/2 - 1)
+		rx_bits[bit_cnt] <= rx_pin;
+	else
+		rx_bits <= rx_bits; 
+end
+endmodule 
