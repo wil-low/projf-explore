@@ -6,20 +6,18 @@
 `timescale 1ns / 1ps
 
 module bram_sdp #(
-    parameter WIDTH=8, 
-    parameter DEPTH=256, 
-    parameter INIT_F=""
+    parameter WIDTH = 8, 
+    parameter DEPTH = 256, 
+    parameter INIT_F = ""
     ) (
     input wire logic clk_write,               // write clock (port a)
     input wire logic clk_read,                // read clock (port b)
     input wire logic we,                      // write enable (port a)
-    input wire logic [ADDRW-1:0] addr_write,  // write address (port a)
-    input wire logic [ADDRW-1:0] addr_read,   // read address (port b)
+    input wire logic [$clog2(DEPTH)-1:0] addr_write,  // write address (port a)
+    input wire logic [$clog2(DEPTH)-1:0] addr_read,   // read address (port b)
     input wire logic [WIDTH-1:0] data_in,     // data in (port a)
     output     logic [WIDTH-1:0] data_out     // data out (port b)
     );
-
-    localparam ADDRW=$clog2(DEPTH);
 
     logic [WIDTH-1:0] memory [DEPTH];
 
