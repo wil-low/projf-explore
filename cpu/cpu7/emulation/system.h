@@ -7,9 +7,9 @@
 #define CALL_STACK_SIZE 16
 #define DATA_STACK_SIZE 16
 
-UINT32 MEM8RD(UINT32 addr);
-void MEM8WR(UINT32 addr, UINT32 value);
-UINT32 MEM16RD(UINT32 addr);
-void MEM16WR(UINT32 addr, UINT32 value);
+UINT8 MEM8RD(UINT32 addr);
+void MEM8WR(UINT32 addr, UINT8 value);
+UINT16 MEM16RD(UINT32 addr);
+void MEM16WR(UINT32 addr, UINT16 value);
 
 #endif

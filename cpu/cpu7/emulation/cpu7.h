@@ -205,7 +205,7 @@ extern volatile cpu_t cpu[CORES];   // CPU register structure
 // this array is not used by the CPU and is only here for consistency and easier adding/removal of
 // new instructions in future
 extern const CHAR8 instw[128][8];
-
+extern const CHAR8 inst_name[128][8];
 
 // push selected accumulator as a variable length number (VLN) into the data stack
 // input

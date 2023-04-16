@@ -108,6 +108,27 @@ void (*const instc[128])(void) = {
 // NOTE: the instruction NOP is fixed at code 0x7f
 };
 
+const CHAR8 inst_name[128][8] = {
+    "",         "SETPR",    "",         "BREAK",    "AGAIN",    "CALL",     "ACALL",    "RETURN",
+    "MAXTHDS",  "THREADS",  "",         "ENDALL",   "END",      "NTCALL",   "NTACALL",  "SYSFN",
+    "",         "EMPTY",    "DEPTH",    "DROP",     "DUP",      "SWAP",     "ROT",      "OVER",
+    "ENTER",    "LEAVE",    "GETVAR",   "SETVAR",   "DELAY",    "",         "",         "",
+    "COM",      "NOT",      "AND",      "OR",       "XOR",      "",         "SHL",      "SHR",
+    "SM",       "SMEQ",     "EQ",       "NEQ",      "GTEQ",     "GT",       "",         "",
+    "",         "",         "",         "",         "",         "",         "",         "",
+    "",         "",         "",         "",         "",         "",         "",         "",
+    "ADD",      "",         "SUB",      "",         "MUL",      "",         "DIV",      "MOD",
+    "INC",      "DEC",      "",         "RANDOM",   "",         "",         "",         "",
+    "MEMFILL",  "",         "MEMDIFF",  "MEMCOPY",  "",         "",         "",         "",
+    "STRLEN",   "STRSCAN",  "STRDIFF",  "STRCOPY",  "",         "",         "",         "",
+    "RDVLN",    "",         "",         "",         "RD32",     "RD16",     "RD8",      "",
+    "WRVLN",    "",         "",         "",         "WR32",     "WR16",     "WR8",      "",
+// NOTE: the last group of codes is not checked for conditional execution
+    "DO",       "SKIP",     "",         "",         "",         "",         "",         "",
+    "REPEAT",   "UNTIL",    "WHILE",    "REPIF",    "IF",       "ENDIF",    "ELSE",     "NOP"
+// NOTE: the instruction NOP is fixed at code 0x7f
+};
+
 // instruction words as text
 // each instruction must not be longer than 7 characters
 // the index in this array corresponds with the instruction code

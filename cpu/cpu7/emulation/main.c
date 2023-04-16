@@ -1,5 +1,7 @@
 #include "torth.h"
+#include "cpu7.h"
 #include <stdio.h>
+#include <string.h>
 
 CHAR8 dest[2048];
 
@@ -26,6 +28,19 @@ void MEM16WR(UINT32 addr, UINT16 value)
 
 int main(int argc, char* argv[])
 {
+
+	for (int i = 0; i < 128; ++i) {
+		if (instw[i][0]) {
+			if (strcmp(instw[i], inst_name[i]) == 0)
+				printf("`define i_%s 'h%02x\n", inst_name[i], i);
+			else
+				printf("`define i_%s 'h%02x\t// alias: %s\n", inst_name[i], i, instw[i]);
+		}
+		else {
+			printf("// `define i_%s 'h%02x\n", instw[i], i);
+		}
+	}
+	return 0;
 	CHAR8 buf[2048];
 	CHAR8* source = &buf[0];
 
