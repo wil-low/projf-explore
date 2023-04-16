@@ -20,9 +20,9 @@
 #ifndef _TORTH_H
 #define _TORTH_H
 
-#include <GenericTypeDefs.h>
+#include "GenericTypeDefs.h"
 
-#define FILE_OPERATIONS     // this definition enables the use of INCLUDE and LIBRARY
+//#define FILE_OPERATIONS     // this definition enables the use of INCLUDE and LIBRARY
                             // comment it out to disable all file operations
 
 // compilation error codes

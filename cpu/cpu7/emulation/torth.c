@@ -1,5 +1,6 @@
-#include <GenericTypeDefs.h>
+#include "GenericTypeDefs.h"
 #include <string.h>
+#include <stdio.h>
 #include "torth.h"
 #include "cpu7.h"
 #include "system.h"
@@ -106,7 +107,8 @@ void addc(UINT32 *addr, INT8 ctype, UINT64 c) {
 // output
 // (*addr) update compilation address
 // addw() exit error code
-UINT8 addw(UINT32 *addr, CHAR8 *name) {    
+UINT8 addw(UINT32 *addr, CHAR8 *name) {
+	printf("addw %s\n", name);  
     UINT8 x=0;
     do {
         if(name[x]>='a' && name[x]<='z') name[x]-=0x20; // uppercase the word
@@ -277,7 +279,7 @@ UINT8 torth_compile(CHAR8 **source, UINT32 *addr) {
         // numeric constants
         n=getn(source, &nsys);
         if(n==-2) return(TORTH_INVNUM);
-
+		printf("trace1 %lu\n", (UINT32)source);  
         // skip the whitespaces
         while((**source)<=' ') {
             if(n>-1) {
@@ -286,6 +288,7 @@ UINT8 torth_compile(CHAR8 **source, UINT32 *addr) {
                 nsys=10;
             } else
                 if(nsys!=10) return(TORTH_INVNUM);
+			printf("trace2 %lu\n", (UINT32)source);  
             (*source)++;
             continue;
         }
@@ -294,6 +297,7 @@ UINT8 torth_compile(CHAR8 **source, UINT32 *addr) {
         while((**source)=='`') {
             lastc=-1;
             if(nsys!=10 || n>-1) return(TORTH_INVNUM);
+			printf("trace %lu\n", (UINT32)source);  
             UINT8 linef=((*(++(*source))=='!')? 1 : 0);
             while(((**source)!='\n' && linef) || ((**source)!='`' && !linef)) (*source)++;
             while((**source)<=' ' || (**source)=='`') (*source)++;
@@ -303,6 +307,7 @@ UINT8 torth_compile(CHAR8 **source, UINT32 *addr) {
         // string constants (copied directly into the program memory)
         if((**source)=='"') {
             if(nsys!=10 || n>-1) return(TORTH_INVNUM);
+			printf("trace4 %lu\n", (UINT32)source);  
             lastc=(INT64)(*addr);       // store the current compilation address
             while(*(++(*source))!='"') {
                 if((**source)<' ') return(TORTH_NOCQ);
@@ -355,6 +360,7 @@ UINT8 torth_compile(CHAR8 **source, UINT32 *addr) {
         if((**source)==':' || (**source)=='.' || (**source)=='_' || (**source)=='&') {
             lastc=-1;
             if(nsys!=10 || n>-1) return(TORTH_INVNUM);
+			printf("trace5 %lu\n", (UINT32)source);  
             memset(label,0,(LABEL_LENGTH+1));
             lx=0;
             label[lx++]=(*((*source)++));   // first get the 'function' character
@@ -411,6 +417,7 @@ UINT8 torth_compile(CHAR8 **source, UINT32 *addr) {
 
         // atomic words
         if(nsys!=10 || n>-1) return(TORTH_INVNUM);
+		printf("trace6 %lu\n", (UINT32)source);  
         memset(label,0,(LABEL_LENGTH+1));
         lx=0;
         while(lx<LABEL_LENGTH && (**source)>' ') label[lx++]=(*((*source)++));
