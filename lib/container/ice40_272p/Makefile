@@ -14,7 +14,7 @@ ICELINK_DIR = /tmp/iCELink
 PATH_LIB = ../../../lib
 ADD_SRC += ../fifo.sv
 ADD_SRC += ../stack.sv
-ADD_SRC += ${PATH_LIB}/memory/ice40/bram_sdp.sv
+ADD_SRC += ${PATH_LIB}/memory/bram_read_async.sv
 
 
 fifo: fifo.rpt fifo.bin fifo.link

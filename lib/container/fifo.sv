@@ -28,9 +28,9 @@ logic signed [ADDRW + 1:0] fifo_count = 0;
 assign full = fifo_count >= DEPTH;
 assign empty = fifo_count <= 0;
 
-bram_sdp #(.WIDTH(WIDTH), .DEPTH(DEPTH))
-bram_sdp_inst (
-	.clk_write(clk), .clk_read(clk), .we(push_en && !full),
+bram_read_async #(.WIDTH(WIDTH), .DEPTH(DEPTH))
+bram_read_async_inst (
+	.clk, .we(push_en && !full),
 	.addr_write, .addr_read,
 	.data_in(push_data), .data_out(pop_data)
 );

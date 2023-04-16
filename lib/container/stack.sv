@@ -39,9 +39,9 @@ assign full = addr_write >= DEPTH;
 assign empty = addr_write == 0;
 assign depth = addr_write;
 
-bram_sdp #(.WIDTH(WIDTH), .DEPTH(DEPTH))
-bram_sdp_inst (
-	.clk_write(clk), .clk_read(clk), .we(we_proxy),
+bram_read_async #(.WIDTH(WIDTH), .DEPTH(DEPTH))
+bram_read_async_inst (
+	.clk, .we(we_proxy),
 	.addr_write(addr_write_proxy), .addr_read(addr_read_proxy),
 	.data_in(data_in), .data_out(data_out)
 );
