@@ -14,7 +14,7 @@ logic clk;
 // generate clock
 always #(CLK_PERIOD / 2) clk <= ~clk;
 
-cpu7_soc #(.CORES(4), .INIT_F("../test.mem"))
+cpu7_soc #(.CORES(4), .INIT_F("../test2.mem"))
 	cpu7_soc_inst (.rst_n, .clk);
 
 initial begin
