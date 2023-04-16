@@ -54,6 +54,7 @@ if [ -d "${DIR}/ice40_272p" ]; then
 			-I${LIB}/lc1602c   -I${LIB}/lc1602c/ice40 \
 			-I${LIB}/maths	 -I${LIB}/maths/ice40 \
 			-I${LIB}/memory	-I${LIB}/memory/ice40 \
+			-I${LIB}/container \
 			-I${LIB}/null/ice40 $f;
 	done
 fi

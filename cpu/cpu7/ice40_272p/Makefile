@@ -13,12 +13,13 @@ ICELINK_DIR = /tmp/iCELink
 # included modules
 PATH_LIB = ../../../lib
 ADD_SRC += ${PATH_LIB}/memory/ice40/bram_sdp.sv
+ADD_SRC += ${PATH_LIB}/container/stack.sv
 ADD_SRC += ../core.sv
 ADD_SRC += ../cpu7_soc.sv
 
 cpu7: cpu7.rpt cpu7.bin cpu7.link
 
-%.json: top_%.sv $(ADD_SRC) cmd.mem
+%.json: top_%.sv $(ADD_SRC)
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
@@ -42,7 +43,7 @@ all: cpu7
 
 cpu7.sim: top_cpu7_tb.vcd
 
-%.vcd: %.sv $(ADD_SRC) cmd.mem
+%.vcd: %.sv $(ADD_SRC)
 
 	#-- Compile
 	iverilog -g2012 -Wall -I.. $< $(ADD_SRC) -o $(basename $@).out

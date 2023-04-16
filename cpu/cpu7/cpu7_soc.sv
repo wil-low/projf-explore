@@ -7,20 +7,23 @@
 
 module cpu7_soc #(
 	parameter CORES = 4,
+	parameter PROGRAM_SIZE = 256,
 	parameter INIT_F = ""
 )
 (
 	input logic rst_n,
-	input logic clk
+	input logic clk,
+	output logic [7:0] trace
 );
 
-logic [6:0] pxr = 0;  // process index register (core index in fact)
+logic [$clog2(CORES) - 1:0] pxr = 0;  // process index register (core index in fact)
 logic [55:0] dlyc;  // free-running incremental delay counter
 
 // active core data
-logic [CORES - 1:0] acore_en;  // hot-one mask
-logic acore_executing[CORES];
-logic [27:0] acore_pcp[CORES];  // program code pointers
+logic [CORES - 1:0] acore_en;			// hot-one mask
+logic [CORES - 1: 0] acore_executing;
+logic [CORES - 1: 0] acore_idle;		// core finished executing a command
+logic [28 * CORES - 1:0] acore_pcp;		// program code pointers
 
 logic [55:0] push_value;
 logic push_en;
@@ -28,13 +31,15 @@ logic [13:0] instr;
 logic instr_en;
 logic pcp_step_en;
 
-logic [27:0] addr_read;
-logic [27:0] addr_write;
-logic [15:0] data_in;
+logic [13:0] addr_read = 0;
+logic [13:0] addr_write = 0;
+logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
 
-bram_sdp #(.WIDTH(16), .DEPTH(256), .INIT_F(INIT_F))
+assign trace = addr_read;
+
+bram_sdp #(.WIDTH(16), .DEPTH(PROGRAM_SIZE), .INIT_F(INIT_F))
 bram_sdp_inst (
 	.clk_write(clk), .clk_read(clk), .we(write_en),
 	.addr_write, .addr_read,
@@ -42,16 +47,19 @@ bram_sdp_inst (
 );
 
 genvar i;
-for (i = 0; i < CORES; i = i +1)
-	core core_inst (
-		.rst_n, .clk, .en(acore_en[i]),
+generate
+for (i = 0; i < CORES; i = i + 1) begin : generate_core
+	core #(.IDX(i)) core_inst (
+		.rst_n(rst_n), .clk, .en(acore_en[i]),
 		.push_value, .push_en, .instr, .instr_en, .pcp_step_en,
-		.pcp(acore_pcp[i]), .executing(acore_executing[i])
+		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]), .executing(acore_executing[i]), .acore_idle(acore_idle[i])
 	);
+end
+endgenerate
 
-enum {s_RESET, s_BEFORE_READ, s_READ_WORD, s_NEXT_CORE} state;
+enum {s_RESET, s_BEFORE_READ, s_READ_WORD, s_DECODE_WORD, s_WAIT_CORE, s_NEXT_CORE} state;
 
-logic [27:0] read_accum;
+logic [55:0] read_accum;
 logic [13:0] bit_counter;
 
 always_ff @(posedge clk) begin
@@ -59,45 +67,69 @@ always_ff @(posedge clk) begin
 	instr_en <= 0;
 	push_en <= 0;
 
-	case (state)
-	s_RESET: begin
-		// reset all cores
-		acore_en <= 1 << pxr;  // first core
-		addr_read <= acore_pcp[pxr];
-		state <= s_BEFORE_READ;
+	if (!rst_n) begin
+		state <= s_RESET;
 	end
+	else begin
+		case (state)
+		s_RESET: begin
+			// reset all cores
+			pxr <= 0;
+			addr_read <= 0;
+			acore_en <= 1 << pxr;  // first core
+			state <= s_BEFORE_READ;
+		end
 
-	s_BEFORE_READ: begin
-		read_accum <= 0;
-		bit_counter <= 0;
-		state <= s_READ_WORD;
-	end
-	
-	s_READ_WORD: begin
-		read_accum <= ((data_out & `MASK14) << bit_counter) | read_accum;
-		pcp_step_en <= 1;
-		if ((data_out & `WT_MASK) != `WT_DNL) begin
-			if ((data_out & `WT_MASK) == `WT_CPU) begin
-				instr <= data_out & `MASK14;
-				instr_en <= 1;
-				state <= s_NEXT_CORE;
-			end
-			else if (((data_out & `WT_MASK) == `WT_IGN) && acore_executing[pxr]) begin
-				push_value <= read_accum;
-				push_en <= 1;
-				state <= s_NEXT_CORE;
+		s_BEFORE_READ: begin
+			addr_read <= acore_pcp[(pxr + 1) * 28 - 1 -: 28];
+			$display("s_BEFORE_READ addr_read %h, acore %d", acore_pcp[(pxr + 1) * 28 - 1 -: 28], pxr);
+			read_accum <= 0;
+			bit_counter <= 0;
+			state <= s_READ_WORD;
+		end
+		
+		s_READ_WORD: begin
+			read_accum <= ((data_out & `MASK14) << bit_counter) | read_accum;
+			state <= s_DECODE_WORD;
+		end
+
+		s_DECODE_WORD: begin
+			$display("s_DECODE_WORD addr_read %h, data_out %h, read_accum %h, pxr %d", addr_read, data_out, read_accum, pxr);
+			bit_counter <= bit_counter + 14;
+			pcp_step_en <= 1;
+			state <= s_READ_WORD;
+			if ((data_out & `WT_MASK) != `WT_DNL) begin
+				if ((data_out & `WT_MASK) == `WT_CPU) begin
+					instr <= data_out & `MASK14;
+					instr_en <= 1;
+					state <= s_WAIT_CORE;
+					$display("instr_en %h", instr);
+				end
+				else if (((data_out & `WT_MASK) == `WT_IGN) && acore_executing[pxr]) begin
+					push_value <= read_accum;
+					push_en <= 1;
+					state <= s_WAIT_CORE;
+					$display("push_en %h", push_value);
+				end
 			end
 		end
-	end
-	
-	s_NEXT_CORE: begin
-		state <= s_BEFORE_READ;
-	end
-	
-	default:
-		state <= s_RESET;
+		
+		s_WAIT_CORE: begin
+			//$display("s_WAIT_CORE %d, idle %b", pxr, acore_idle[pxr]);
+			if (acore_idle[pxr])
+				state <= s_NEXT_CORE;
+		end
+		
+		s_NEXT_CORE: begin
+			$display("s_NEXT_CORE");
+			state <= s_BEFORE_READ;
+		end
+		
+		default:
+			state <= s_RESET;
 
-	endcase
+		endcase
+	end
 end
 
 logic _unused_ok = &{1'b1, 1'b0};

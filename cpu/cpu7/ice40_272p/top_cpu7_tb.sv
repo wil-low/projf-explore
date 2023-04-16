@@ -22,10 +22,14 @@ initial begin
 	$dumpvars(0, top_cpu7_tb);
 	rst_n = 0;
 	clk = 1;
+	$display("rst_n %b", rst_n);
 
 	#2 rst_n = 1;
 
-	#50 $finish;
+	#2;
+	$display("rst_n %b", rst_n);
+
+	#100 $finish;
 end
 
 logic _unused_ok = &{1'b1, 1'b0};
