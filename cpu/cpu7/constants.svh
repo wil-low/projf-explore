@@ -1,19 +1,33 @@
+`ifndef CONSTANTS_SVH
+
+`define CONSTANTS_SVH
+
 // error codes
-`define ERR_INVALID 0x100   // invalid instruction code
-`define ERR_COLD    0x101   // cold start
-`define ERR_ALIGN   0x102   // alignment error
-`define ERR_INVMEM  0x103   // invalid memory location
-`define ERR_DSINDEX 0x104   // invalid data stack index
-`define ERR_DSFULL  0x105   // data stack overflow
-`define ERR_DSEMPTY 0x106   // data stack underflow
-`define ERR_CSFULL  0x107   // call stack overflow
-`define ERR_CSEMPTY 0x108   // call stack underflow
-`define ERR_CALC    0x109   // arithmetic error (eg. division by 0)
-`define ERR_ECST    0x10a   // error in conditional structure
+`define ERR_INVALID 'h100   // invalid instruction code
+`define ERR_COLD    'h101   // cold start
+`define ERR_ALIGN   'h102   // alignment error
+`define ERR_INVMEM  'h103   // invalid memory location
+`define ERR_DSINDEX 'h104   // invalid data stack index
+`define ERR_DSFULL  'h105   // data stack overflow
+`define ERR_DSEMPTY 'h106   // data stack underflow
+`define ERR_CSFULL  'h107   // call stack overflow
+`define ERR_CSEMPTY 'h108   // call stack underflow
+`define ERR_CALC    'h109   // arithmetic error (eg. division by 0)
+`define ERR_ECST    'h10a   // error in conditional structure
                             // ELSE or ENDIF without an opening IF
                             // UNTIL without an opening REPEAT
-`define ERR_DBLENT  0x10b   // double entering error
-`define ERR_NOENT   0x10c   // LEAVE without preceding ENTER
+`define ERR_DBLENT  'h10b   // double entering error
+`define ERR_NOENT   'h10c   // LEAVE without preceding ENTER
+
+task reset;
+input [13:0] err_code;
+input [27:0] code_addr;
+begin
+	$display("CPU reset: errcode %h, addr %h", err_code, code_addr);
+	$display("Halt.\n");
+	$finish;
+end
+endtask
 
 // word types
 `define WT_MASK 16'hc000      // general bitmask for the word type constants
@@ -111,3 +125,9 @@
 `define i_SETPR 0
 `define i_GETVAR 0
 `define i_SETVAR 0
+
+// non-standard instructions
+
+`define custom_PRINT_STACK 'h02
+
+`endif

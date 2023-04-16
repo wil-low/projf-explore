@@ -39,9 +39,9 @@ logic write_en = 0;
 
 assign trace = addr_read;
 
-bram_sdp #(.WIDTH(16), .DEPTH(PROGRAM_SIZE), .INIT_F(INIT_F))
-bram_sdp_inst (
-	.clk_write(clk), .clk_read(clk), .we(write_en),
+bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE), .INIT_F(INIT_F))
+bram_read_async (
+	.clk, .we(write_en),
 	.addr_write, .addr_read,
 	.data_in, .data_out
 );
@@ -103,7 +103,7 @@ always_ff @(posedge clk) begin
 					instr <= data_out & `MASK14;
 					instr_en <= 1;
 					state <= s_WAIT_CORE;
-					$display("instr_en %h", instr);
+					$display("instr_en %h", data_out & `MASK14);
 				end
 				else if (((data_out & `WT_MASK) == `WT_IGN) && acore_executing[pxr]) begin
 					push_value <= read_accum;
@@ -121,7 +121,7 @@ always_ff @(posedge clk) begin
 		end
 		
 		s_NEXT_CORE: begin
-			$display("s_NEXT_CORE");
+			$display("==== Next core ====");
 			state <= s_BEFORE_READ;
 		end
 		

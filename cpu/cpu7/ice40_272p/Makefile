@@ -12,7 +12,7 @@ ICELINK_DIR = /tmp/iCELink
 
 # included modules
 PATH_LIB = ../../../lib
-ADD_SRC += ${PATH_LIB}/memory/ice40/bram_sdp.sv
+ADD_SRC += ${PATH_LIB}/memory/bram_read_async.sv
 ADD_SRC += ${PATH_LIB}/container/stack.sv
 ADD_SRC += ../core.sv
 ADD_SRC += ../cpu7_soc.sv
