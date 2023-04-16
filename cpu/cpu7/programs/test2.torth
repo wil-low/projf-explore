@@ -1,10 +1,22 @@
+DEPTH NOP
+NOP PRINT_STACK
+DEPTH NOP
+NOP PRINT_STACK
+DEPTH 100000 DEPTH 1234567890
+DEPTH NOP
+NOP PRINT_STACK
+DUP DUP
+DUP EMPTY DEPTH DUP DUP 1234
+
+PRINT_STACK
+
 `! usage: addr len bubblesort8
 :bubblesort8
   dup 1 > if          `! check if the array is more than one element
     enter
     1 over +          `! calculate end=addr+len; stack: beg, end
     1 swap dup        `! stack: end, beg, addr
-    repeat
+:repeat repeat
       dup rd8         `! stack: end, beg, addr, [addr]
       1 over ++ rd8   `! stack: end, beg, addr, [addr], [addr+1]
       < if            `! stack: end, beg, addr
@@ -15,10 +27,16 @@
         2 over wr8    `! stack: end, beg, addr, [addr]
         1 over ++ wr8 `! stack: end, beg, addr
         drop dup      `! addr=beg; stack: end, beg, addr
-      endif
+      endif  :end1
     dup 3 over < until
     leave             `! clean up the data stack
   endif
   drop drop           `! remove the input parameters from the data stack
 ;
-
+_unknown &!END1
+55555 34 _bubblesort8
+22 _!bubblesort8
+&end1 _repeat
+_!bubblesort8
+.end1 CALL
+dup

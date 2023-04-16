@@ -53,78 +53,134 @@ endtask
 `define CA_NOEXEC   2   // conditional structure; not executing code
 `define CA_EXEC     3   // conditional structure; executing code
 
-
-`define i_NOP 'h7f
-`define i_SKIP 0
-`define i_DO 0
-`define i_RETURN 0
-`define i_CALL 0
-`define i_ACALL 0
-`define i_NTCALL 0
-`define i_NTACALL 0
-`define i_END 0
-`define i_ENDALL 0
-`define i_MAXTHDS 0
-`define i_THREADS 0
-`define i_DUP 'h14
-`define i_DROP 0
-`define i_SWAP 0
-`define i_ROT 0
-`define i_OVER 0
-`define i_DEPTH 'h12
+// `define i_ 'h00
+`define i_SETPR 'h01
+// `define i_ 'h02
+`define i_BREAK 'h03
+`define i_AGAIN 'h04
+`define i_CALL 'h05
+`define i_ACALL 'h06
+`define i_RETURN 'h07
+`define i_MAXTHDS 'h08
+`define i_THREADS 'h09
+// `define i_ 'h0a
+`define i_ENDALL 'h0b
+`define i_END 'h0c
+`define i_NTCALL 'h0d
+`define i_NTACALL 'h0e
+`define i_SYSFN 'h0f
+// `define i_ 'h10
 `define i_EMPTY 'h11
-`define i_AND 0
-`define i_OR 0
-`define i_XOR 0
-`define i_COM 0
-`define i_NOT 0
-`define i_SHL 0
-`define i_SHR 0
-`define i_ADD 0
-`define i_SUB 0
-`define i_MUL 0
-`define i_DIV 0
-`define i_MOD 0
-`define i_EQ 0
-`define i_NEQ 0
-`define i_GT 0
-`define i_GTEQ 0
-`define i_SM 0
-`define i_SMEQ 0
-`define i_INC 0
-`define i_DEC 0
-`define i_IF 0
-`define i_ELSE 0
-`define i_ENDIF 0
-`define i_REPEAT 0
-`define i_REPIF 0
-`define i_UNTIL 0
-`define i_WHILE 0
-`define i_AGAIN 0
-`define i_BREAK 0
-`define i_RD8 0
-`define i_RD16 0
-`define i_RD32 0
-`define i_RDVLN 0
-`define i_WR8 0
-`define i_WR16 0
-`define i_WR32 0
-`define i_WRVLN 0
-`define i_RANDOM 0
-`define i_MEMCOPY 0
-`define i_STRCOPY 0
-`define i_MEMDIFF 0
-`define i_STRDIFF 0
-`define i_MEMFILL 0
-`define i_STRLEN 0
-`define i_STRSCAN 0
-`define i_SYSFN 0
-`define i_DELAY 0
-`define i_ENTER 0
-`define i_LEAVE 0
-`define i_SETPR 0
-`define i_GETVAR 0
-`define i_SETVAR 0
+`define i_DEPTH 'h12
+`define i_DROP 'h13
+`define i_DUP 'h14
+`define i_SWAP 'h15
+`define i_ROT 'h16
+`define i_OVER 'h17
+`define i_ENTER 'h18
+`define i_LEAVE 'h19
+`define i_GETVAR 'h1a   // alias: !
+`define i_SETVAR 'h1b   // alias: =!
+`define i_DELAY 'h1c
+// `define i_ 'h1d
+// `define i_ 'h1e
+// `define i_ 'h1f
+`define i_COM 'h20
+`define i_NOT 'h21
+`define i_AND 'h22
+`define i_OR 'h23
+`define i_XOR 'h24
+// `define i_ 'h25
+`define i_SHL 'h26
+`define i_SHR 'h27
+`define i_SM 'h28       // alias: <
+`define i_SMEQ 'h29     // alias: <=
+`define i_EQ 'h2a       // alias: ==
+`define i_NEQ 'h2b      // alias: <>
+`define i_GTEQ 'h2c     // alias: >=
+`define i_GT 'h2d       // alias: >
+// `define i_ 'h2e
+// `define i_ 'h2f
+// `define i_ 'h30
+// `define i_ 'h31
+// `define i_ 'h32
+// `define i_ 'h33
+// `define i_ 'h34
+// `define i_ 'h35
+// `define i_ 'h36
+// `define i_ 'h37
+// `define i_ 'h38
+// `define i_ 'h39
+// `define i_ 'h3a
+// `define i_ 'h3b
+// `define i_ 'h3c
+// `define i_ 'h3d
+// `define i_ 'h3e
+// `define i_ 'h3f
+`define i_ADD 'h40      // alias: +
+// `define i_ 'h41
+`define i_SUB 'h42      // alias: -
+// `define i_ 'h43
+`define i_MUL 'h44      // alias: *
+// `define i_ 'h45
+`define i_DIV 'h46      // alias: /
+`define i_MOD 'h47      // alias: //
+`define i_INC 'h48      // alias: ++
+`define i_DEC 'h49      // alias: --
+// `define i_ 'h4a
+`define i_RANDOM 'h4b
+// `define i_ 'h4c
+// `define i_ 'h4d
+// `define i_ 'h4e
+// `define i_ 'h4f
+`define i_MEMFILL 'h50  // alias: FILL
+// `define i_ 'h51
+`define i_MEMDIFF 'h52  // alias: DIFF
+`define i_MEMCOPY 'h53  // alias: =
+// `define i_ 'h54
+// `define i_ 'h55
+// `define i_ 'h56
+// `define i_ 'h57
+`define i_STRLEN 'h58   // alias: LEN$
+`define i_STRSCAN 'h59  // alias: SCAN$
+`define i_STRDIFF 'h5a  // alias: DIFF$
+`define i_STRCOPY 'h5b  // alias: =$
+// `define i_ 'h5c
+// `define i_ 'h5d
+// `define i_ 'h5e
+// `define i_ 'h5f
+// `define i_ 'h60
+// `define i_ 'h61
+// `define i_ 'h62
+// `define i_ 'h63
+`define i_RD32 'h64
+`define i_RD16 'h65
+`define i_RD8 'h66
+// `define i_ 'h67
+// `define i_ 'h68
+// `define i_ 'h69
+// `define i_ 'h6a
+// `define i_ 'h6b
+`define i_WR32 'h6c
+`define i_WR16 'h6d
+`define i_WR8 'h6e
+// `define i_ 'h6f
+`define i_DO 'h70
+`define i_SKIP 'h71
+// `define i_ 'h72
+// `define i_ 'h73
+// `define i_ 'h74
+// `define i_ 'h75
+// `define i_ 'h76
+// `define i_ 'h77
+`define i_REPEAT 'h78
+`define i_UNTIL 'h79
+`define i_WHILE 'h7a
+`define i_REPIF 'h7b
+`define i_IF 'h7c
+`define i_ENDIF 'h7d
+`define i_ELSE 'h7e
+`define i_NOP 'h7f
 
 // non-standard instructions
 
