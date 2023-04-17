@@ -23,9 +23,10 @@ module core #(
 );
 
 localparam VREGS = 8;  // number of V-registers in this realisation
-localparam STACK_DEPTH = 8;  // max item count in stack
+localparam STACK_DEPTH = 8;		// max item count in data stack
+localparam CSTACK_DEPTH = 32;	// max item count in call stack
 
-logic [27:0] car; // conditional action register
+logic [31:0] car; // conditional action register
 					// only the two lowest order bits are monitored to determine the current condition
 logic [55:0] r_a; // register R0 (A)
 logic [55:0] r_b; // register R1 (B)
@@ -46,6 +47,8 @@ logic [13:0] ppr; // process priority register
 logic [63:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
 logic [63:0] v_r[VREGS]; // variable registers
 
+
+//============ Data stack ============
 logic stack_rst_n = 1;
 logic stack_push_en = 0;			// push enable (add on top)
 logic stack_pop_en = 0;				// pop enable (remove from top)
@@ -74,12 +77,42 @@ stack_inst(
 	.depth(stack_depth)
 );
 
+//============ Call stack ============
+logic cstack_rst_n = 1;
+logic cstack_push_en = 0;			// push enable (add on top)
+logic cstack_pop_en = 0;			// pop enable (remove from top)
+logic cstack_peek_en = 0;			// peek enable (return item at index, no change)
+logic cstack_poke_en = 0;			// poke enable (replace item at index)
+logic [55:0] cstack_data_in;			// data to push|poke
+logic [55:0] cstack_data_out; 		// data returned for pop|peek
+logic cstack_full;					// buffer is full
+logic cstack_empty;					// buffer is empty
+logic [$clog2(STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
+logic [$clog2(STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
+
+stack #(.WIDTH(28), .DEPTH(CSTACK_DEPTH))
+cstack_inst(
+	.clk,
+	.rst_n(cstack_rst_n),
+	.push_en(cstack_push_en),
+	.pop_en(cstack_pop_en),
+	//.peek_en(cstack_peek_en),
+	//.poke_en(cstack_poke_en),
+	//.index(cstack_index),
+	.data_in(cstack_data_in),
+	.data_out(cstack_data_out),
+	.full(cstack_full),
+	.empty(cstack_empty),
+	.depth(cstack_depth)
+);
+
+//============ State machine ============
 enum {
 	s_IDLE, s_INSTR, s_INSTR_DONE,
-	s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
+	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_1, s_OP_2,
 	s_DUP_STEP, s_PRINT_STACK_STEP, s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
-	s_ROT_STEP, s_OVER_STEP
+	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1
 } state, next_state;
 
 assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EXEC);
@@ -133,6 +166,28 @@ always @(posedge clk) begin
 			end
 		end
 
+		s_CALL_PUSH_PROC: begin
+			$display("CALL_PUSH_PROC %h", cstack_data_in);
+			if (cstack_full) begin
+				reset(`ERR_CSFULL);
+			end
+			else begin
+				cstack_push_en <= 1;
+				state <= next_state;
+			end
+		end
+		
+		s_CALL_POP_PROC: begin
+			$display("CALL_POP_PROC");
+			if (cstack_empty) begin
+				reset(`ERR_CSEMPTY);
+			end
+			else begin
+				cstack_pop_en <= 1;
+				state <= next_state;
+			end
+		end
+		
 		s_PUSH_PROC: begin
 			$display("PUSH_PROC %h", stack_data_in);
 			if (stack_full) begin
@@ -260,6 +315,47 @@ always @(posedge clk) begin
 			`i_MOD:
 			begin
 				state <= s_OP_2;
+			end
+
+			`i_IF: begin
+				// x if
+				// if X is not 0, executes until the corresponding ELSE or ENDIF
+				// if X is 0, skips until the corresponding ELSE or ENDIF
+
+				if (executing) begin
+					state <= s_POP_PROC;
+					next_state <= s_IF_STEP0;
+				end
+				else begin
+					car <= (car << `CA_LENGTH) | `CA_NOEXEC;
+					state <= s_IF_STEP1;
+				end
+			end
+
+			`i_ELSE: begin
+				// else
+				// inverts the current condition for execution in IF structure
+				// (can be used also to terminate REPEAT...UNTIL structure)
+
+				if ((car & `CA_MASK) == `CA_EXEC)
+					car <= (car & ~`CA_MASK) | `CA_NOEXEC;
+				else if ((car & `CA_MASK) == `CA_NOEXEC)
+					car <= (car & ~`CA_MASK) | `CA_EXEC;
+				else
+					reset(`ERR_ECST);
+			end
+
+			`i_ENDIF: begin
+				// endif
+				// terminates the current IF block
+
+				if ((car & `CA_MASK) == `CA_NONE)
+					reset(`ERR_ECST);
+				else begin
+					car <= car >> `CA_LENGTH;
+					state <= s_CALL_POP_PROC;
+					next_state <= s_INSTR_DONE;					
+				end
 			end
 
 /* template
@@ -405,13 +501,9 @@ always @(posedge clk) begin
 				end
 			end
 			3: begin
-				if (stack_data_out >= stack_depth)  //TODO: early check due to width mismatch
-					reset(`ERR_DSINDEX);
-				else begin
-					r_a <= stack_data_out;  // remember Nth element
-					stack_index <= 0;
-					state <= s_PEEK_PROC;
-				end
+				r_b <= stack_data_out;  // remember Nth element
+				stack_index <= 0;
+				state <= s_PEEK_PROC;
 			end
 			2: begin
 				stack_data_in <= stack_data_out; // top element
@@ -419,7 +511,7 @@ always @(posedge clk) begin
 				state <= s_POKE_PROC;
 			end
 			1: begin
-				stack_data_in <= r_a;
+				stack_data_in <= r_b;
 				stack_index <= 0;
 				state <= s_POKE_PROC;
 			end
@@ -488,6 +580,17 @@ always @(posedge clk) begin
 			step_counter <= step_counter - 1;
 		end
 
+		s_IF_STEP0: begin
+			car <= (car << `CA_LENGTH) | (stack_data_out ? `CA_EXEC : `CA_NOEXEC);
+			state <= s_IF_STEP1;
+		end
+
+		s_IF_STEP1: begin
+			cstack_data_in <= pcp;
+			state <= s_CALL_PUSH_PROC;
+			next_state <= s_INSTR_DONE;
+		end
+		
 		s_PRINT_STACK_STEP: begin
 			if (step_counter == 0) begin
 				$display("    %d: %d", stack_index, stack_data_out);
