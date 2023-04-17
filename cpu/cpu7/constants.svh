@@ -19,16 +19,6 @@
 `define ERR_DBLENT  'h10b   // double entering error
 `define ERR_NOENT   'h10c   // LEAVE without preceding ENTER
 
-task reset;
-input [13:0] err_code;
-input [27:0] code_addr;
-begin
-	$display("CPU reset: errcode %h, addr %d", err_code, code_addr);
-	$display("Halt.\n");
-	$finish;
-end
-endtask
-
 // word types
 `define WT_MASK 16'hc000      // general bitmask for the word type constants
 `define WT_CPU  16'h0000      // code word containing two 7-bit CPU instructions
@@ -186,6 +176,9 @@ endtask
 
 `define i_PRINT_STACK 'h02
 
+
+`ifdef SIMULATION
+
 function string opcode2str (input logic [6:0] opcode);
 begin
 	case (opcode)
@@ -264,5 +257,6 @@ begin
 end
 endfunction
 
+`endif
 
 `endif

@@ -46,7 +46,7 @@ cpu7.sim: top_cpu7_tb.vcd
 %.vcd: %.sv $(ADD_SRC)
 
 	#-- Compile
-	iverilog -g2012 -Wall -I.. $< $(ADD_SRC) -o $(basename $@).out
+	iverilog -g2012 -Wall -DSIMULATION -I.. $< $(ADD_SRC) -o $(basename $@).out
 	
 	#-- Simulate
 	./$(basename $@).out

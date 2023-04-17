@@ -54,7 +54,8 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 	core #(.IDX(i)) core_inst (
 		.rst_n(rst_n), .clk, .en(acore_en[i]),
 		.push_value, .push_en, .instr, .instr_en, .pcp_step_en,
-		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]), .executing(acore_executing[i]), .acore_idle(acore_idle[i])
+		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]), .executing(acore_executing[i]),
+		.acore_idle(acore_idle[i])
 	);
 end
 endgenerate

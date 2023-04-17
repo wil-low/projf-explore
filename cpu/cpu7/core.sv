@@ -33,6 +33,8 @@ logic [27:0] r_c; // register R2 (C)
 logic [13:0] r_d; // register R3 (D)
 logic [13:0] r_e; // register R3 (E)
 
+logic [55:0] r_f; // register R4 (F)
+
 logic [13:0] icr; // instruction code register
 					// contains two 7-bit instruction codes with the one in the lower
 					// 7 bits executed first, and the one in the higher 7 bits executed second
@@ -75,7 +77,8 @@ stack_inst(
 );
 
 enum {
-	s_IDLE, s_PUSH_VALUE, s_POP_VALUE, s_INSTR, s_INSTR_DONE,
+	s_IDLE, s_INSTR, s_INSTR_DONE,
+	s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_2,
 	s_DUP_STEP, s_PRINT_STACK_STEP, s_OP_2_STEP
 } state, next_state;
@@ -86,6 +89,17 @@ assign acore_idle = (state == s_IDLE) && !push_en && !instr_en;
 logic instr_counter;
 logic [$clog2(STACK_DEPTH) - 1:0] step_counter;  // for multi-step instructions
 logic [6:0] opcode;  // for generalized instructions
+
+task reset;
+input [13:0] errcode;
+begin
+	$display("CPU reset: errcode %h, addr %d", errcode, pcp);
+	$display("Halt.\n");
+`ifdef SIMULATION
+	$finish;
+`endif
+end
+endtask
 
 always @(posedge clk) begin
 	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en} <= 0;
@@ -103,13 +117,12 @@ always @(posedge clk) begin
 
 		s_IDLE: begin
 			if (pcp_step_en) begin
-				$display("pcp_step pcp = %d", pcp);
 				pcp <= pcp + 1;
 			end
 
 			if (push_en) begin
 				stack_data_in <= push_value;
-				state <= s_PUSH_VALUE;
+				state <= s_PUSH_PROC;
 				next_state <= s_IDLE;
 			end
 			else if (instr_en) begin
@@ -121,10 +134,10 @@ always @(posedge clk) begin
 			end
 		end
 
-		s_PUSH_VALUE: begin
-			$display("PUSH_VALUE %h", stack_data_in);
+		s_PUSH_PROC: begin
+			$display("PUSH_PROC %h", stack_data_in);
 			if (stack_full) begin
-				reset(`ERR_DSFULL, pcp);
+				reset(`ERR_DSFULL);
 			end
 			else begin
 				stack_push_en <= 1;
@@ -132,10 +145,10 @@ always @(posedge clk) begin
 			end
 		end
 		
-		s_POP_VALUE: begin
-			$display("POP_VALUE");
+		s_POP_PROC: begin
+			$display("POP_PROC");
 			if (stack_empty) begin
-				reset(`ERR_DSEMPTY, pcp);
+				reset(`ERR_DSEMPTY);
 			end
 			else begin
 				stack_pop_en <= 1;
@@ -143,6 +156,28 @@ always @(posedge clk) begin
 			end
 		end
 		
+		s_PEEK_PROC: begin
+			$display("PEEK_PROC at %d", stack_index);
+			if (stack_index >= stack_depth) begin
+				reset(`ERR_DSFULL);
+			end
+			else begin
+				stack_peek_en <= 1;
+				state <= next_state;
+			end
+		end
+		
+		s_POKE_PROC: begin
+			$display("POKE_PROC at %d: %h", stack_index, stack_data_in);
+			if (stack_index >= stack_depth) begin
+				reset(`ERR_DSFULL);
+			end
+			else begin
+				stack_poke_en <= 1;
+				state <= next_state;
+			end
+		end
+
 		s_INSTR: begin
 			$display("\ninstr %h %s", opcode, opcode2str(opcode));
 			state <= s_INSTR_DONE;
@@ -155,14 +190,14 @@ always @(posedge clk) begin
 
 			`i_DEPTH: begin
 				stack_data_in <= stack_depth + 1;
-				state <= s_PUSH_VALUE;
+				state <= s_PUSH_PROC;
 				next_state <= s_INSTR_DONE;
 			end
 
 			`i_DUP: begin
 				stack_index <= 0;
-				stack_peek_en <= 1;
-				state <= s_DUP_STEP;
+				state <= s_PEEK_PROC;
+				next_state <= s_DUP_STEP;
 			end
 
 			`i_EMPTY: begin
@@ -182,11 +217,27 @@ always @(posedge clk) begin
 			end
 
 			`i_DROP: begin
-				state <= s_POP_VALUE;
+				state <= s_POP_PROC;
 				next_state <= s_INSTR_DONE;
 			end
 
-			`i_GT: begin
+			`i_GT,
+			`i_GTEQ,
+			`i_SM,
+			`i_SMEQ,
+			`i_EQ,
+			`i_NEQ,
+			`i_AND,
+			`i_OR,
+			`i_XOR,
+			`i_SHL,
+			`i_SHR,
+			`i_ADD,
+			`i_SUB,
+			`i_MUL,
+			`i_DIV,
+			`i_MOD:
+			begin
 				state <= s_OP_2;
 			end
 
@@ -197,7 +248,7 @@ always @(posedge clk) begin
 */
 			default: begin
 				$display("  Not implemented: %h (%s)", opcode, opcode2str(opcode));
-				reset(`ERR_INVALID, pcp);
+				reset(`ERR_INVALID);
 			end
 
 			endcase
@@ -219,7 +270,7 @@ always @(posedge clk) begin
 		s_DUP_STEP: begin
 			$display("DUP_STEP, stack_data_out %h", stack_data_out);
 			stack_data_in <= stack_data_out;
-			state <= s_PUSH_VALUE;
+			state <= s_PUSH_PROC;
 			next_state <= s_INSTR_DONE;
 		end
 
@@ -233,19 +284,55 @@ always @(posedge clk) begin
 			next_state <= state;
 			case (step_counter)
 			3: begin
-				state <= s_POP_VALUE;
+				state <= s_POP_PROC;
 			end
 			2: begin
-				r_b <= stack_data_out;
-				state <= s_POP_VALUE;
+				r_f <= stack_data_out;
+				state <= s_POP_PROC;
 			end
 			1: begin
-				state <= s_PUSH_VALUE;
+				state <= s_PUSH_PROC;
 				case (opcode)
 				`i_GT:
-					stack_data_in <= stack_data_out > r_b ? 1 : 0;
+					stack_data_in <= stack_data_out > r_f ? 1 : 0;
+				`i_GTEQ:
+					stack_data_in <= stack_data_out >= r_f ? 1 : 0;
+				`i_SM:
+					stack_data_in <= stack_data_out < r_f ? 1 : 0;
+				`i_SMEQ:
+					stack_data_in <= stack_data_out <= r_f ? 1 : 0;
+				`i_EQ:
+					stack_data_in <= stack_data_out == r_f ? 1 : 0;
+				`i_NEQ:
+					stack_data_in <= stack_data_out != r_f ? 1 : 0;
+				`i_AND:
+					stack_data_in <= stack_data_out & r_f;
+				`i_OR:
+					stack_data_in <= stack_data_out | r_f;
+				`i_XOR:
+					stack_data_in <= stack_data_out ^ r_f;
+				`i_SHL:
+					stack_data_in <= stack_data_out << r_f;
+				`i_SHR:
+					stack_data_in <= stack_data_out >> r_f;
+				`i_ADD:
+					stack_data_in <= stack_data_out + r_f;
+				`i_SUB:
+					stack_data_in <= stack_data_out - r_f;
+				`i_MUL:
+					stack_data_in <= stack_data_out * r_f;
+				`i_DIV:
+					if (r_f == 0)
+						reset(`ERR_CALC);
+					else
+						stack_data_in <= stack_data_out / r_f;
+				`i_MOD:
+					if (r_f == 0)
+						reset(`ERR_CALC);
+					else
+						stack_data_in <= stack_data_out % r_f;
 				default:
-					reset(`ERR_INVALID, pcp);
+					reset(`ERR_INVALID);
 				endcase
 			end
 			default: begin
