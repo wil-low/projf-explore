@@ -23,7 +23,7 @@ task reset;
 input [13:0] err_code;
 input [27:0] code_addr;
 begin
-	$display("CPU reset: errcode %h, addr %h", err_code, code_addr);
+	$display("CPU reset: errcode %h, addr %d", err_code, code_addr);
 	$display("Halt.\n");
 	$finish;
 end
@@ -184,6 +184,85 @@ endtask
 
 // non-standard instructions
 
-`define custom_PRINT_STACK 'h02
+`define i_PRINT_STACK 'h02
+
+function string opcode2str (input logic [6:0] opcode);
+begin
+	case (opcode)
+	`i_ACALL           : opcode2str = "ACALL";
+	`i_ADD             : opcode2str = "ADD";
+	`i_AGAIN           : opcode2str = "AGAIN";
+	`i_AND             : opcode2str = "AND";
+	`i_BREAK           : opcode2str = "BREAK";
+	`i_CALL            : opcode2str = "CALL";
+	`i_COM             : opcode2str = "COM";
+	`i_DEC             : opcode2str = "DEC";
+	`i_DELAY           : opcode2str = "DELAY";
+	`i_DEPTH           : opcode2str = "DEPTH";
+	`i_DIV             : opcode2str = "DIV";
+	`i_DO              : opcode2str = "DO";
+	`i_DROP            : opcode2str = "DROP";
+	`i_DUP             : opcode2str = "DUP";
+	`i_ELSE            : opcode2str = "ELSE";
+	`i_EMPTY           : opcode2str = "EMPTY";
+	`i_END             : opcode2str = "END";
+	`i_ENDALL          : opcode2str = "ENDALL";
+	`i_ENDIF           : opcode2str = "ENDIF";
+	`i_ENTER           : opcode2str = "ENTER";
+	`i_EQ              : opcode2str = "EQ";
+	`i_GETVAR          : opcode2str = "GETVAR";
+	`i_GT              : opcode2str = "GT";
+	`i_GTEQ            : opcode2str = "GTEQ";
+	`i_IF              : opcode2str = "IF";
+	`i_INC             : opcode2str = "INC";
+	`i_LEAVE           : opcode2str = "LEAVE";
+	`i_MAXTHDS         : opcode2str = "MAXTHDS";
+	`i_MEMCOPY         : opcode2str = "MEMCOPY";
+	`i_MEMDIFF         : opcode2str = "MEMDIFF";
+	`i_MEMFILL         : opcode2str = "MEMFILL";
+	`i_MOD             : opcode2str = "MOD";
+	`i_MUL             : opcode2str = "MUL";
+	`i_NEQ             : opcode2str = "NEQ";
+	`i_NOP             : opcode2str = "NOP";
+	`i_NOT             : opcode2str = "NOT";
+	`i_NTACALL         : opcode2str = "NTACALL";
+	`i_NTCALL          : opcode2str = "NTCALL";
+	`i_OR              : opcode2str = "OR";
+	`i_OVER            : opcode2str = "OVER";
+	`i_PRINT_STACK     : opcode2str = "PRINT_STACK";
+	`i_RANDOM          : opcode2str = "RANDOM";
+	`i_RD16            : opcode2str = "RD16";
+	`i_RD32            : opcode2str = "RD32";
+	`i_RD8             : opcode2str = "RD8";
+	`i_REPEAT          : opcode2str = "REPEAT";
+	`i_REPIF           : opcode2str = "REPIF";
+	`i_RETURN          : opcode2str = "RETURN";
+	`i_ROT             : opcode2str = "ROT";
+	`i_SETPR           : opcode2str = "SETPR";
+	`i_SETVAR          : opcode2str = "SETVAR";
+	`i_SHL             : opcode2str = "SHL";
+	`i_SHR             : opcode2str = "SHR";
+	`i_SKIP            : opcode2str = "SKIP";
+	`i_SM              : opcode2str = "SM";
+	`i_SMEQ            : opcode2str = "SMEQ";
+	`i_STRCOPY         : opcode2str = "STRCOPY";
+	`i_STRDIFF         : opcode2str = "STRDIFF";
+	`i_STRLEN          : opcode2str = "STRLEN";
+	`i_STRSCAN         : opcode2str = "STRSCAN";
+	`i_SUB             : opcode2str = "SUB";
+	`i_SWAP            : opcode2str = "SWAP";
+	`i_SYSFN           : opcode2str = "SYSFN";
+	`i_THREADS         : opcode2str = "THREADS";
+	`i_UNTIL           : opcode2str = "UNTIL";
+	`i_WHILE           : opcode2str = "WHILE";
+	`i_WR16            : opcode2str = "WR16";
+	`i_WR32            : opcode2str = "WR32";
+	`i_WR8             : opcode2str = "WR8";
+	`i_XOR             : opcode2str = "XOR";
+	default            : opcode2str = "???";
+	endcase
+end
+endfunction
+
 
 `endif

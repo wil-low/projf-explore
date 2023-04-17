@@ -7,21 +7,26 @@ use Data::Dumper;
 my ($program_file, $constants_file) = @ARGV;
 
 my %instr;
+my %alias;
 open (INF, "<$constants_file") or die "$!: $constants_file";
 while (my $line = <INF>) {
 	$line =~ s/[\r\n]//sg;
-	if ($line =~ /`define\s+(i|custom)_(\S+)\s(?:'h)?([0-9a-fA-F]+)/) {
-		my $val = hex($3);
-		$instr{$2} = $val;
+	if ($line =~ /`define\s+i_(\S+)\s(?:'h)?([0-9a-fA-F]+)/) {
+		my $val = hex($2);
+		$instr{$1} = $val;
 		if ($line =~ /alias: (\S+)/) {
-			$instr{$1} = $val;
+			$alias{$1} = $val;
 		}
 	}
 }
 close (INF);
 
+#make_opcode2str();
+
 $instr{';'} = $instr{RETURN};  # alias for RETURN
 $instr{'(NOP)'} = $instr{NOP};  # NOP forced (for alignment)
+
+%instr = (%instr, %alias);
 
 #print Dumper(\%instr);
 
@@ -123,7 +128,7 @@ sub add_token {  # token
 		}
 	}
 	else {
-		print "      // Unknown token '$orig_tok'\n";
+		die "Unknown token '$orig_tok'\n";
 	}
 }
 
@@ -195,4 +200,26 @@ sub vln_str {  # number
 		$result .= sprintf("%04x ", (($n >> 42) & $MASK14) | $VLN_LAST);
 	}
 	return $result;
+}
+
+sub make_opcode2str {
+	my $text = << 'EOF';
+function string opcode2str (input logic [6:0] opcode);
+begin
+	case (opcode)
+EOF
+	print $text;
+
+	foreach my $key (sort(keys(%instr))) {
+		print sprintf("\t`i_%-16s: opcode2str = \"%s\";\n", $key, $key);
+	}
+	print sprintf("\t%-19s: opcode2str = \"%s\";\n", 'default', '???');
+
+	$text = << 'EOF';
+	endcase
+end
+endfunction
+EOF
+	print $text;
+	die;
 }
