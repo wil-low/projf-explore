@@ -46,7 +46,7 @@ bram_read_async_inst (
 	.data_in(data_in), .data_out(data_out)
 );
 
-always_ff @(posedge clk) begin
+always @(posedge clk) begin
 	if (!rst_n) begin
 		$display("stack rst_n");
 		addr_write <= 0;

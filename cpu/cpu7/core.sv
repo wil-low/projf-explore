@@ -75,8 +75,9 @@ stack_inst(
 );
 
 enum {
-	s_IDLE, s_PUSH_VALUE, s_INSTR, s_INSTR_DONE,
-	s_DUP_STEP, s_PRINT_STACK_STEP
+	s_IDLE, s_PUSH_VALUE, s_POP_VALUE, s_INSTR, s_INSTR_DONE,
+	s_OP_2,
+	s_DUP_STEP, s_PRINT_STACK_STEP, s_OP_2_STEP
 } state, next_state;
 
 assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EXEC);
@@ -84,8 +85,9 @@ assign acore_idle = (state == s_IDLE) && !push_en && !instr_en;
 
 logic instr_counter;
 logic [$clog2(STACK_DEPTH) - 1:0] step_counter;  // for multi-step instructions
+logic [6:0] opcode;  // for generalized instructions
 
-always_ff @(posedge clk) begin
+always @(posedge clk) begin
 	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en} <= 0;
 	stack_rst_n <= 1;
 
@@ -95,13 +97,16 @@ always_ff @(posedge clk) begin
 		state <= s_IDLE;
 	end
 	else if (en) begin
-		//$display("core %d pcp %h, state %d, next %d", IDX, pcp, state, next_state);
-		if (pcp_step_en)
-			pcp <= pcp + 1;
+		//$display("  core %d pcp %d, state %d, next %d, pcp_step_en %b", IDX, pcp, state, next_state, pcp_step_en);
 
 		case (state)
 
 		s_IDLE: begin
+			if (pcp_step_en) begin
+				$display("pcp_step pcp = %d", pcp);
+				pcp <= pcp + 1;
+			end
+
 			if (push_en) begin
 				stack_data_in <= push_value;
 				state <= s_PUSH_VALUE;
@@ -109,6 +114,7 @@ always_ff @(posedge clk) begin
 			end
 			else if (instr_en) begin
 				icr <= instr;
+				opcode <= instr & `MASK7;
 				instr_counter <= 1;
 				state <= s_INSTR;
 				next_state <= s_INSTR_DONE;
@@ -117,41 +123,53 @@ always_ff @(posedge clk) begin
 
 		s_PUSH_VALUE: begin
 			$display("PUSH_VALUE %h", stack_data_in);
-			stack_push_en <= 1;
-			state <= next_state;
+			if (stack_full) begin
+				reset(`ERR_DSFULL, pcp);
+			end
+			else begin
+				stack_push_en <= 1;
+				state <= next_state;
+			end
+		end
+		
+		s_POP_VALUE: begin
+			$display("POP_VALUE");
+			if (stack_empty) begin
+				reset(`ERR_DSEMPTY, pcp);
+			end
+			else begin
+				stack_pop_en <= 1;
+				state <= next_state;
+			end
 		end
 		
 		s_INSTR: begin
-			//$display("\ninstr %h", icr & `MASK7);
+			$display("\ninstr %h %s", opcode, opcode2str(opcode));
 			state <= s_INSTR_DONE;
 
-			case (icr & `MASK7)
+			case (opcode)
 
 			`i_NOP: begin
-				$display("  NOP");
 				// do nothing
 			end
 
 			`i_DEPTH: begin
-				$display("  DEPTH");
 				stack_data_in <= stack_depth + 1;
 				state <= s_PUSH_VALUE;
 				next_state <= s_INSTR_DONE;
 			end
 
 			`i_DUP: begin
-				$display("  DUP");
 				stack_index <= 0;
 				stack_peek_en <= 1;
 				state <= s_DUP_STEP;
 			end
 
 			`i_EMPTY: begin
-				$display("  EMPTY");
 				stack_rst_n <= 0;
 			end
 
-			`custom_PRINT_STACK: begin
+			`i_PRINT_STACK: begin
 				$display("PRINT_STACK depth %d", stack_depth);
 				if (stack_empty)
 					$display("PRINT_STACK end");
@@ -163,13 +181,22 @@ always_ff @(posedge clk) begin
 				end
 			end
 
+			`i_DROP: begin
+				state <= s_POP_VALUE;
+				next_state <= s_INSTR_DONE;
+			end
+
+			`i_GT: begin
+				state <= s_OP_2;
+			end
+
 /* template
 			`i_: begin
 				$display("  ?");
 			end
 */
 			default: begin
-				$display("  Not implemented: %h", icr & `MASK7);
+				$display("  Not implemented: %h (%s)", opcode, opcode2str(opcode));
 				reset(`ERR_INVALID, pcp);
 			end
 
@@ -183,7 +210,7 @@ always_ff @(posedge clk) begin
 				state <= s_IDLE;
 			end
 			else begin
-				icr <= icr >> 7;
+				opcode <= icr >> 7;
 				state <= s_INSTR;
 				instr_counter <= instr_counter - 1;
 			end
@@ -196,9 +223,41 @@ always_ff @(posedge clk) begin
 			next_state <= s_INSTR_DONE;
 		end
 
+		s_OP_2: begin
+			$display("OP_2 for opcode %h", opcode);
+			step_counter <= 3;
+			state <= s_OP_2_STEP;
+		end
+
+		s_OP_2_STEP: begin
+			next_state <= state;
+			case (step_counter)
+			3: begin
+				state <= s_POP_VALUE;
+			end
+			2: begin
+				r_b <= stack_data_out;
+				state <= s_POP_VALUE;
+			end
+			1: begin
+				state <= s_PUSH_VALUE;
+				case (opcode)
+				`i_GT:
+					stack_data_in <= stack_data_out > r_b ? 1 : 0;
+				default:
+					reset(`ERR_INVALID, pcp);
+				endcase
+			end
+			default: begin
+				state <= s_INSTR_DONE;
+			end
+			endcase
+			step_counter <= step_counter - 1;
+		end
+
 		s_PRINT_STACK_STEP: begin
 			if (step_counter == 0) begin
-				$display("    %d: %h", stack_index, stack_data_out);
+				$display("    %d: %d", stack_index, stack_data_out);
 				if (stack_index == stack_depth - 1) begin
 					state <= s_INSTR_DONE;
 					$display("PRINT_STACK end");
