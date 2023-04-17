@@ -17,7 +17,7 @@ module cpu7_soc #(
 );
 
 logic [$clog2(CORES) - 1:0] pxr = 0;  // process index register (core index in fact)
-logic [55:0] dlyc;  // free-running incremental delay counter
+logic [63:0] dlyc;  // free-running incremental delay counter
 
 // active core data
 logic [CORES - 1:0] acore_en;			// hot-one mask

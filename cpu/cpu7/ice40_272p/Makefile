@@ -19,7 +19,7 @@ ADD_SRC += ../cpu7_soc.sv
 
 cpu7: cpu7.rpt cpu7.bin cpu7.link
 
-%.json: top_%.sv $(ADD_SRC)
+%.json: top_%.sv $(ADD_SRC) generate_mem
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
@@ -43,7 +43,7 @@ all: cpu7
 
 cpu7.sim: top_cpu7_tb.vcd
 
-%.vcd: %.sv $(ADD_SRC)
+%.vcd: %.sv $(ADD_SRC) generate_mem
 
 	#-- Compile
 	iverilog -g2012 -Wall -DSIMULATION -I.. $< $(ADD_SRC) -o $(basename $@).out
@@ -55,12 +55,10 @@ cpu7.sim: top_cpu7_tb.vcd
 	killall gtkwave || true
 	gtkwave $@ $(basename $@).gtkw &
 
-generate_cmd: cmd.mem
+generate_mem: ../test.mem
 
-cmd.mem: ../generate_cmd.sv
-	iverilog -g2012 ../generate_cmd.sv -I.. -o generate_cmd.out
-	#-- Simulate
-	./generate_cmd.out
+../test.mem: ../programs/test.torth ../constants.svh
+	perl ../emulation/cpu7_compile.pl ../programs/test.torth ../constants.svh > ../test.mem
 
 clean:
 	rm -f *.json *.asc *.rpt *.bin *yosys.log *.out *.vcd
