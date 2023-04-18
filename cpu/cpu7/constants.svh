@@ -175,6 +175,7 @@
 // non-standard instructions
 
 `define i_PRINT_STACK 'h02
+`define i_PRINT_CSTACK 'h0a
 
 
 `ifdef SIMULATION
@@ -222,6 +223,7 @@ begin
 	`i_NTCALL          : opcode2str = "NTCALL";
 	`i_OR              : opcode2str = "OR";
 	`i_OVER            : opcode2str = "OVER";
+	`i_PRINT_CSTACK    : opcode2str = "PRINT_CSTACK";
 	`i_PRINT_STACK     : opcode2str = "PRINT_STACK";
 	`i_RANDOM          : opcode2str = "RANDOM";
 	`i_RD16            : opcode2str = "RD16";
@@ -254,6 +256,14 @@ begin
 	`i_XOR             : opcode2str = "XOR";
 	default            : opcode2str = "???";
 	endcase
+end
+endfunction
+
+`else
+
+function [6:0] opcode2str (input logic [6:0] opcode);
+begin
+	opcode2str = opcode;
 end
 endfunction
 

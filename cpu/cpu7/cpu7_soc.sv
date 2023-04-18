@@ -57,7 +57,9 @@ genvar i;
 generate
 for (i = 0; i < CORES; i = i + 1) begin : generate_core
 	core #(
-		.VREGS(VREGS), .DATA_STACK_DEPTH(DATA_STACK_DEPTH),
+		.VREGS(VREGS),
+		.PROGRAM_SIZE(PROGRAM_SIZE),
+		.DATA_STACK_DEPTH(DATA_STACK_DEPTH),
 		.CALL_STACK_DEPTH(CALL_STACK_DEPTH),
 		.CORE_INDEX(i)
 	) core_inst (
@@ -151,11 +153,11 @@ always @(posedge clk) begin
 					acore_errcode[(pxr + 1) * 9 - 1 -: 9],
 					acore_pcp[(pxr + 1) * 28 - 1 -: 28] * 2);
 				$display("Halt.\n");
-				//`ifdef SIMULATION
-				//	$finish;
-				//`else
+				`ifdef SIMULATION
+					$finish;
+				`else
 					state <= s_HALT;
-				//`endif
+				`endif
 			end
 			else begin
 				$display("\n==== Next core ====");

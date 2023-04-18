@@ -34,7 +34,7 @@ initial begin
 	#2;
 	//$display("rst_n %b", rst_n);
 
-	#2000 $finish;
+	#20000 $finish;
 end
 
 logic _unused_ok = &{1'b1, 1'b0};

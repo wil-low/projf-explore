@@ -7,6 +7,7 @@
 
 module core #(
 	parameter VREGS = 8,			// number of V-registers in this realisation
+	parameter PROGRAM_SIZE = 1024,	// program size
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
 	parameter CORE_INDEX = -1
@@ -80,14 +81,14 @@ stack_inst(
 logic cstack_rst_n = 1;
 logic cstack_push_en = 0;			// push enable (add on top)
 logic cstack_pop_en = 0;			// pop enable (remove from top)
-//logic cstack_peek_en = 0;			// peek enable (return item at index, no change)
-//logic cstack_poke_en = 0;			// poke enable (replace item at index)
-logic [55:0] cstack_data_in;			// data to push|poke
-logic [55:0] cstack_data_out; 		// data returned for pop|peek
+logic cstack_peek_en = 0;			// peek enable (return item at index, no change)
+logic cstack_poke_en = 0;			// poke enable (replace item at index)
+logic [27:0] cstack_data_in;			// data to push|poke
+logic [27:0] cstack_data_out; 		// data returned for pop|peek
 logic cstack_full;					// buffer is full
 logic cstack_empty;					// buffer is empty
-//logic [$clog2(DATA_STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
-//logic [$clog2(DATA_STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
+logic [$clog2(CALL_STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
+logic [$clog2(CALL_STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
 
 /* verilator lint_off PINCONNECTEMPTY */
 stack #(.WIDTH(28), .DEPTH(CALL_STACK_DEPTH))
@@ -96,14 +97,14 @@ cstack_inst(
 	.rst_n(cstack_rst_n),
 	.push_en(cstack_push_en),
 	.pop_en(cstack_pop_en),
-	.peek_en(),
-	.poke_en(),
-	.index(),
+	.peek_en(cstack_peek_en),
+	.poke_en(cstack_poke_en),
+	.index(cstack_index),
 	.data_in(cstack_data_in),
 	.data_out(cstack_data_out),
 	.full(cstack_full),
 	.empty(cstack_empty),
-	.depth()
+	.depth(cstack_depth)
 );
 /* verilator lint_on PINCONNECTEMPTY */
 
@@ -167,8 +168,8 @@ enum {
 	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_1, s_OP_2,
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
-	s_DUP_STEP, s_PRINT_STACK_STEP, s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
-	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1
+	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
+	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_STEP0, s_UNTIL_STEP1
 } state, next_state;
 
 assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EXEC);
@@ -188,11 +189,14 @@ end
 endtask
 
 always @(posedge clk) begin
-	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en, mul_en, divu_en} <= 0;
+	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en} <= 0;
+	{cstack_push_en, cstack_pop_en, cstack_peek_en, cstack_poke_en} <= 0;
+	{mul_en, divu_en} <= 0;
 	stack_rst_n <= 1;
+	cstack_rst_n <= 1;
 
 	if (!rst_n) begin
-		{csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, pcp, errcode} <= 0;
+		{csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, cstack_rst_n, pcp, errcode} <= 0;
 		car <= `CA_NONE;
 		state <= s_IDLE;
 	end
@@ -221,7 +225,7 @@ always @(posedge clk) begin
 		end
 
 		s_CALL_PUSH_PROC: begin
-			$display("CALL_PUSH %hd", cstack_data_in);
+			$display("CALL_PUSH %d", cstack_data_in);
 			if (cstack_full) begin
 				reset(`ERR_CSFULL);
 			end
@@ -324,6 +328,18 @@ always @(posedge clk) begin
 				end
 			end
 
+			`i_PRINT_CSTACK: begin
+				$display("PRINT_CSTACK (depth %d):", cstack_depth);
+				if (cstack_empty)
+					$display("PRINT_CSTACK end");
+				else begin
+					cstack_index <= 0;
+					cstack_peek_en <= 1;
+					step_counter <= 1;
+					state <= s_PRINT_CSTACK_STEP;
+				end
+			end
+
 			`i_DROP: begin
 				state <= s_POP_PROC;
 				next_state <= s_INSTR_DONE;
@@ -412,6 +428,30 @@ always @(posedge clk) begin
 				end
 			end
 
+			`i_REPEAT: begin
+				// repeat
+				// marks the beginning of a REPEAT structure
+
+				if (executing)
+					car <= (car << `CA_LENGTH) | `CA_EXEC;
+				else
+					car <= (car << `CA_LENGTH) | `CA_NOEXEC;
+				state <= s_IF_STEP1;
+			end
+
+			`i_UNTIL: begin
+				// x until
+				// if X is zero, return to the corresponding REPEAT, otherwise continue after UNTIL
+				// (can be used also by already called by CALL/ACALL code to conditionally cancel its return address)
+				// (condition opposite to WHILE)
+
+				if ((car & `CA_MASK) == `CA_NONE)
+					reset(`ERR_ECST);
+				else begin
+					state <= s_CALL_POP_PROC;
+					next_state <= s_UNTIL_STEP0;					
+				end
+			end
 /* template
 			`i_: begin
 				$display("  ?");
@@ -439,7 +479,7 @@ always @(posedge clk) begin
 		end
 
 		s_DUP_STEP: begin
-			$display("DUP_STEP, stack_data_out %h", stack_data_out);
+			//$display("DUP_STEP, stack_data_out %h", stack_data_out);
 			stack_data_in <= stack_data_out;
 			state <= s_PUSH_PROC;
 			next_state <= s_INSTR_DONE;
@@ -645,11 +685,41 @@ always @(posedge clk) begin
 		end
 
 		s_IF_STEP1: begin
+			$display("s_IF_STEP1 car %b", car);
 			cstack_data_in <= pcp;
 			state <= s_CALL_PUSH_PROC;
 			next_state <= s_INSTR_DONE;
 		end
 		
+		s_UNTIL_STEP0: begin
+			$display("UNTIL_STEP0 %d, car %b", cstack_data_out, car);
+			r_a <= cstack_data_out;
+			if ((car & `CA_MASK) == `CA_EXEC) begin
+				state <= s_POP_PROC;
+				next_state <= s_UNTIL_STEP1;
+			end
+			else begin
+				car <= car >> `CA_LENGTH;
+				state <= s_INSTR_DONE;
+			end
+		end
+
+		s_UNTIL_STEP1: begin
+			$display("UNTIL_STEP1 %d car %b", stack_data_out, car);
+			if (!stack_data_out) begin
+				pcp <= r_a;
+				if (pcp >= PROGRAM_SIZE)
+					reset(`ERR_INVMEM);
+				state <= s_CALL_PUSH_PROC;
+				cstack_data_in <= r_a | 1;
+				next_state <= s_INSTR_DONE;
+			end
+			else begin
+				car <= car >> `CA_LENGTH;
+				state <= s_INSTR_DONE;
+			end
+		end
+
 		s_MUL_WAIT: begin
 			if (mul_done) begin
 				if (!mul_busy) begin
@@ -684,6 +754,22 @@ always @(posedge clk) begin
 				else begin
 					stack_index <= stack_index + 1;
 					stack_peek_en <= 1;
+				end
+			end
+			else
+				step_counter <= step_counter - 1;
+		end
+
+		s_PRINT_CSTACK_STEP: begin
+			if (step_counter == 0) begin
+				$display("    %d: %d", cstack_index, cstack_data_out);
+				if (cstack_index == cstack_depth - 1) begin
+					state <= s_INSTR_DONE;
+					$display("PRINT_CSTACK end, car %b", car);
+				end
+				else begin
+					cstack_index <= cstack_index + 1;
+					cstack_peek_en <= 1;
 				end
 			end
 			else
