@@ -48,7 +48,7 @@ bram_read_async_inst (
 
 always @(posedge clk) begin
 	if (!rst_n) begin
-		$display("stack rst_n");
+		//$display("stack rst_n");
 		addr_write <= 0;
 	end
 	else begin

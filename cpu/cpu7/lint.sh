@@ -47,6 +47,7 @@ if [ -d "${DIR}/ice40_272p" ]; then
 		echo "##   Checking ${f}";
 		verilator --lint-only --timing -Wall -I${DIR} -I${DIR}/ice40_272p \
 			-I${LIB}/3rd_party/Tiny_But_Mighty_I2C_Master_Verilog/rtl \
+			-I${LIB}/3rd_party/zipcpu/rtl/core \
 			-I${LIB}/clock	 -I${LIB}/clock/ice40 \
 			-I${LIB}/display   -I${LIB}/display/ice40 \
 			-I${LIB}/essential -I${LIB}/essential/ice40 \

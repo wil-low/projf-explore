@@ -16,7 +16,7 @@ module cpu7_soc #(
 (
 	input logic rst_n,
 	input logic clk,
-	output logic [7:0] trace
+	output logic [11:0] trace
 );
 
 logic [$clog2(CORES) - 1:0] pxr = 0;  // process index register (core index in fact)
@@ -24,6 +24,7 @@ logic [63:0] dlyc;  // free-running incremental delay counter
 
 // active core data
 logic [CORES - 1:0] acore_en;			// hot-one mask
+logic [9 * CORES - 1: 0] acore_errcode;
 logic [CORES - 1: 0] acore_executing;
 logic [CORES - 1: 0] acore_idle;		// core finished executing a command
 logic [28 * CORES - 1:0] acore_pcp;		// program code pointers
@@ -42,7 +43,8 @@ logic write_en = 0;
 
 assign addr_read = acore_pcp[(pxr + 1) * 28 - 1 -: 28];
 
-assign trace = addr_read;
+assign trace[7:0] = addr_read;
+assign trace[11:8] = state;
 
 bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE), .INIT_F(INIT_F))
 bram_read_async (
@@ -59,15 +61,26 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.CALL_STACK_DEPTH(CALL_STACK_DEPTH),
 		.CORE_INDEX(i)
 	) core_inst (
-		.rst_n(rst_n), .clk, .en(acore_en[i]),
-		.push_value, .push_en, .instr, .instr_en, .pcp_step_en,
-		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]), .executing(acore_executing[i]),
-		.acore_idle(acore_idle[i])
+		.rst_n(rst_n),
+		.clk,
+		.en(acore_en[i]),
+		.push_value,
+		.push_en,
+		.instr,
+		.instr_en,
+		.pcp_step_en,
+		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]),
+		.executing(acore_executing[i]),
+		.errcode(acore_errcode[(i + 1) * 9 - 1 -: 9]),
+		.idle(acore_idle[i])
 	);
 end
 endgenerate
 
-enum {s_RESET, s_BEFORE_READ, s_READ_WORD, s_DECODE_WORD, s_WAIT_CORE, s_NEXT_CORE} state, next_state;
+enum {s_RESET, s_HALT,
+	s_BEFORE_READ, s_READ_WORD, s_DECODE_WORD,
+	s_WAIT_CORE, s_NEXT_CORE
+} state, next_state;
 
 logic [55:0] read_accum;
 logic [13:0] bit_counter;
@@ -132,8 +145,25 @@ always @(posedge clk) begin
 		end
 		
 		s_NEXT_CORE: begin
-			$display("\n==== Next core ====");
-			state <= s_BEFORE_READ;
+			if (|acore_errcode) begin  // errcode detected (always on active core)
+				$display("\nCPU reset from core %d: errcode %h, addr %d",
+					pxr,
+					acore_errcode[(pxr + 1) * 9 - 1 -: 9],
+					acore_pcp[(pxr + 1) * 28 - 1 -: 28] * 2);
+				$display("Halt.\n");
+				//`ifdef SIMULATION
+				//	$finish;
+				//`else
+					state <= s_HALT;
+				//`endif
+			end
+			else begin
+				$display("\n==== Next core ====");
+				state <= s_BEFORE_READ;
+			end
+		end
+
+		s_HALT: begin
 		end
 		
 		default:

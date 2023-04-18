@@ -22,7 +22,8 @@ module core #(
 	input logic pcp_step_en,		// advance pcp by 2
 	output logic [27:0] pcp,		// program code pointer (...0)
 	output logic executing,			// core status by condition action register
-	output logic acore_idle			// core finished executing a command
+	output logic [8:0] errcode,		// core errcode
+	output logic idle			// core finished executing a command
 );
 
 logic [31:0] car; // conditional action register
@@ -79,15 +80,16 @@ stack_inst(
 logic cstack_rst_n = 1;
 logic cstack_push_en = 0;			// push enable (add on top)
 logic cstack_pop_en = 0;			// pop enable (remove from top)
-logic cstack_peek_en = 0;			// peek enable (return item at index, no change)
-logic cstack_poke_en = 0;			// poke enable (replace item at index)
+//logic cstack_peek_en = 0;			// peek enable (return item at index, no change)
+//logic cstack_poke_en = 0;			// poke enable (replace item at index)
 logic [55:0] cstack_data_in;			// data to push|poke
 logic [55:0] cstack_data_out; 		// data returned for pop|peek
 logic cstack_full;					// buffer is full
 logic cstack_empty;					// buffer is empty
-logic [$clog2(DATA_STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
-logic [$clog2(DATA_STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
+//logic [$clog2(DATA_STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
+//logic [$clog2(DATA_STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
 
+/* verilator lint_off PINCONNECTEMPTY */
 stack #(.WIDTH(28), .DEPTH(CALL_STACK_DEPTH))
 cstack_inst(
 	.clk,
@@ -101,8 +103,9 @@ cstack_inst(
 	.data_out(cstack_data_out),
 	.full(cstack_full),
 	.empty(cstack_empty),
-	.depth(cstack_depth)
+	.depth()
 );
+/* verilator lint_on PINCONNECTEMPTY */
 
 //============ Multiplication: Unsigned Integer ============
 logic mul_en = 0;
@@ -112,6 +115,7 @@ logic [55:0] mul_a;
 logic [55:0] mul_b;
 logic [55:0] mul_val;
 
+/* verilator lint_off PINCONNECTEMPTY */
 slowmpy #(
 	.LGNA(6), .NA(56), .OPT_SIGNED(1'b0)
 )
@@ -127,6 +131,7 @@ slowmpy_inst(
 	.o_p(mul_val),
 	.o_aux()
 );
+/* verilator lint_on PINCONNECTEMPTY */
 
 //============ Division: Unsigned Integer with Remainder ============
 logic divu_en = 0;
@@ -139,11 +144,13 @@ logic [55:0] divu_b;
 logic [55:0] divu_val;
 logic [55:0] divu_rem;
 
+/* verilator lint_off PINCONNECTEMPTY */
 divu_int #(.WIDTH(56))
 divu_int_inst(
 	.clk,
 	.rst(~rst_n),
 	.start(divu_en),
+	.busy(divu_busy),
 	.done(divu_done),
 	.valid(divu_valid),
 	.dbz(divu_dbz),
@@ -152,6 +159,7 @@ divu_int_inst(
 	.val(divu_val),
 	.rem(divu_rem)
 );
+/* verilator lint_on PINCONNECTEMPTY */
 
 //============ State machine ============
 enum {
@@ -164,20 +172,18 @@ enum {
 } state, next_state;
 
 assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EXEC);
-assign acore_idle = (state == s_IDLE) && !push_en && !instr_en;
+assign idle = (state == s_IDLE) && !push_en && !instr_en;
 
 logic instr_counter;
 logic [$clog2(DATA_STACK_DEPTH) - 1:0] step_counter;  // for multi-step instructions
 logic [6:0] opcode;  // for generalized instructions
 
 task reset;
-input [13:0] errcode;
+input [13:0] ec;
 begin
-	$display("\nCPU reset: errcode %h, addr %d", errcode, pcp);
-	$display("Halt.\n");
-`ifdef SIMULATION
-	$finish;
-`endif
+	errcode <= ec;
+	state <= s_IDLE;
+	//$display("\nError in core #%d: errcode %h, addr %d", CORE_INDEX, ec, pcp * 2);
 end
 endtask
 
@@ -186,7 +192,7 @@ always @(posedge clk) begin
 	stack_rst_n <= 1;
 
 	if (!rst_n) begin
-		{csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, pcp} <= 0;
+		{csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, pcp, errcode} <= 0;
 		car <= `CA_NONE;
 		state <= s_IDLE;
 	end
