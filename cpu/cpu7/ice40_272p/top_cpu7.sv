@@ -28,8 +28,8 @@ always @(posedge CLK) begin
 end
 
 cpu7_soc #(
-	.CORES(4),
-	.PROGRAM_SIZE(1024),
+	.CORES(1),
+	.PROGRAM_SIZE(128),
 	.DATA_STACK_DEPTH(8),
 	.CALL_STACK_DEPTH(8),
 	.VREGS(8),

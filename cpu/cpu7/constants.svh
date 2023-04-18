@@ -176,6 +176,7 @@
 
 `define i_PRINT_STACK 'h02
 `define i_PRINT_CSTACK 'h0a
+`define i_TRACE 'h10			// top of stack copied to trace[7:0]
 
 
 `ifdef SIMULATION
@@ -223,8 +224,6 @@ begin
 	`i_NTCALL          : opcode2str = "NTCALL";
 	`i_OR              : opcode2str = "OR";
 	`i_OVER            : opcode2str = "OVER";
-	`i_PRINT_CSTACK    : opcode2str = "PRINT_CSTACK";
-	`i_PRINT_STACK     : opcode2str = "PRINT_STACK";
 	`i_RANDOM          : opcode2str = "RANDOM";
 	`i_RD16            : opcode2str = "RD16";
 	`i_RD32            : opcode2str = "RD32";
@@ -254,6 +253,9 @@ begin
 	`i_WR32            : opcode2str = "WR32";
 	`i_WR8             : opcode2str = "WR8";
 	`i_XOR             : opcode2str = "XOR";
+	`i_PRINT_CSTACK    : opcode2str = "PRINT_CSTACK";
+	`i_PRINT_STACK     : opcode2str = "PRINT_STACK";
+	`i_TRACE           : opcode2str = "TRACE";
 	default            : opcode2str = "???";
 	endcase
 end

@@ -24,7 +24,8 @@ module core #(
 	output logic [27:0] pcp,		// program code pointer (...0)
 	output logic executing,			// core status by condition action register
 	output logic [8:0] errcode,		// core errcode
-	output logic idle			// core finished executing a command
+	output logic [7:0] trace,		// core trace
+	output logic idle				// core finished executing a command
 );
 
 logic [31:0] car; // conditional action register
@@ -168,7 +169,8 @@ enum {
 	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_1, s_OP_2,
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
-	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
+	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP,
+	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
 	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_STEP0, s_UNTIL_STEP1
 } state, next_state;
 
@@ -180,7 +182,7 @@ logic [$clog2(DATA_STACK_DEPTH) - 1:0] step_counter;  // for multi-step instruct
 logic [6:0] opcode;  // for generalized instructions
 
 task reset;
-input [13:0] ec;
+input [9:0] ec;
 begin
 	errcode <= ec;
 	state <= s_IDLE;
@@ -198,6 +200,7 @@ always @(posedge clk) begin
 	if (!rst_n) begin
 		{csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, cstack_rst_n, pcp, errcode} <= 0;
 		car <= `CA_NONE;
+		trace <= ~0;
 		state <= s_IDLE;
 	end
 	else if (en) begin
@@ -269,7 +272,7 @@ always @(posedge clk) begin
 		end
 		
 		s_PEEK_PROC: begin
-			$display("PEEK at %d", stack_index);
+			$display("PEEK at %d, depth %d", stack_index, stack_depth);
 			if (stack_index >= stack_depth) begin
 				reset(`ERR_DSINDEX);
 			end
@@ -337,6 +340,16 @@ always @(posedge clk) begin
 					cstack_peek_en <= 1;
 					step_counter <= 1;
 					state <= s_PRINT_CSTACK_STEP;
+				end
+			end
+
+			`i_TRACE: begin
+				if (stack_empty)
+					trace <= ~0;
+				else begin
+					stack_index <= 0;
+					state <= s_PEEK_PROC;
+					next_state <= s_TRACE_STEP;
 				end
 			end
 
@@ -774,6 +787,11 @@ always @(posedge clk) begin
 			end
 			else
 				step_counter <= step_counter - 1;
+		end
+
+		s_TRACE_STEP: begin
+			trace <= stack_data_out;
+			state <= s_INSTR_DONE;
 		end
 
 		default:

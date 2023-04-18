@@ -28,6 +28,7 @@ logic [9 * CORES - 1: 0] acore_errcode;
 logic [CORES - 1: 0] acore_executing;
 logic [CORES - 1: 0] acore_idle;		// core finished executing a command
 logic [28 * CORES - 1:0] acore_pcp;		// program code pointers
+logic [8 * CORES - 1:0] acore_trace;	// trace from cores
 
 logic [55:0] push_value;
 logic push_en;
@@ -43,7 +44,7 @@ logic write_en = 0;
 
 assign addr_read = acore_pcp[(pxr + 1) * 28 - 1 -: 28];
 
-assign trace[7:0] = addr_read;
+assign trace[7:0] = acore_trace[(pxr + 1) * 8 - 1 -: 8];
 assign trace[11:8] = state;
 
 bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE), .INIT_F(INIT_F))
@@ -74,6 +75,7 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]),
 		.executing(acore_executing[i]),
 		.errcode(acore_errcode[(i + 1) * 9 - 1 -: 9]),
+		.trace(acore_trace[(i + 1) * 8 - 1 -: 8]),
 		.idle(acore_idle[i])
 	);
 end
