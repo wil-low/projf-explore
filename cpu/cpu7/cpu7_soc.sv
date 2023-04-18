@@ -7,7 +7,10 @@
 
 module cpu7_soc #(
 	parameter CORES = 4,
-	parameter PROGRAM_SIZE = 256,
+	parameter PROGRAM_SIZE = 1024,
+	parameter DATA_STACK_DEPTH = 8,
+	parameter CALL_STACK_DEPTH = 8,
+	parameter VREGS = 8,
 	parameter INIT_F = ""
 )
 (
@@ -51,7 +54,11 @@ bram_read_async (
 genvar i;
 generate
 for (i = 0; i < CORES; i = i + 1) begin : generate_core
-	core #(.IDX(i)) core_inst (
+	core #(
+		.VREGS(VREGS), .DATA_STACK_DEPTH(DATA_STACK_DEPTH),
+		.CALL_STACK_DEPTH(CALL_STACK_DEPTH),
+		.CORE_INDEX(i)
+	) core_inst (
 		.rst_n(rst_n), .clk, .en(acore_en[i]),
 		.push_value, .push_en, .instr, .instr_en, .pcp_step_en,
 		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]), .executing(acore_executing[i]),

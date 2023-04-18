@@ -6,7 +6,10 @@
 `include "constants.svh"
 
 module core #(
-	parameter IDX = -1
+	parameter VREGS = 8,			// number of V-registers in this realisation
+	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
+	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
+	parameter CORE_INDEX = -1
 )
 (
 	input logic rst_n,
@@ -21,10 +24,6 @@ module core #(
 	output logic executing,			// core status by condition action register
 	output logic acore_idle			// core finished executing a command
 );
-
-localparam VREGS = 8;  // number of V-registers in this realisation
-localparam STACK_DEPTH = 8;		// max item count in data stack
-localparam CSTACK_DEPTH = 32;	// max item count in call stack
 
 logic [31:0] car; // conditional action register
 					// only the two lowest order bits are monitored to determine the current condition
@@ -58,10 +57,10 @@ logic [55:0] stack_data_in;			// data to push|poke
 logic [55:0] stack_data_out; 		// data returned for pop|peek
 logic stack_full;					// buffer is full
 logic stack_empty;					// buffer is empty
-logic [$clog2(STACK_DEPTH):0] stack_index;  // element index t (0 is top)
-logic [$clog2(STACK_DEPTH):0] stack_depth;  // returns how many items are in stack
+logic [$clog2(DATA_STACK_DEPTH):0] stack_index;  // element index t (0 is top)
+logic [$clog2(DATA_STACK_DEPTH):0] stack_depth;  // returns how many items are in stack
 
-stack #(.WIDTH(56), .DEPTH(STACK_DEPTH))
+stack #(.WIDTH(56), .DEPTH(DATA_STACK_DEPTH))
 stack_inst(
 	.clk,
 	.rst_n(stack_rst_n),
@@ -87,18 +86,18 @@ logic [55:0] cstack_data_in;			// data to push|poke
 logic [55:0] cstack_data_out; 		// data returned for pop|peek
 logic cstack_full;					// buffer is full
 logic cstack_empty;					// buffer is empty
-logic [$clog2(STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
-logic [$clog2(STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
+logic [$clog2(DATA_STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
+logic [$clog2(DATA_STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
 
-stack #(.WIDTH(28), .DEPTH(CSTACK_DEPTH))
+stack #(.WIDTH(28), .DEPTH(CALL_STACK_DEPTH))
 cstack_inst(
 	.clk,
 	.rst_n(cstack_rst_n),
 	.push_en(cstack_push_en),
 	.pop_en(cstack_pop_en),
-	//.peek_en(cstack_peek_en),
-	//.poke_en(cstack_poke_en),
-	//.index(cstack_index),
+	.peek_en(),
+	.poke_en(),
+	.index(),
 	.data_in(cstack_data_in),
 	.data_out(cstack_data_out),
 	.full(cstack_full),
@@ -106,11 +105,46 @@ cstack_inst(
 	.depth(cstack_depth)
 );
 
+//============ Multiplication: Unsigned Integer ============
+logic mul_en = 0;
+logic mul_busy;
+logic mul_done;
+logic [55:0] mul_a;
+logic [55:0] mul_b;
+logic [55:0] mul_val;
+
+slowmpy #(
+	.LGNA(6), .NA(56), .OPT_SIGNED(1'b0)
+)
+slowmpy_inst(
+	.i_clk(clk), .i_reset(~rst_n), .i_stb(mul_en), .i_a(mul_a), .i_b(mul_b),
+	.i_aux(), .o_busy(mul_busy), .o_done(mul_done), .o_p(mul_val), .o_aux()
+);
+
+//============ Division: Unsigned Integer with Remainder ============
+logic divu_en = 0;
+logic divu_busy;
+logic divu_done;
+logic divu_valid;
+logic divu_dbz;
+logic [55:0] divu_a;
+logic [55:0] divu_b;
+logic [55:0] divu_val;
+logic [55:0] divu_rem;
+
+divu_int #(.WIDTH(56))
+divu_int_inst(
+	.clk, .rst(~rst_n),
+	.start(divu_en), .done(divu_done), .valid(divu_valid), .dbz(divu_dbz),
+	.a(divu_a), .b(divu_b), .val(divu_val), .rem(divu_rem)
+);
+
 //============ State machine ============
 enum {
 	s_IDLE, s_INSTR, s_INSTR_DONE,
 	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_1, s_OP_2,
+	s_MUL_WAIT, s_DIV_MOD_WAIT,
 	s_DUP_STEP, s_PRINT_STACK_STEP, s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
 	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1
 } state, next_state;
@@ -119,7 +153,7 @@ assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EX
 assign acore_idle = (state == s_IDLE) && !push_en && !instr_en;
 
 logic instr_counter;
-logic [$clog2(STACK_DEPTH) - 1:0] step_counter;  // for multi-step instructions
+logic [$clog2(DATA_STACK_DEPTH) - 1:0] step_counter;  // for multi-step instructions
 logic [6:0] opcode;  // for generalized instructions
 
 task reset;
@@ -134,7 +168,7 @@ end
 endtask
 
 always @(posedge clk) begin
-	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en} <= 0;
+	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en, mul_en, divu_en} <= 0;
 	stack_rst_n <= 1;
 
 	if (!rst_n) begin
@@ -143,7 +177,7 @@ always @(posedge clk) begin
 		state <= s_IDLE;
 	end
 	else if (en) begin
-		//$display("  core %d pcp %d, state %d, next %d, pcp_step_en %b", IDX, pcp, state, next_state, pcp_step_en);
+		//$display("  core %d pcp %d, state %d, next %d, pcp_step_en %b", CORE_INDEX, pcp, state, next_state, pcp_step_en);
 
 		case (state)
 
@@ -462,17 +496,22 @@ always @(posedge clk) begin
 				`i_SUB:
 					stack_data_in <= stack_data_out - r_a;
 				`i_MUL:
-					stack_data_in <= stack_data_out * r_a;
-				`i_DIV:
-					if (r_a == 0)
-						reset(`ERR_CALC);
-					else
-						stack_data_in <= stack_data_out / r_a;
+					begin
+						mul_a <= stack_data_out;
+						mul_b <= r_a;
+						mul_en <= 1;
+						state <= s_MUL_WAIT;
+					end
+				`i_DIV,
 				`i_MOD:
 					if (r_a == 0)
 						reset(`ERR_CALC);
-					else
-						stack_data_in <= stack_data_out % r_a;
+					else begin
+						divu_a <= stack_data_out;
+						divu_b <= r_a;
+						divu_en <= 1;
+						state <= s_DIV_MOD_WAIT;
+					end
 				default:
 					reset(`ERR_INVALID);
 				endcase
@@ -591,6 +630,30 @@ always @(posedge clk) begin
 			next_state <= s_INSTR_DONE;
 		end
 		
+		s_MUL_WAIT: begin
+			if (mul_done) begin
+				if (!mul_busy) begin
+					stack_data_in <= mul_val;
+					state <= s_PUSH_PROC;
+					next_state <= s_INSTR_DONE;
+				end
+				else
+					reset(`ERR_CALC);
+			end
+		end
+
+		s_DIV_MOD_WAIT: begin
+			if (divu_done) begin
+				if (divu_valid && !divu_dbz) begin
+					stack_data_in <= (opcode == `i_DIV) ? divu_val : divu_rem;
+					state <= s_PUSH_PROC;
+					next_state <= s_INSTR_DONE;
+				end
+				else
+					reset(`ERR_CALC);
+			end
+		end
+
 		s_PRINT_STACK_STEP: begin
 			if (step_counter == 0) begin
 				$display("    %d: %d", stack_index, stack_data_out);

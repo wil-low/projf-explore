@@ -15,8 +15,12 @@ logic clk;
 // generate clock
 always #(CLK_PERIOD / 2) clk <= ~clk;
 
-cpu7_soc #(.CORES(4), .INIT_F(INIT_F))
-	cpu7_soc_inst (.rst_n, .clk);
+cpu7_soc #(
+	.CORES(4), .PROGRAM_SIZE(1024), .VREGS(8),
+	.DATA_STACK_DEPTH(8), .CALL_STACK_DEPTH(8),
+	.INIT_F(INIT_F)
+)
+cpu7_soc_inst (.rst_n, .clk);
 
 initial begin
 	$dumpfile("top_cpu7_tb.vcd");
@@ -30,7 +34,7 @@ initial begin
 	#2;
 	$display("rst_n %b", rst_n);
 
-	#500 $finish;
+	#2000 $finish;
 end
 
 logic _unused_ok = &{1'b1, 1'b0};
