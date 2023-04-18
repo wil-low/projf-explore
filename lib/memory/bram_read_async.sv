@@ -6,15 +6,14 @@
 `timescale 1ns / 1ps
 
 module bram_read_async #(
-    parameter WIDTH=8, 
-    parameter DEPTH=512, 
-    parameter INIT_F="",
-    localparam ADDRW=$clog2(DEPTH)
+    parameter WIDTH = 8, 
+    parameter DEPTH = 512, 
+    parameter INIT_F = ""
     ) (
     input wire logic clk,
     input wire logic we,
-    input wire logic [ADDRW-1:0] addr_write,
-    input wire logic [ADDRW-1:0] addr_read,
+    input wire logic [$clog2(DEPTH)-1:0] addr_write,
+    input wire logic [$clog2(DEPTH)-1:0] addr_read,
     input wire logic [WIDTH-1:0] data_in,
     output     logic [WIDTH-1:0] data_out
     );

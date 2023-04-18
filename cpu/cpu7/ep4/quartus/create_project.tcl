@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Sun Apr 16 09:31:08 2023
+# Generated on: Tue Apr 18 08:37:32 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -78,6 +78,9 @@ if {$make_assignments} {
 	set_global_assignment -name SEARCH_PATH ../../../../lib/memory
 	set_global_assignment -name SEARCH_PATH ../../../../lib/essential
 	set_global_assignment -name SEARCH_PATH ../../ice40_272p
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/maths/divu_int.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_read_async.sv
+	set_global_assignment -name VERILOG_FILE ../../../../lib/3rd_party/zipcpu/rtl/core/slowmpy.v
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../cpu7_soc.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_sdp.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/container/stack.sv

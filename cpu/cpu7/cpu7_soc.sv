@@ -34,8 +34,8 @@ logic [13:0] instr;
 logic instr_en;
 logic pcp_step_en;
 
-logic [13:0] addr_read;
-logic [13:0] addr_write = 0;
+logic [$clog2(PROGRAM_SIZE) - 1 : 0] addr_read;
+logic [$clog2(PROGRAM_SIZE) - 1 : 0] addr_write = 0;
 logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
