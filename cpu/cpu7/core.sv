@@ -28,6 +28,8 @@ module core #(
 	output logic idle				// core finished executing a command
 );
 
+localparam MUL_DIV_DATA_WIDTH = 28; //56
+
 logic [31:0] car; // conditional action register
 					// only the two lowest order bits are monitored to determine the current condition
 logic [55:0] r_a; // register R0 (A)
@@ -119,7 +121,7 @@ logic [55:0] mul_val;
 
 /* verilator lint_off PINCONNECTEMPTY */
 slowmpy #(
-	.LGNA(6), .NA(56), .OPT_SIGNED(1'b0)
+	.LGNA(6), .NA(MUL_DIV_DATA_WIDTH), .OPT_SIGNED(1'b0)
 )
 slowmpy_inst(
 	.i_clk(clk),
@@ -141,13 +143,13 @@ logic divu_busy;
 logic divu_done;
 logic divu_valid;
 logic divu_dbz;
-logic [55:0] divu_a;
-logic [55:0] divu_b;
-logic [55:0] divu_val;
-logic [55:0] divu_rem;
+logic [MUL_DIV_DATA_WIDTH:0] divu_a;
+logic [MUL_DIV_DATA_WIDTH:0] divu_b;
+logic [MUL_DIV_DATA_WIDTH:0] divu_val;
+logic [MUL_DIV_DATA_WIDTH:0] divu_rem;
 
 /* verilator lint_off PINCONNECTEMPTY */
-divu_int #(.WIDTH(56))
+divu_int #(.WIDTH(MUL_DIV_DATA_WIDTH))
 divu_int_inst(
 	.clk,
 	.rst(~rst_n),
@@ -320,27 +322,31 @@ always @(posedge clk) begin
 			end
 
 			`i_PRINT_STACK: begin
-				$display("PRINT_STACK (depth %d):", stack_depth);
-				if (stack_empty)
-					$display("PRINT_STACK end");
-				else begin
-					stack_index <= 0;
-					stack_peek_en <= 1;
-					step_counter <= 1;
-					state <= s_PRINT_STACK_STEP;
-				end
+				`ifdef SIMULATION
+					$display("PRINT_STACK (depth %d):", stack_depth);
+					if (stack_empty)
+						$display("PRINT_STACK end");
+					else begin
+						stack_index <= 0;
+						stack_peek_en <= 1;
+						step_counter <= 1;
+						state <= s_PRINT_STACK_STEP;
+					end
+				`endif
 			end
 
 			`i_PRINT_CSTACK: begin
-				$display("PRINT_CSTACK (depth %d):", cstack_depth);
-				if (cstack_empty)
-					$display("PRINT_CSTACK end");
-				else begin
-					cstack_index <= 0;
-					cstack_peek_en <= 1;
-					step_counter <= 1;
-					state <= s_PRINT_CSTACK_STEP;
-				end
+				`ifdef SIMULATION
+					$display("PRINT_CSTACK (depth %d):", cstack_depth);
+					if (cstack_empty)
+						$display("PRINT_CSTACK end");
+					else begin
+						cstack_index <= 0;
+						cstack_peek_en <= 1;
+						step_counter <= 1;
+						state <= s_PRINT_CSTACK_STEP;
+					end
+				`endif
 			end
 
 			`i_TRACE: begin
@@ -758,35 +764,43 @@ always @(posedge clk) begin
 		end
 
 		s_PRINT_STACK_STEP: begin
-			if (step_counter == 0) begin
-				$display("    %d: %d", stack_index, stack_data_out);
-				if (stack_index == stack_depth - 1) begin
-					state <= s_INSTR_DONE;
-					$display("PRINT_STACK end");
+			`ifdef SIMULATION
+				if (step_counter == 0) begin
+					$display("    %d: %d", stack_index, stack_data_out);
+					if (stack_index == stack_depth - 1) begin
+						state <= s_INSTR_DONE;
+						$display("PRINT_STACK end");
+					end
+					else begin
+						stack_index <= stack_index + 1;
+						stack_peek_en <= 1;
+					end
 				end
-				else begin
-					stack_index <= stack_index + 1;
-					stack_peek_en <= 1;
-				end
-			end
-			else
-				step_counter <= step_counter - 1;
+				else
+					step_counter <= step_counter - 1;
+			`else
+				state <= s_INSTR_DONE;
+			`endif
 		end
 
 		s_PRINT_CSTACK_STEP: begin
-			if (step_counter == 0) begin
-				$display("    %d: %d", cstack_index, cstack_data_out);
-				if (cstack_index == cstack_depth - 1) begin
-					state <= s_INSTR_DONE;
-					$display("PRINT_CSTACK end, car %b", car);
+			`ifdef SIMULATION
+				if (step_counter == 0) begin
+					$display("    %d: %d", cstack_index, cstack_data_out);
+					if (cstack_index == cstack_depth - 1) begin
+						state <= s_INSTR_DONE;
+						$display("PRINT_CSTACK end, car %b", car);
+					end
+					else begin
+						cstack_index <= cstack_index + 1;
+						cstack_peek_en <= 1;
+					end
 				end
-				else begin
-					cstack_index <= cstack_index + 1;
-					cstack_peek_en <= 1;
-				end
-			end
-			else
-				step_counter <= step_counter - 1;
+				else
+					step_counter <= step_counter - 1;
+			`else
+				state <= s_INSTR_DONE;
+			`endif
 		end
 
 		s_TRACE_STEP: begin
