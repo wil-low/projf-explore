@@ -87,10 +87,11 @@ always @(posedge clk) begin
 			pxr <= 0;
 			acore_en <= 1 << pxr;  // first core
 			state <= s_BEFORE_READ;
+			$display("\n=== Restart after RESET ===");
 		end
 
 		s_BEFORE_READ: begin
-			$display("s_BEFORE_READ addr_read %d, acore %d", addr_read, pxr);
+			//$display("s_BEFORE_READ addr_read %d, acore %d", addr_read, pxr);
 			read_accum <= 0;
 			bit_counter <= 0;
 			state <= s_READ_WORD;
@@ -103,7 +104,7 @@ always @(posedge clk) begin
 		end
 
 		s_DECODE_WORD: begin
-			$display("s_DECODE_WORD addr_read %d, data_out %h, read_accum %h, pxr %d", addr_read, data_out, read_accum, pxr);
+			//$display("s_DECODE_WORD addr_read %d, data_out %h, read_accum %h, pxr %d", addr_read, data_out, read_accum, pxr);
 			bit_counter <= bit_counter + 14;
 			pcp_step_en <= 1;
 			state <= s_WAIT_CORE;
@@ -113,13 +114,13 @@ always @(posedge clk) begin
 					instr <= data_out & `MASK14;
 					instr_en <= 1;
 					next_state <= s_NEXT_CORE;
-					$display("instr_en %h", data_out & `MASK14);
+					//$display("instr_en %h", data_out & `MASK14);
 				end
 				else if (((data_out & `WT_MASK) != `WT_IGN) && acore_executing[pxr]) begin
 					push_value <= read_accum;
 					push_en <= 1;
 					next_state <= s_NEXT_CORE;
-					$display("push_en %h", read_accum);
+					//$display("push_en %h", read_accum);
 				end
 			end
 		end
@@ -131,7 +132,7 @@ always @(posedge clk) begin
 		end
 		
 		s_NEXT_CORE: begin
-			$display("==== Next core ====");
+			$display("\n==== Next core ====");
 			state <= s_BEFORE_READ;
 		end
 		

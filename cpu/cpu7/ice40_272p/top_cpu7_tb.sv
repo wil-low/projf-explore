@@ -27,12 +27,12 @@ initial begin
 	$dumpvars(0, top_cpu7_tb);
 	rst_n = 0;
 	clk = 1;
-	$display("rst_n %b", rst_n);
+	//$display("rst_n %b", rst_n);
 
 	#2 rst_n = 1;
 
 	#2;
-	$display("rst_n %b", rst_n);
+	//$display("rst_n %b", rst_n);
 
 	#2000 $finish;
 end

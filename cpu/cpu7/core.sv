@@ -46,7 +46,6 @@ logic [13:0] ppr; // process priority register
 logic [63:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
 logic [63:0] v_r[VREGS]; // variable registers
 
-
 //============ Data stack ============
 logic stack_rst_n = 1;
 logic stack_push_en = 0;			// push enable (add on top)
@@ -117,8 +116,16 @@ slowmpy #(
 	.LGNA(6), .NA(56), .OPT_SIGNED(1'b0)
 )
 slowmpy_inst(
-	.i_clk(clk), .i_reset(~rst_n), .i_stb(mul_en), .i_a(mul_a), .i_b(mul_b),
-	.i_aux(), .o_busy(mul_busy), .o_done(mul_done), .o_p(mul_val), .o_aux()
+	.i_clk(clk),
+	.i_reset(~rst_n),
+	.i_stb(mul_en),
+	.i_a(mul_a),
+	.i_b(mul_b),
+	.i_aux(),
+	.o_busy(mul_busy),
+	.o_done(mul_done),
+	.o_p(mul_val),
+	.o_aux()
 );
 
 //============ Division: Unsigned Integer with Remainder ============
@@ -134,9 +141,16 @@ logic [55:0] divu_rem;
 
 divu_int #(.WIDTH(56))
 divu_int_inst(
-	.clk, .rst(~rst_n),
-	.start(divu_en), .done(divu_done), .valid(divu_valid), .dbz(divu_dbz),
-	.a(divu_a), .b(divu_b), .val(divu_val), .rem(divu_rem)
+	.clk,
+	.rst(~rst_n),
+	.start(divu_en),
+	.done(divu_done),
+	.valid(divu_valid),
+	.dbz(divu_dbz),
+	.a(divu_a),
+	.b(divu_b),
+	.val(divu_val),
+	.rem(divu_rem)
 );
 
 //============ State machine ============
@@ -159,7 +173,7 @@ logic [6:0] opcode;  // for generalized instructions
 task reset;
 input [13:0] errcode;
 begin
-	$display("CPU reset: errcode %h, addr %d", errcode, pcp);
+	$display("\nCPU reset: errcode %h, addr %d", errcode, pcp);
 	$display("Halt.\n");
 `ifdef SIMULATION
 	$finish;
@@ -201,7 +215,7 @@ always @(posedge clk) begin
 		end
 
 		s_CALL_PUSH_PROC: begin
-			$display("CALL_PUSH_PROC %h", cstack_data_in);
+			$display("CALL_PUSH %hd", cstack_data_in);
 			if (cstack_full) begin
 				reset(`ERR_CSFULL);
 			end
@@ -212,7 +226,7 @@ always @(posedge clk) begin
 		end
 		
 		s_CALL_POP_PROC: begin
-			$display("CALL_POP_PROC");
+			$display("CALL_POP");
 			if (cstack_empty) begin
 				reset(`ERR_CSEMPTY);
 			end
@@ -223,7 +237,7 @@ always @(posedge clk) begin
 		end
 		
 		s_PUSH_PROC: begin
-			$display("PUSH_PROC %h", stack_data_in);
+			$display("PUSH %d", stack_data_in);
 			if (stack_full) begin
 				reset(`ERR_DSFULL);
 			end
@@ -234,7 +248,7 @@ always @(posedge clk) begin
 		end
 		
 		s_POP_PROC: begin
-			$display("POP_PROC");
+			$display("POP");
 			if (stack_empty) begin
 				reset(`ERR_DSEMPTY);
 			end
@@ -245,7 +259,7 @@ always @(posedge clk) begin
 		end
 		
 		s_PEEK_PROC: begin
-			$display("PEEK_PROC at %d", stack_index);
+			$display("PEEK at %d", stack_index);
 			if (stack_index >= stack_depth) begin
 				reset(`ERR_DSINDEX);
 			end
@@ -256,7 +270,7 @@ always @(posedge clk) begin
 		end
 		
 		s_POKE_PROC: begin
-			$display("POKE_PROC at %d: %h", stack_index, stack_data_in);
+			$display("POKE at %d: %d", stack_index, stack_data_in);
 			if (stack_index >= stack_depth) begin
 				reset(`ERR_DSINDEX);
 			end
@@ -267,7 +281,7 @@ always @(posedge clk) begin
 		end
 
 		s_INSTR: begin
-			$display("\ninstr %h %s", opcode, opcode2str(opcode));
+			$display("instr %h %s", opcode, opcode2str(opcode));
 			state <= s_INSTR_DONE;
 
 			case (opcode)
@@ -293,7 +307,7 @@ always @(posedge clk) begin
 			end
 
 			`i_PRINT_STACK: begin
-				$display("PRINT_STACK depth %d", stack_depth);
+				$display("PRINT_STACK (depth %d):", stack_depth);
 				if (stack_empty)
 					$display("PRINT_STACK end");
 				else begin
@@ -407,7 +421,7 @@ always @(posedge clk) begin
 		end
 
 		s_INSTR_DONE: begin
-			$display("instr %d done\n", instr_counter);
+			$display("");
 			if (instr_counter == 0) begin
 				state <= s_IDLE;
 			end
@@ -426,14 +440,14 @@ always @(posedge clk) begin
 		end
 
 		s_OP_1: begin
-			$display("OP_1 for opcode %h", opcode);
+			//$display("OP_1 for opcode %h", opcode);
 			stack_index <= 0;
 			state <= s_PEEK_PROC;
 			next_state <= s_OP_1_STEP;
 		end
 
 		s_OP_1_STEP: begin
-			$display("OP_1_STEP for opcode %h", opcode);
+			//$display("OP_1_STEP for opcode %h", opcode);
 			case (opcode)
 			`i_COM:
 				stack_data_in <= 1 + ~stack_data_out;
@@ -451,7 +465,7 @@ always @(posedge clk) begin
 		end
 
 		s_OP_2: begin
-			$display("OP_2 for opcode %h", opcode);
+			//$display("OP_2 for opcode %h", opcode);
 			step_counter <= 3;
 			state <= s_OP_2_STEP;
 		end
