@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Tue Apr 18 08:37:32 2023
+# Generated on: Wed Apr 19 13:22:53 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -91,17 +91,7 @@ if {$make_assignments} {
 	set_location_assignment PIN_C9 -to LED3
 	set_location_assignment PIN_D9 -to LED4
 	set_location_assignment PIN_E1 -to CLK
-	set_location_assignment PIN_C6 -to LED[0]
-	set_location_assignment PIN_F8 -to LED[1]
-	set_location_assignment PIN_D8 -to LED[2]
-	set_location_assignment PIN_E9 -to LED[3]
-	set_location_assignment PIN_B12 -to LED[4]
-	set_location_assignment PIN_B13 -to LED[5]
-	set_location_assignment PIN_D5 -to LED[6]
-	set_location_assignment PIN_B11 -to LED[7]
-	set_location_assignment PIN_N13 -to RST
-	set_location_assignment PIN_M15 -to BTN1
-	set_location_assignment PIN_M16 -to BTN2
+	set_location_assignment PIN_N13 -to rst_n
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments

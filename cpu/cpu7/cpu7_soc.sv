@@ -42,8 +42,8 @@ logic [13:0] instr;
 logic instr_en;
 logic pcp_step_en;
 
-logic [PCP_WIDTH : 0] addr_read;
-logic [PCP_WIDTH : 0] addr_write = 0;
+logic [PCP_WIDTH - 1 : 0] addr_read;
+logic [PCP_WIDTH - 1 : 0] addr_write = 0;
 logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
