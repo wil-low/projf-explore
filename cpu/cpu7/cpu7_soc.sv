@@ -11,6 +11,7 @@ module cpu7_soc #(
 	parameter DATA_STACK_DEPTH = 8,
 	parameter CALL_STACK_DEPTH = 8,
 	parameter VREGS = 8,
+	parameter MUL_DIV_DATA_WIDTH = 56,
 	parameter INIT_F = ""
 )
 (
@@ -62,6 +63,7 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.PROGRAM_SIZE(PROGRAM_SIZE),
 		.DATA_STACK_DEPTH(DATA_STACK_DEPTH),
 		.CALL_STACK_DEPTH(CALL_STACK_DEPTH),
+		.MUL_DIV_DATA_WIDTH(MUL_DIV_DATA_WIDTH),
 		.CORE_INDEX(i)
 	) core_inst (
 		.rst_n(rst_n),

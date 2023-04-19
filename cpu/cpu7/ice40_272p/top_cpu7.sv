@@ -33,6 +33,7 @@ cpu7_soc #(
 	.DATA_STACK_DEPTH(8),
 	.CALL_STACK_DEPTH(8),
 	.VREGS(8),
+	.MUL_DIV_DATA_WIDTH(28),
 	.INIT_F("../test.mem")
 )
 cpu7_soc_inst (

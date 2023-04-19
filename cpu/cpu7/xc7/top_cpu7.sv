@@ -19,7 +19,7 @@ logic [7:0] trace;
 
 assign LED = ~trace;
 
-cpu7_soc #(.CORES(4), .INIT_F("../test.mem"))
+cpu7_soc #(.CORES(4), .INIT_F("test.mem"))
 	cpu7_soc_inst (.rst_n, .clk(CLK), .trace(trace));
 
 logic _unused_ok = &{1'b1, 1'b0};
