@@ -7,11 +7,16 @@
 
 module core #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
+	parameter DELAY_REG_WIDTH = 36,	// max running time in microseconds
 	parameter VREGS = 8,			// number of V-registers in this realisation
 	parameter PROGRAM_SIZE = 1024,	// program size
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
 	parameter MUL_DIV_DATA_WIDTH = 56,
+	parameter PCP_WIDTH = $clog2(PROGRAM_SIZE),
+	parameter DSP_WIDTH = $clog2(DATA_STACK_DEPTH),
+	parameter CSP_WIDTH = $clog2(CALL_STACK_DEPTH),
+
 	parameter CORE_INDEX = -1
 )
 (
@@ -23,8 +28,8 @@ module core #(
 	input logic [13:0] instr,		// instruction to execute
 	input logic instr_en,			// do execute
 	input logic pcp_step_en,		// advance pcp by 2
-	input logic [35:0] dlyc,		// free-running delay counter
-	output logic [27:0] pcp,		// program code pointer (...0)
+	input logic [DELAY_REG_WIDTH - 1:0] dlyc,	// free-running delay counter
+	output logic [PCP_WIDTH - 1:0] pcp,		// program code pointer
 	output logic executing,			// core status by condition action register
 	output logic delayed,			// core is executing DELAY
 	output logic [8:0] errcode,		// core errcode
@@ -50,7 +55,7 @@ logic [13:0] ddc; // data stack depth counter
 logic [13:0] ddc_s; // data stack depth counter snapshot
 logic [13:0] ppr; // process priority register
 
-logic [35:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
+logic [DELAY_REG_WIDTH - 1:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
 logic [55:0] v_r[VREGS]; // variable registers
 
 //============ Data stack ============
@@ -63,8 +68,8 @@ logic [55:0] stack_data_in;			// data to push|poke
 logic [55:0] stack_data_out; 		// data returned for pop|peek
 logic stack_full;					// buffer is full
 logic stack_empty;					// buffer is empty
-logic [$clog2(DATA_STACK_DEPTH):0] stack_index;  // element index t (0 is top)
-logic [$clog2(DATA_STACK_DEPTH):0] stack_depth;  // returns how many items are in stack
+logic [DSP_WIDTH:0] stack_index;  // element index t (0 is top)
+logic [CSP_WIDTH:0] stack_depth;  	// returns how many items are in stack
 
 stack #(.WIDTH(56), .DEPTH(DATA_STACK_DEPTH))
 stack_inst(
@@ -92,8 +97,8 @@ logic [27:0] cstack_data_in;			// data to push|poke
 logic [27:0] cstack_data_out; 		// data returned for pop|peek
 logic cstack_full;					// buffer is full
 logic cstack_empty;					// buffer is empty
-logic [$clog2(CALL_STACK_DEPTH):0] cstack_index;  // element index t (0 is top)
-logic [$clog2(CALL_STACK_DEPTH):0] cstack_depth;  // returns how many items are in stack
+logic [DSP_WIDTH:0] cstack_index;  // element index t (0 is top)
+logic [CSP_WIDTH:0] cstack_depth;  // returns how many items are in stack
 
 /* verilator lint_off PINCONNECTEMPTY */
 stack #(.WIDTH(28), .DEPTH(CALL_STACK_DEPTH))
@@ -117,7 +122,6 @@ cstack_inst(
 logic mul_en = 0;
 logic mul_busy;
 logic mul_done;
-logic [MUL_DIV_DATA_WIDTH - 1:0] mul_a;
 logic [55:0] mul_val;
 
 /* verilator lint_off PINCONNECTEMPTY */
@@ -128,7 +132,7 @@ slowmpy_inst(
 	.i_clk(clk),
 	.i_reset(~rst_n),
 	.i_stb(mul_en),
-	.i_a(mul_a),
+	.i_a(r_b),
 	.i_b(r_a),
 	.i_aux(),
 	.o_busy(mul_busy),
@@ -144,7 +148,6 @@ logic divu_busy;
 logic divu_done;
 logic divu_valid;
 logic divu_dbz;
-logic [MUL_DIV_DATA_WIDTH - 1:0] divu_a;
 logic [MUL_DIV_DATA_WIDTH - 1:0] divu_val;
 logic [MUL_DIV_DATA_WIDTH - 1:0] divu_rem;
 
@@ -158,7 +161,7 @@ divu_int_inst(
 	.done(divu_done),
 	.valid(divu_valid),
 	.dbz(divu_dbz),
-	.a(divu_a),
+	.a(r_b),
 	.b(r_a),
 	.val(divu_val),
 	.rem(divu_rem)
@@ -181,11 +184,11 @@ assign delayed = dcr && (dlyc < dcr);
 assign idle = (state == s_IDLE) && !push_en && !instr_en;
 
 logic instr_counter;
-logic [$clog2(DATA_STACK_DEPTH) - 1:0] step_counter;  // for multi-step instructions
+logic [DSP_WIDTH - 1:0] step_counter;  // for multi-step instructions
 logic [6:0] opcode;  // for generalized instructions
 
 task reset;
-input [9:0] ec;
+input [8:0] ec;
 begin
 	errcode <= ec;
 	state <= s_IDLE;
@@ -587,7 +590,7 @@ always @(posedge clk) begin
 					stack_data_in <= stack_data_out - r_a;
 				`i_MUL:
 					begin
-						mul_a <= stack_data_out;
+						r_b <= stack_data_out;
 						mul_en <= 1;
 						state <= s_MUL_WAIT;
 					end
@@ -596,7 +599,7 @@ always @(posedge clk) begin
 					if (r_a == 0)
 						reset(`ERR_CALC);
 					else begin
-						divu_a <= stack_data_out;
+						r_b <= stack_data_out;
 						divu_en <= 1;
 						state <= s_DIV_MOD_WAIT;
 					end

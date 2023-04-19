@@ -6,13 +6,16 @@
 `include "constants.svh"
 
 module cpu7_soc #(
-	parameter CLOCK_FREQ_MHZ = 50,
-	parameter CORES = 4,
-	parameter PROGRAM_SIZE = 1024,
-	parameter DATA_STACK_DEPTH = 8,
-	parameter CALL_STACK_DEPTH = 8,
-	parameter VREGS = 8,
+	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
+	parameter DELAY_REG_WIDTH = 36,	// max running time in microseconds
+	parameter VREGS = 8,			// number of V-registers in this realisation
+	parameter PROGRAM_SIZE = 1024,	// program size
+	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
+	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
 	parameter MUL_DIV_DATA_WIDTH = 56,
+	parameter PCP_WIDTH = $clog2(PROGRAM_SIZE),
+
+	parameter CORES = 4,
 	parameter INIT_F = ""
 )
 (
@@ -22,7 +25,7 @@ module cpu7_soc #(
 );
 
 logic [$clog2(CORES) - 1:0] pxr = 0;  // process index register (core index in fact)
-logic [35:0] dlyc;  // free-running incremental delay counter
+logic [DELAY_REG_WIDTH - 1:0] dlyc;  // free-running incremental delay counter
 
 // active core data
 logic [CORES - 1:0] acore_en;			// hot-one mask
@@ -30,7 +33,7 @@ logic [9 * CORES - 1: 0] acore_errcode;
 logic [CORES - 1: 0] acore_executing;
 logic [CORES - 1: 0] acore_delayed;
 logic [CORES - 1: 0] acore_idle;		// core finished executing a command
-logic [28 * CORES - 1:0] acore_pcp;		// program code pointers
+logic [PCP_WIDTH * CORES - 1:0] acore_pcp;		// program code pointers
 logic [8 * CORES - 1:0] acore_trace;	// trace from cores
 
 logic [55:0] push_value;
@@ -39,13 +42,13 @@ logic [13:0] instr;
 logic instr_en;
 logic pcp_step_en;
 
-logic [$clog2(PROGRAM_SIZE) - 1 : 0] addr_read;
-logic [$clog2(PROGRAM_SIZE) - 1 : 0] addr_write = 0;
+logic [PCP_WIDTH : 0] addr_read;
+logic [PCP_WIDTH : 0] addr_write = 0;
 logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
 
-assign addr_read = acore_pcp[(pxr + 1) * 28 - 1 -: 28];
+assign addr_read = acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH];
 
 assign trace[7:0] = acore_trace[(pxr + 1) * 8 - 1 -: 8];
 assign trace[11:8] = state;
@@ -78,7 +81,7 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.instr_en,
 		.pcp_step_en,
 		.dlyc,
-		.pcp(acore_pcp[(i + 1) * 28 - 1 -: 28]),
+		.pcp(acore_pcp[(i + 1) * PCP_WIDTH - 1 -: PCP_WIDTH]),
 		.executing(acore_executing[i]),
 		.delayed(acore_delayed[i]),
 		.errcode(acore_errcode[(i + 1) * 9 - 1 -: 9]),
@@ -162,7 +165,7 @@ always @(posedge clk) begin
 				$display("\nCPU reset from core %d: errcode %h, addr %d",
 					pxr,
 					acore_errcode[(pxr + 1) * 9 - 1 -: 9],
-					acore_pcp[(pxr + 1) * 28 - 1 -: 28] * 2);
+					acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH] * 2);
 				$display("Halt.\n");
 				`ifdef SIMULATION
 					$finish;
