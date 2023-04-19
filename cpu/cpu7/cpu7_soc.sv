@@ -96,8 +96,7 @@ enum {s_RESET, s_HALT,
 	s_WAIT_CORE, s_NEXT_CORE, s_NEXT_CORE_STEP
 } state, next_state;
 
-logic [55:0] read_accum;
-logic [13:0] bit_counter;
+logic [7:0] bit_counter;
 
 always @(posedge clk) begin
 	pcp_step_en <= 0;
@@ -121,19 +120,19 @@ always @(posedge clk) begin
 
 		s_BEFORE_READ: begin
 			//$display("s_BEFORE_READ addr_read %d, acore %d", addr_read, pxr);
-			read_accum <= 0;
+			push_value <= 0;
 			bit_counter <= 0;
 			state <= s_READ_WORD;
 		end
 		
 		s_READ_WORD: begin
-			//$display("  (%h << %d) | %h", data_out & `MASK14, bit_counter, read_accum);
-			read_accum <= ((data_out & `MASK14) << bit_counter) | read_accum;
+			//$display("  (%h << %d) | %h", data_out & `MASK14, bit_counter, push_value);
+			push_value <= ((data_out & `MASK14) << bit_counter) | push_value;
 			state <= s_DECODE_WORD;
 		end
 
 		s_DECODE_WORD: begin
-			//$display("s_DECODE_WORD addr_read %d, data_out %h, read_accum %h, pxr %d", addr_read, data_out, read_accum, pxr);
+			//$display("s_DECODE_WORD addr_read %d, data_out %h, push_value %h, pxr %d", addr_read, data_out, push_value, pxr);
 			bit_counter <= bit_counter + 14;
 			pcp_step_en <= 1;
 			state <= s_WAIT_CORE;
@@ -146,10 +145,9 @@ always @(posedge clk) begin
 					//$display("instr_en %h", data_out & `MASK14);
 				end
 				else if (((data_out & `WT_MASK) != `WT_IGN) && acore_executing[pxr]) begin
-					push_value <= read_accum;
 					push_en <= 1;
 					next_state <= s_NEXT_CORE;
-					//$display("push_en %h", read_accum);
+					//$display("push_en %h", push_value);
 				end
 			end
 		end
