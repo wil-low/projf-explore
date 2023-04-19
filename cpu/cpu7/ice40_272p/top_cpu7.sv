@@ -28,6 +28,7 @@ always @(posedge CLK) begin
 end
 
 cpu7_soc #(
+	.CLOCK_FREQ_MHZ(12),
 	.CORES(1),
 	.PROGRAM_SIZE(128),
 	.DATA_STACK_DEPTH(8),

@@ -13,7 +13,8 @@ logic clk;
 always #(CLK_PERIOD / 2) clk <= ~clk;
 
 cpu7_soc #(
-	.CORES(4),
+	.CLOCK_FREQ_MHZ(1),
+	.CORES(1),
 	.PROGRAM_SIZE(1024),
 	.VREGS(8),
 	.DATA_STACK_DEPTH(8),

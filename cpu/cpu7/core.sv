@@ -6,6 +6,7 @@
 `include "constants.svh"
 
 module core #(
+	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
 	parameter VREGS = 8,			// number of V-registers in this realisation
 	parameter PROGRAM_SIZE = 1024,	// program size
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
@@ -22,8 +23,10 @@ module core #(
 	input logic [13:0] instr,		// instruction to execute
 	input logic instr_en,			// do execute
 	input logic pcp_step_en,		// advance pcp by 2
+	input logic [35:0] dlyc,		// free-running delay counter
 	output logic [27:0] pcp,		// program code pointer (...0)
 	output logic executing,			// core status by condition action register
+	output logic delayed,			// core is executing DELAY
 	output logic [8:0] errcode,		// core errcode
 	output logic [7:0] trace,		// core trace
 	output logic idle				// core finished executing a command
@@ -47,8 +50,8 @@ logic [13:0] ddc; // data stack depth counter
 logic [13:0] ddc_s; // data stack depth counter snapshot
 logic [13:0] ppr; // process priority register
 
-logic [63:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
-logic [63:0] v_r[VREGS]; // variable registers
+logic [35:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
+logic [55:0] v_r[VREGS]; // variable registers
 
 //============ Data stack ============
 logic stack_rst_n = 1;
@@ -169,11 +172,12 @@ enum {
 	s_OP_1, s_OP_2,
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
 	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP,
-	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP,
+	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP, s_DELAY_STEP,
 	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_STEP0, s_UNTIL_STEP1
 } state, next_state;
 
 assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EXEC);
+assign delayed = dcr && (dlyc < dcr);
 assign idle = (state == s_IDLE) && !push_en && !instr_en;
 
 logic instr_counter;
@@ -197,13 +201,15 @@ always @(posedge clk) begin
 	cstack_rst_n <= 1;
 
 	if (!rst_n) begin
-		{csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, cstack_rst_n, pcp, errcode} <= 0;
+		{dcr, csp, dsp, dsp_s, ddc, ddc_s, dcr, pcp, ppr, stack_rst_n, cstack_rst_n, pcp, errcode} <= 0;
 		car <= `CA_NONE;
 		trace <= ~0;
 		state <= s_IDLE;
 	end
 	else if (en) begin
 		//$display("  core %d pcp %d, state %d, next %d, pcp_step_en %b", CORE_INDEX, pcp, state, next_state, pcp_step_en);
+		if (dlyc >= dcr)
+			dcr <= 0;
 
 		case (state)
 
@@ -302,6 +308,14 @@ always @(posedge clk) begin
 				// do nothing
 			end
 
+			`i_DELAY: begin
+				// x delay
+				// delay the current thread for at least X microseconds
+				stack_index <= 0;
+				state <= s_POP_PROC;
+				next_state <= s_DELAY_STEP;				
+			end
+			
 			`i_DEPTH: begin
 				stack_data_in <= stack_depth + 1;
 				state <= s_PUSH_PROC;
@@ -800,6 +814,11 @@ always @(posedge clk) begin
 
 		s_TRACE_STEP: begin
 			trace <= stack_data_out;
+			state <= s_INSTR_DONE;
+		end
+
+		s_DELAY_STEP: begin
+			dcr <= stack_data_out * CLOCK_FREQ_MHZ + dlyc;
 			state <= s_INSTR_DONE;
 		end
 
