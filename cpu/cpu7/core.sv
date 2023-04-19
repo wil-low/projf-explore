@@ -10,6 +10,7 @@ module core #(
 	parameter PROGRAM_SIZE = 1024,	// program size
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
+	parameter MUL_DIV_DATA_WIDTH = 56,
 	parameter CORE_INDEX = -1
 )
 (
@@ -27,8 +28,6 @@ module core #(
 	output logic [7:0] trace,		// core trace
 	output logic idle				// core finished executing a command
 );
-
-localparam MUL_DIV_DATA_WIDTH = 28; //56
 
 logic [31:0] car; // conditional action register
 					// only the two lowest order bits are monitored to determine the current condition
@@ -115,8 +114,7 @@ cstack_inst(
 logic mul_en = 0;
 logic mul_busy;
 logic mul_done;
-logic [55:0] mul_a;
-logic [55:0] mul_b;
+logic [MUL_DIV_DATA_WIDTH - 1:0] mul_a;
 logic [55:0] mul_val;
 
 /* verilator lint_off PINCONNECTEMPTY */
@@ -128,7 +126,7 @@ slowmpy_inst(
 	.i_reset(~rst_n),
 	.i_stb(mul_en),
 	.i_a(mul_a),
-	.i_b(mul_b),
+	.i_b(r_a),
 	.i_aux(),
 	.o_busy(mul_busy),
 	.o_done(mul_done),
@@ -143,10 +141,9 @@ logic divu_busy;
 logic divu_done;
 logic divu_valid;
 logic divu_dbz;
-logic [MUL_DIV_DATA_WIDTH:0] divu_a;
-logic [MUL_DIV_DATA_WIDTH:0] divu_b;
-logic [MUL_DIV_DATA_WIDTH:0] divu_val;
-logic [MUL_DIV_DATA_WIDTH:0] divu_rem;
+logic [MUL_DIV_DATA_WIDTH - 1:0] divu_a;
+logic [MUL_DIV_DATA_WIDTH - 1:0] divu_val;
+logic [MUL_DIV_DATA_WIDTH - 1:0] divu_rem;
 
 /* verilator lint_off PINCONNECTEMPTY */
 divu_int #(.WIDTH(MUL_DIV_DATA_WIDTH))
@@ -159,7 +156,7 @@ divu_int_inst(
 	.valid(divu_valid),
 	.dbz(divu_dbz),
 	.a(divu_a),
-	.b(divu_b),
+	.b(r_a),
 	.val(divu_val),
 	.rem(divu_rem)
 );
@@ -577,7 +574,6 @@ always @(posedge clk) begin
 				`i_MUL:
 					begin
 						mul_a <= stack_data_out;
-						mul_b <= r_a;
 						mul_en <= 1;
 						state <= s_MUL_WAIT;
 					end
@@ -587,7 +583,6 @@ always @(posedge clk) begin
 						reset(`ERR_CALC);
 					else begin
 						divu_a <= stack_data_out;
-						divu_b <= r_a;
 						divu_en <= 1;
 						state <= s_DIV_MOD_WAIT;
 					end
