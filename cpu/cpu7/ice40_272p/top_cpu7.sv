@@ -30,11 +30,14 @@ end
 cpu7_soc #(
 	.CLOCK_FREQ_MHZ(12),
 	.CORES(1),
-	.PROGRAM_SIZE(128),
+	.PROGRAM_SIZE(256),
 	.DATA_STACK_DEPTH(8),
 	.CALL_STACK_DEPTH(8),
-	.VREGS(8),
-	.MUL_DIV_DATA_WIDTH(28),
+	.VREGS(2),
+	.USE_MUL(1),
+	.MUL_DATA_WIDTH(28),
+	.USE_DIV(0),
+	.DIV_DATA_WIDTH(28),
 	.INIT_F("../test.mem")
 )
 cpu7_soc_inst (

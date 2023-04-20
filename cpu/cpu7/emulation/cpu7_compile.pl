@@ -106,19 +106,19 @@ sub add_token {  # token
 			}
 			else {
 				if ($label_op eq '_') {
-					add_offset($tok);
+					add_offset($tok, $orig_tok);
 					add_token('CALL');
 				}
 				elsif ($label_op eq '_!') {
-					add_offset($tok);
+					add_offset($tok, $orig_tok);
 					add_token('NTCALL');
 				}
 				elsif ($label_op eq '&') {
-					add_token(".$tok");
+					add_token(".$tok", $orig_tok);
 					add_token('ACALL');
 				}
 				elsif ($label_op eq '&!') {
-					add_token(".$tok");
+					add_token(".$tok", $orig_tok);
 					add_token('NTACALL');
 				}
 			}
@@ -146,11 +146,13 @@ sub check_align_after {
 	}
 }
 
-sub add_offset {  # tok
-	my $tok = shift;
+sub add_offset {  # number, orig_tok
+	my ($tok, $orig_tok) = @_;
 	my $offset = $addr - $label{$tok};
 	my $len = vln_len($offset + 8 + 2); # forecast for max length
-	add_number($offset + $len + 2, ".$tok");
+	my $result = $offset + $len + 3;
+	warn("add_offset for tok '$tok', orig_tok '$orig_tok', addr $addr, label addr $label{$tok}, len $len -> $result\n");
+	add_number($result, $orig_tok);
 }
 
 sub add_number {  # number, orig_tok

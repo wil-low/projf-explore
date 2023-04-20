@@ -43,6 +43,8 @@
 `define CA_NOEXEC   2   // conditional structure; not executing code
 `define CA_EXEC     3   // conditional structure; executing code
 
+`define UCX_GROUP 'h70  // define the starting code of the unconditionally executed instructions
+
 // `define i_ 'h00
 `define i_SETPR 'h01
 // `define i_ 'h02
@@ -155,6 +157,8 @@
 `define i_WR16 'h6d
 `define i_WR8 'h6e
 // `define i_ 'h6f
+
+// === UCX_GROUP, do not insert new instructions below ===
 `define i_DO 'h70
 `define i_SKIP 'h71
 // `define i_ 'h72

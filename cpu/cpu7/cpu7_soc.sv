@@ -12,7 +12,12 @@ module cpu7_soc #(
 	parameter PROGRAM_SIZE = 1024,	// program size
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
-	parameter MUL_DIV_DATA_WIDTH = 56,
+	
+	parameter USE_MUL = 1,
+	parameter MUL_DATA_WIDTH = 56,
+	parameter USE_DIV = 1,
+	parameter DIV_DATA_WIDTH = 56,
+	
 	parameter PCP_WIDTH = $clog2(PROGRAM_SIZE),
 
 	parameter CORES = 4,
@@ -69,7 +74,10 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.PROGRAM_SIZE(PROGRAM_SIZE),
 		.DATA_STACK_DEPTH(DATA_STACK_DEPTH),
 		.CALL_STACK_DEPTH(CALL_STACK_DEPTH),
-		.MUL_DIV_DATA_WIDTH(MUL_DIV_DATA_WIDTH),
+		.USE_MUL(USE_MUL),
+		.MUL_DATA_WIDTH(MUL_DATA_WIDTH),
+		.USE_DIV(USE_DIV),
+		.DIV_DATA_WIDTH(DIV_DATA_WIDTH),
 		.CORE_INDEX(i)
 	) core_inst (
 		.rst_n(rst_n),
@@ -172,14 +180,14 @@ always @(posedge clk) begin
 				`endif
 			end
 			else begin
-				$display("\n==== Next core ====");
+				$display("\n>>");
 				pxr <= (pxr == CORES - 1) ? 0 : pxr + 1;
 				state <= s_NEXT_CORE_STEP;
 			end
 		end
 
 		s_NEXT_CORE_STEP: begin
-			$display("NEXT_CORE_STEP %d", pxr);
+			//$display("NEXT_CORE_STEP %d", pxr);
 			// ignore cores that are executing delays
 			if (acore_delayed[pxr])
 				pxr <= (pxr == CORES - 1) ? 0 : pxr + 1;

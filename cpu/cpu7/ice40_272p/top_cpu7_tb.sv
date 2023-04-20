@@ -19,7 +19,10 @@ cpu7_soc #(
 	.VREGS(8),
 	.DATA_STACK_DEPTH(8),
 	.CALL_STACK_DEPTH(8),
-	.MUL_DIV_DATA_WIDTH(56),
+	.USE_MUL(1),
+	.MUL_DATA_WIDTH(56),
+	.USE_DIV(1),
+	.DIV_DATA_WIDTH(56),
 	.INIT_F(INIT_F)
 )
 cpu7_soc_inst (.rst_n, .clk);

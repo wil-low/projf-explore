@@ -12,7 +12,12 @@ module core #(
 	parameter PROGRAM_SIZE = 1024,	// program size
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
-	parameter MUL_DIV_DATA_WIDTH = 56,
+
+	parameter USE_MUL = 1,
+	parameter MUL_DATA_WIDTH = 56,
+	parameter USE_DIV = 1,
+	parameter DIV_DATA_WIDTH = 56,
+
 	parameter PCP_WIDTH = $clog2(PROGRAM_SIZE),
 	parameter DSP_WIDTH = $clog2(DATA_STACK_DEPTH),
 	parameter CSP_WIDTH = $clog2(CALL_STACK_DEPTH),
@@ -42,8 +47,6 @@ logic [31:0] car; // conditional action register
 logic [55:0] r_a; // register R0 (A)
 logic [55:0] r_b; // register R1 (B)
 logic [55:0] r_c; // register R2 (C)
-logic [13:0] r_d; // register R3 (D)
-logic [13:0] r_e; // register R3 (E)
 
 logic [13:0] icr; // instruction code register
 					// contains two 7-bit instruction codes with the one in the lower
@@ -122,11 +125,11 @@ cstack_inst(
 logic mul_en = 0;
 logic mul_busy;
 logic mul_done;
-logic [55:0] mul_val;
+logic [MUL_DATA_WIDTH * 2 - 1:0] mul_val;
 
 /* verilator lint_off PINCONNECTEMPTY */
 slowmpy #(
-	.LGNA(6), .NA(MUL_DIV_DATA_WIDTH), .OPT_SIGNED(1'b0)
+	.LGNA(6), .NA(MUL_DATA_WIDTH), .OPT_SIGNED(1'b0)
 )
 slowmpy_inst(
 	.i_clk(clk),
@@ -148,11 +151,11 @@ logic divu_busy;
 logic divu_done;
 logic divu_valid;
 logic divu_dbz;
-logic [MUL_DIV_DATA_WIDTH - 1:0] divu_val;
-logic [MUL_DIV_DATA_WIDTH - 1:0] divu_rem;
+logic [DIV_DATA_WIDTH - 1:0] divu_val;
+logic [DIV_DATA_WIDTH - 1:0] divu_rem;
 
 /* verilator lint_off PINCONNECTEMPTY */
-divu_int #(.WIDTH(MUL_DIV_DATA_WIDTH))
+divu_int #(.WIDTH(DIV_DATA_WIDTH))
 divu_int_inst(
 	.clk,
 	.rst(~rst_n),
@@ -170,12 +173,12 @@ divu_int_inst(
 
 //============ State machine ============
 enum {
-	s_IDLE, s_INSTR, s_INSTR_DONE,
+	s_IDLE, s_INSTR, s_INSTR_DONE, s_PCP_CHANGED,
 	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_1, s_OP_2,
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
-	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP,
-	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP, s_DELAY_STEP,
+	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP, s_RETURN_STEP,
+	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP, s_DELAY_STEP, s_SKIP_STEP, s_CALL_STEP0, s_CALL_STEP1,
 	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_STEP0, s_UNTIL_STEP1
 } state, next_state;
 
@@ -219,6 +222,7 @@ always @(posedge clk) begin
 		s_IDLE: begin
 			if (pcp_step_en) begin
 				pcp <= pcp + 1;
+				//$display("pcp_step_en, now pcp %d", (pcp + 1) * 2);
 			end
 
 			if (push_en) begin
@@ -230,13 +234,18 @@ always @(posedge clk) begin
 				icr <= instr;
 				opcode <= instr & `MASK7;
 				instr_counter <= 1;
-				state <= s_INSTR;
-				next_state <= s_INSTR_DONE;
+				if (((instr & `MASK7) >= `UCX_GROUP) || executing) begin
+					state <= s_INSTR;
+					next_state <= s_INSTR_DONE;
+				end
+				else begin
+					state <= s_INSTR_DONE;
+				end
 			end
 		end
 
 		s_CALL_PUSH_PROC: begin
-			$display("CALL_PUSH %d", cstack_data_in);
+			$display("CALL_PUSH pcp %d", cstack_data_in * 2);
 			if (cstack_full) begin
 				reset(`ERR_CSFULL);
 			end
@@ -302,7 +311,7 @@ always @(posedge clk) begin
 		end
 
 		s_INSTR: begin
-			$display("instr %h %s", opcode, opcode2str(opcode));
+			$display("\ninstr %h %s", opcode, opcode2str(opcode));
 			state <= s_INSTR_DONE;
 
 			case (opcode)
@@ -317,6 +326,41 @@ always @(posedge clk) begin
 				stack_index <= 0;
 				state <= s_POP_PROC;
 				next_state <= s_DELAY_STEP;				
+			end
+			
+			`i_SKIP: begin
+				// x skip
+				// enable skipping mode, skip next x words
+				// all following instructions will be skipped until the first DO
+				if (executing) begin
+					stack_index <= 0;
+					state <= s_POP_PROC;
+					next_state <= s_SKIP_STEP;
+				end
+			end
+			
+			`i_DO: begin
+				// do
+				// cancel skipping mode and return to normal execution
+				if ((car & `CA_MASK) == `CA_SKIP)
+					car <= car >> `CA_LENGTH;
+			end
+
+			`i_CALL: begin
+				// x call
+				// store the current PCP into call stack and call code located at relative address (PCP-X)
+				// note that the X parameter is relative to the current location and the resulting address
+				// is always lower than the current one
+				cstack_data_in <= pcp * 2;
+				state <= s_CALL_PUSH_PROC;
+				next_state <= s_CALL_STEP0;
+			end
+			
+			`i_RETURN: begin
+				// return or ;
+				// restore PCP from the call stack
+				state <= s_CALL_POP_PROC;
+				next_state <= s_RETURN_STEP;
 			end
 			
 			`i_DEPTH: begin
@@ -393,6 +437,7 @@ always @(posedge clk) begin
 				state <= s_OVER_STEP;
 			end
 
+			`i_GETVAR,
 			`i_COM,
 			`i_NOT,
 			`i_INC,
@@ -400,6 +445,7 @@ always @(posedge clk) begin
 				state <= s_OP_1;
 			end
 
+			`i_SETVAR,
 			`i_GT,
 			`i_GTEQ,
 			`i_SM,
@@ -500,15 +546,25 @@ always @(posedge clk) begin
 		end
 
 		s_INSTR_DONE: begin
-			$display("");
+			//$display("INSTR_DONE, ic %d", instr_counter);
 			if (instr_counter == 0) begin
 				state <= s_IDLE;
 			end
 			else begin
-				opcode <= icr >> 7;
-				state <= s_INSTR;
+				if (((icr >> 7) & `MASK7) >= `UCX_GROUP || executing) begin
+					state <= s_INSTR;
+					opcode <= icr >> 7;
+				end
+				else begin
+					state <= s_INSTR_DONE;
+				end
 				instr_counter <= instr_counter - 1;
 			end
+		end
+
+		s_PCP_CHANGED: begin
+			$display("PCP_CHANGED to %d", pcp * 2);
+			state <= s_IDLE;
 		end
 
 		s_DUP_STEP: begin
@@ -528,6 +584,8 @@ always @(posedge clk) begin
 		s_OP_1_STEP: begin
 			//$display("OP_1_STEP for opcode %h", opcode);
 			case (opcode)
+			`i_GETVAR:
+				stack_data_in <= v_r[stack_data_out % VREGS];
 			`i_COM:
 				stack_data_in <= 1 + ~stack_data_out;
 			`i_NOT:
@@ -562,6 +620,11 @@ always @(posedge clk) begin
 			1: begin
 				state <= s_PUSH_PROC;
 				case (opcode)
+				`i_SETVAR:
+					begin
+						v_r[r_a % VREGS] <= stack_data_out;
+						state <= s_INSTR_DONE;
+					end
 				`i_GT:
 					stack_data_in <= stack_data_out > r_a ? 1 : 0;
 				`i_GTEQ:
@@ -589,20 +652,27 @@ always @(posedge clk) begin
 				`i_SUB:
 					stack_data_in <= stack_data_out - r_a;
 				`i_MUL:
-					begin
+					if (USE_MUL) begin
 						r_b <= stack_data_out;
 						mul_en <= 1;
 						state <= s_MUL_WAIT;
 					end
+					else
+						reset(`ERR_INVALID);
 				`i_DIV,
 				`i_MOD:
-					if (r_a == 0)
-						reset(`ERR_CALC);
-					else begin
-						r_b <= stack_data_out;
-						divu_en <= 1;
-						state <= s_DIV_MOD_WAIT;
+					if (USE_DIV) begin
+						if (r_a == 0)
+							reset(`ERR_CALC);
+						else begin
+							r_b <= stack_data_out;
+							divu_en <= 1;
+							state <= s_DIV_MOD_WAIT;
+						end
 					end
+					else
+						reset(`ERR_INVALID);
+
 				default:
 					reset(`ERR_INVALID);
 				endcase
@@ -612,6 +682,44 @@ always @(posedge clk) begin
 			end
 			endcase
 			step_counter <= step_counter - 1;
+		end
+
+		s_SKIP_STEP: begin
+			pcp <= pcp + stack_data_out / 2;
+			$display("SKIP to pcp %d, skip was %d", pcp * 2 + stack_data_out, pcp);
+			car <= (car << `CA_LENGTH) | `CA_SKIP;
+			state <= s_PCP_CHANGED;
+		end
+
+		s_CALL_STEP0: begin
+			stack_index <= 0;
+			state <= s_POP_PROC;
+			next_state <= s_CALL_STEP1;
+		end
+
+		s_CALL_STEP1: begin
+			$display("s_CALL_STEP1 pcp %d, stack_data_out %d", pcp * 2, stack_data_out);
+			if (pcp - stack_data_out / 2 >= PROGRAM_SIZE)
+				reset(`ERR_INVMEM);
+			else begin
+				pcp <= pcp - stack_data_out / 2;
+				state <= s_PCP_CHANGED;
+			end
+		end
+
+		s_RETURN_STEP: begin
+			$display("s_RETURN_STEP cstack_data_out %d", stack_data_out);
+			if (cstack_data_out & 1) begin
+				car <= car >> `CA_LENGTH;
+				state <= s_CALL_POP_PROC;
+				next_state <= s_RETURN_STEP;
+			end
+			else begin
+				pcp <= cstack_data_out / 2;
+				if (cstack_data_out / 2 >= PROGRAM_SIZE)
+					reset(`ERR_INVMEM);
+				state <= s_PCP_CHANGED;
+			end
 		end
 
 		s_SWAP_STEP: begin
@@ -716,8 +824,8 @@ always @(posedge clk) begin
 		end
 
 		s_IF_STEP1: begin
-			$display("s_IF_STEP1 car %b", car);
-			cstack_data_in <= pcp;
+			$display("s_IF_STEP1 car %b, pcp %d", car, pcp * 2);
+			cstack_data_in <= pcp * 2 + 1;
 			state <= s_CALL_PUSH_PROC;
 			next_state <= s_INSTR_DONE;
 		end
@@ -738,12 +846,16 @@ always @(posedge clk) begin
 		s_UNTIL_STEP1: begin
 			$display("UNTIL_STEP1 %d car %b", stack_data_out, car);
 			if (!stack_data_out) begin
-				pcp <= r_a;
-				if (pcp >= PROGRAM_SIZE)
-					reset(`ERR_INVMEM);
-				state <= s_CALL_PUSH_PROC;
-				cstack_data_in <= r_a | 1;
-				next_state <= s_INSTR_DONE;
+				if ((r_a & 1) == 0)
+					reset(`ERR_ALIGN);
+				else begin
+					pcp <= r_a / 2;
+					if (pcp >= PROGRAM_SIZE)
+						reset(`ERR_INVMEM);
+					state <= s_CALL_PUSH_PROC;
+					cstack_data_in <= r_a | 1;
+					next_state <= s_PCP_CHANGED;
+				end
 			end
 			else begin
 				car <= car >> `CA_LENGTH;
