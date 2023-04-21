@@ -16,14 +16,17 @@ logic [3:0] trace;
 assign {LED1, LED2, LED3, LED4} = trace;
 
 cpu7_soc #(
-	.CLOCK_FREQ_MHZ(50),
-	.CORES(1),
-	.PROGRAM_SIZE(128),
-	.DATA_STACK_DEPTH(8),
-	.CALL_STACK_DEPTH(8),
-	.VREGS(8),
-	.MUL_DIV_DATA_WIDTH(56),
-	.INIT_F("../test.mem")
+    .CLOCK_FREQ_MHZ(50),
+    .CORES(1),
+    .PROGRAM_SIZE(1024),
+    .VREGS(8),
+    .DATA_STACK_DEPTH(8),
+    .CALL_STACK_DEPTH(8),
+    .USE_MUL(1),
+    .MUL_DATA_WIDTH(56),
+    .USE_DIV(1),
+    .DIV_DATA_WIDTH(56),
+    .INIT_F("../collatz.mem")
 )
 cpu7_soc_inst (
 	.rst_n,
