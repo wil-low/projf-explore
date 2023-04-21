@@ -61,7 +61,7 @@ assign trace[11:8] = state;
 bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE / 2), .INIT_F(INIT_F))
 bram_read_async (
 	.clk, .we(write_en),
-	.addr_write, .addr_read,
+	.addr_write(addr_write), .addr_read(addr_read),
 	.data_in, .data_out
 );
 

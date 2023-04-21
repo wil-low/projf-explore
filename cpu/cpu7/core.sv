@@ -73,7 +73,7 @@ logic [55:0] stack_data_out; 		// data returned for pop|peek
 logic stack_full;					// buffer is full
 logic stack_empty;					// buffer is empty
 logic [DSP_WIDTH:0] stack_index;  // element index t (0 is top)
-logic [CSP_WIDTH:0] stack_depth;  	// returns how many items are in stack
+logic [DSP_WIDTH:0] stack_depth;  	// returns how many items are in stack
 
 stack #(.WIDTH(56), .DEPTH(DATA_STACK_DEPTH))
 stack_inst(
@@ -101,7 +101,7 @@ logic [27:0] cstack_data_in;			// data to push|poke
 logic [27:0] cstack_data_out; 		// data returned for pop|peek
 logic cstack_full;					// buffer is full
 logic cstack_empty;					// buffer is empty
-logic [DSP_WIDTH:0] cstack_index;  // element index t (0 is top)
+logic [CSP_WIDTH:0] cstack_index;  // element index t (0 is top)
 logic [CSP_WIDTH:0] cstack_depth;  // returns how many items are in stack
 
 /* verilator lint_off PINCONNECTEMPTY */
