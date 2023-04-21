@@ -179,7 +179,7 @@ enum {
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
 	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP, s_RETURN_STEP,
 	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP, s_DELAY_STEP, s_SKIP_STEP, s_CALL_STEP0, s_CALL_STEP1,
-	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_STEP0, s_UNTIL_STEP1
+	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_WHILE_STEP0, s_UNTIL_WHILE_STEP1
 } state, next_state;
 
 assign executing = ((car & `CA_MASK) == `CA_NONE) || ((car & `CA_MASK) == `CA_EXEC);
@@ -518,6 +518,11 @@ always @(posedge clk) begin
 				state <= s_IF_STEP1;
 			end
 
+			`i_WHILE,
+				// x while
+				// if X is not zero, return to the corresponding REPEAT, otherwise continue after WHILE
+				// (can be used also by already called by CALL/ACALL code to conditionally cancel its return address)
+				// (condition opposite to UNTIL)
 			`i_UNTIL: begin
 				// x until
 				// if X is zero, return to the corresponding REPEAT, otherwise continue after UNTIL
@@ -528,7 +533,7 @@ always @(posedge clk) begin
 					reset(`ERR_ECST);
 				else begin
 					state <= s_CALL_POP_PROC;
-					next_state <= s_UNTIL_STEP0;					
+					next_state <= s_UNTIL_WHILE_STEP0;					
 				end
 			end
 /* template
@@ -833,12 +838,12 @@ always @(posedge clk) begin
 			next_state <= s_INSTR_DONE;
 		end
 		
-		s_UNTIL_STEP0: begin
-			$display("UNTIL_STEP0 %d, car %b", cstack_data_out, car);
+		s_UNTIL_WHILE_STEP0: begin
+			$display("UNTIL_WHILE_STEP0 %d, car %b", cstack_data_out, car);
 			r_a <= cstack_data_out;
 			if ((car & `CA_MASK) == `CA_EXEC) begin
 				state <= s_POP_PROC;
-				next_state <= s_UNTIL_STEP1;
+				next_state <= s_UNTIL_WHILE_STEP1;
 			end
 			else begin
 				car <= car >> `CA_LENGTH;
@@ -846,13 +851,13 @@ always @(posedge clk) begin
 			end
 		end
 
-		s_UNTIL_STEP1: begin
-			$display("UNTIL_STEP1 %d car %b", stack_data_out, car);
-			if (!stack_data_out) begin
+		s_UNTIL_WHILE_STEP1: begin
+			$display("UNTIL_WHILE_STEP1 %d car %b", stack_data_out, car);
+			if ((opcode == `i_WHILE) ? stack_data_out : !stack_data_out) begin
 				if ((r_a & 1) == 0)
 					reset(`ERR_ALIGN);
 				else begin
-					pcp <= r_a;
+					pcp <= r_a & ~1;
 					if (pcp >= PROGRAM_SIZE)
 						reset(`ERR_INVMEM);
 					state <= s_CALL_PUSH_PROC;

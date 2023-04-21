@@ -90,6 +90,7 @@ sub add_token {  # token
 		check_align_after($tok);
 	}
 	elsif ($tok =~ /^[\d\+\-]+$/) {  # base 10
+		check_add_nopf();
 		add_number($tok, $tok);
 	}
 	elsif ($tok =~ /(\.|:|_\!?|\&\!?)(.+)/) {
@@ -102,6 +103,7 @@ sub add_token {  # token
 		}
 		elsif (defined($label{$tok})) {
 			if ($label_op eq '.') {
+				check_add_nopf();
 				add_number($label{$tok}, $orig_tok);
 			}
 			else {
@@ -148,16 +150,16 @@ sub check_align_after {
 
 sub add_offset {  # number, orig_tok
 	my ($tok, $orig_tok) = @_;
+	check_add_nopf();
 	my $offset = $addr - $label{$tok};
 	my $len = vln_len($offset + 8 + 2); # forecast for max length
-	my $result = $offset + $len + 3;
-	warn("add_offset for tok '$tok', orig_tok '$orig_tok', addr $addr, label addr $label{$tok}, len $len -> $result\n");
+	my $result = $offset + $len + 2;
+	warn("add_offset $offset for tok '$tok', orig_tok '$orig_tok', addr $addr, label addr $label{$tok}, len $len -> $result\n");
 	add_number($result, $orig_tok);
 }
 
 sub add_number {  # number, orig_tok
 	my ($tok, $orig_tok) = @_;
-	check_add_nopf();
 	my $vln = vln_str($tok);
 	$addr += vln_len($tok);
 	print sprintf("%s // %06d: %s\n", $vln, $addr_save, $orig_tok);
