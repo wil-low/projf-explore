@@ -22,7 +22,7 @@ ADD_SRC += ../cpu7_soc.sv
 cpu7: cpu7.rpt cpu7.bin cpu7.link
 
 %.json: top_%.sv $(ADD_SRC) generate_mem
-	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
+	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -dsp -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
 	nextpnr-ice40 --${FPGA_TYPE} --package ${FPGA_PKG} --json $< --pcf ${PCF} --asc $@
