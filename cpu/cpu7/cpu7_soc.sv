@@ -9,7 +9,7 @@ module cpu7_soc #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
 	parameter DELAY_REG_WIDTH = 36,	// max running time in microseconds
 	parameter VREGS = 8,			// number of V-registers in this realisation
-	parameter PROGRAM_SIZE = 1024,	// program size
+	parameter PROGRAM_SIZE = 1024,	// program size (in bytes)
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
 	
@@ -53,12 +53,12 @@ logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
 
-assign addr_read = acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH];
+assign addr_read = acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH] / 2; // in words
 
 assign trace[7:0] = acore_trace[(pxr + 1) * 8 - 1 -: 8];
 assign trace[11:8] = state;
 
-bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE), .INIT_F(INIT_F))
+bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE / 2), .INIT_F(INIT_F))
 bram_read_async (
 	.clk, .we(write_en),
 	.addr_write, .addr_read,
@@ -171,7 +171,7 @@ always @(posedge clk) begin
 				$display("\nCPU reset from core %d: errcode %h, addr %d",
 					pxr,
 					acore_errcode[(pxr + 1) * 9 - 1 -: 9],
-					acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH] * 2);
+					acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH]);
 				$display("Halt.\n");
 				`ifdef SIMULATION
 					$finish;
