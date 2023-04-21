@@ -22,7 +22,8 @@ module core #(
 	parameter DSP_WIDTH = $clog2(DATA_STACK_DEPTH),
 	parameter CSP_WIDTH = $clog2(CALL_STACK_DEPTH),
 
-	parameter CORE_INDEX = -1
+	parameter CORE_INDEX = -1,
+	parameter MAX_THREADS = 1
 )
 (
 	input logic rst_n,
@@ -405,6 +406,12 @@ always @(posedge clk) begin
 						state <= s_PRINT_CSTACK_STEP;
 					end
 				`endif
+			end
+
+			`i_MAXTHDS: begin
+				stack_data_in <= MAX_THREADS;
+				state <= s_PUSH_PROC;
+				next_state <= s_INSTR_DONE;
 			end
 
 			`i_TRACE: begin

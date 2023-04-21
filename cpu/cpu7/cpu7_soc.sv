@@ -78,7 +78,8 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.MUL_DATA_WIDTH(MUL_DATA_WIDTH),
 		.USE_DIV(USE_DIV),
 		.DIV_DATA_WIDTH(DIV_DATA_WIDTH),
-		.CORE_INDEX(i)
+		.CORE_INDEX(i),
+		.MAX_THREADS(CORES)
 	) core_inst (
 		.rst_n(rst_n),
 		.clk,
