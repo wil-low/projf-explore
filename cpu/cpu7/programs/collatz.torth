@@ -1,0 +1,27 @@
+`! ==== collatz sequence ====
+1000 1 =!
+2
+repeat
+	dup
+	:collatz_count
+	0 0 =!
+	repeat
+		dup 1 and if
+		3 * 1 + else
+		1 shr endif
+		0 ! ++ 0 =!
+		trace 
+		100000 delay
+		dup 1 == 
+	until
+	drop
+	0 trace
+	1000000 delay drop
+	++
+	trace 
+	1000000 delay
+	dup 1 ! >
+
+until
+print_stack
+acall
