@@ -24,8 +24,8 @@ module cpu7_soc #(
 	parameter INIT_F = ""
 )
 (
-	input logic rst_n,
-	input logic clk,
+	input wire logic rst_n,
+	input wire logic clk,
 	output logic [11:0] trace
 );
 

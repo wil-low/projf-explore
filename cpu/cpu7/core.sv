@@ -26,15 +26,15 @@ module core #(
 	parameter MAX_THREADS = 1
 )
 (
-	input logic rst_n,
-	input logic clk,
-	input logic en,					// core is selected to run
-	input logic [55:0] push_value,	// constant value to push on stack
-	input logic push_en,			// do push
-	input logic [13:0] instr,		// instruction to execute
-	input logic instr_en,			// do execute
-	input logic pcp_step_en,		// advance pcp by 2
-	input logic [DELAY_REG_WIDTH - 1:0] dlyc,	// free-running delay counter
+	input wire logic rst_n,
+	input wire logic clk,
+	input wire logic en,				// core is selected to run
+	input wire logic [55:0] push_value,	// constant value to push on stack
+	input wire logic push_en,			// do push
+	input wire logic [13:0] instr,		// instruction to execute
+	input wire logic instr_en,			// do execute
+	input wire logic pcp_step_en,		// advance pcp by 2
+	input wire logic [DELAY_REG_WIDTH - 1:0] dlyc,	// free-running delay counter
 	output logic [PCP_WIDTH - 1:0] pcp,	// program code pointer (in bytes)
 	output logic executing,			// core status by condition action register
 	output logic delayed,			// core is executing DELAY

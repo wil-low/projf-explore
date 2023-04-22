@@ -3,8 +3,8 @@
 
 module top_cpu7
 (
-	input logic CLK,
-	input logic rst_n,
+	input wire logic CLK,
+	input wire logic rst_n,
 	output logic LED1,
 	output logic LED2,
 	output logic LED3,
