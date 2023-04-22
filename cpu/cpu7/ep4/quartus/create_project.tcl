@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Wed Apr 19 13:22:53 2023
+# Generated on: Sat Apr 22 19:50:48 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -78,6 +78,7 @@ if {$make_assignments} {
 	set_global_assignment -name SEARCH_PATH ../../../../lib/memory
 	set_global_assignment -name SEARCH_PATH ../../../../lib/essential
 	set_global_assignment -name SEARCH_PATH ../../ice40_272p
+	set_global_assignment -name SDC_FILE top.sdc
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/maths/divu_int.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_read_async.sv
 	set_global_assignment -name VERILOG_FILE ../../../../lib/3rd_party/zipcpu/rtl/core/slowmpy.v
@@ -92,6 +93,14 @@ if {$make_assignments} {
 	set_location_assignment PIN_D9 -to LED4
 	set_location_assignment PIN_E1 -to CLK
 	set_location_assignment PIN_N13 -to rst_n
+	set_location_assignment PIN_A10 -to LED[0]
+	set_location_assignment PIN_A11 -to LED[1]
+	set_location_assignment PIN_A12 -to LED[2]
+	set_location_assignment PIN_A13 -to LED[3]
+	set_location_assignment PIN_D6 -to LED[4]
+	set_location_assignment PIN_E7 -to LED[5]
+	set_location_assignment PIN_C8 -to LED[6]
+	set_location_assignment PIN_E8 -to LED[7]
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments
