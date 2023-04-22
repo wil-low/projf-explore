@@ -183,7 +183,7 @@
 `define i_TRACE 'h10			// top of stack copied to trace[7:0]
 
 
-`ifdef SIMULATION
+`ifndef SYNTHESIS
 
 function string opcode2str (input logic [6:0] opcode);
 begin

@@ -45,9 +45,7 @@ module core #(
 
 logic [31:0] car; // conditional action register
 					// only the two lowest order bits are monitored to determine the current condition
-logic [55:0] r_a; // register R0 (A)
-logic [55:0] r_b; // register R1 (B)
-logic [55:0] r_c; // register R2 (C)
+logic [55:0] v_r[VREGS + 3]; // variable registers, VREGS are user's and 3 other are R0-R2
 
 logic [13:0] icr; // instruction code register
 					// contains two 7-bit instruction codes with the one in the lower
@@ -60,7 +58,6 @@ logic [13:0] ddc_s; // data stack depth counter snapshot
 logic [13:0] ppr; // process priority register
 
 logic [DELAY_REG_WIDTH - 1:0] dcr; // delay compare register, kept 0 if there is no active delay, otherwise contains the compare
-logic [55:0] v_r[VREGS]; // variable registers
 
 //============ Data stack ============
 logic stack_rst_n = 1;
@@ -136,8 +133,8 @@ slowmpy_inst(
 	.i_clk(clk),
 	.i_reset(~rst_n),
 	.i_stb(mul_en),
-	.i_a(r_b),
-	.i_b(r_a),
+	.i_a(v_r[VREGS + 1]),
+	.i_b(v_r[VREGS]),
 	.i_aux(),
 	.o_busy(mul_busy),
 	.o_done(mul_done),
@@ -165,8 +162,8 @@ divu_int_inst(
 	.done(divu_done),
 	.valid(divu_valid),
 	.dbz(divu_dbz),
-	.a(r_b),
-	.b(r_a),
+	.a(v_r[VREGS + 1]),
+	.b(v_r[VREGS]),
 	.val(divu_val),
 	.rem(divu_rem)
 );
@@ -628,7 +625,7 @@ always @(posedge clk) begin
 				state <= s_POP_PROC;
 			end
 			2: begin
-				r_a <= stack_data_out;
+				v_r[VREGS] <= stack_data_out;
 				state <= s_POP_PROC;
 			end
 			1: begin
@@ -636,39 +633,39 @@ always @(posedge clk) begin
 				case (opcode)
 				`i_SETVAR:
 					begin
-						v_r[r_a % VREGS] <= stack_data_out;
-						$display("SETVAR %d = %d", r_a % VREGS, stack_data_out);
+						v_r[v_r[VREGS] % VREGS] <= stack_data_out;
+						$display("SETVAR %d = %d", v_r[VREGS] % VREGS, stack_data_out);
 						state <= s_INSTR_DONE;
 					end
 				`i_GT:
-					stack_data_in <= stack_data_out > r_a ? 1 : 0;
+					stack_data_in <= stack_data_out > v_r[VREGS] ? 1 : 0;
 				`i_GTEQ:
-					stack_data_in <= stack_data_out >= r_a ? 1 : 0;
+					stack_data_in <= stack_data_out >= v_r[VREGS] ? 1 : 0;
 				`i_SM:
-					stack_data_in <= stack_data_out < r_a ? 1 : 0;
+					stack_data_in <= stack_data_out < v_r[VREGS] ? 1 : 0;
 				`i_SMEQ:
-					stack_data_in <= stack_data_out <= r_a ? 1 : 0;
+					stack_data_in <= stack_data_out <= v_r[VREGS] ? 1 : 0;
 				`i_EQ:
-					stack_data_in <= stack_data_out == r_a ? 1 : 0;
+					stack_data_in <= stack_data_out == v_r[VREGS] ? 1 : 0;
 				`i_NEQ:
-					stack_data_in <= stack_data_out != r_a ? 1 : 0;
+					stack_data_in <= stack_data_out != v_r[VREGS] ? 1 : 0;
 				`i_AND:
-					stack_data_in <= stack_data_out & r_a;
+					stack_data_in <= stack_data_out & v_r[VREGS];
 				`i_OR:
-					stack_data_in <= stack_data_out | r_a;
+					stack_data_in <= stack_data_out | v_r[VREGS];
 				`i_XOR:
-					stack_data_in <= stack_data_out ^ r_a;
+					stack_data_in <= stack_data_out ^ v_r[VREGS];
 				`i_SHL:
-					stack_data_in <= stack_data_out << r_a;
+					stack_data_in <= stack_data_out << v_r[VREGS];
 				`i_SHR:
-					stack_data_in <= stack_data_out >> r_a;
+					stack_data_in <= stack_data_out >> v_r[VREGS];
 				`i_ADD:
-					stack_data_in <= stack_data_out + r_a;
+					stack_data_in <= stack_data_out + v_r[VREGS];
 				`i_SUB:
-					stack_data_in <= stack_data_out - r_a;
+					stack_data_in <= stack_data_out - v_r[VREGS];
 				`i_MUL:
 					if (USE_MUL) begin
-						r_b <= stack_data_out;
+						v_r[VREGS + 1] <= stack_data_out;
 						mul_en <= 1;
 						state <= s_MUL_WAIT;
 					end
@@ -677,10 +674,10 @@ always @(posedge clk) begin
 				`i_DIV,
 				`i_MOD:
 					if (USE_DIV) begin
-						if (r_a == 0)
+						if (v_r[VREGS] == 0)
 							reset(`ERR_CALC);
 						else begin
-							r_b <= stack_data_out;
+							v_r[VREGS + 1] <= stack_data_out;
 							divu_en <= 1;
 							state <= s_DIV_MOD_WAIT;
 						end
@@ -749,22 +746,22 @@ always @(posedge clk) begin
 				else begin
 					stack_index <= stack_data_out; 
 					$display("s_SWAP_STEP: %d", stack_data_out);
-					r_a <= stack_data_out;  // remember N
+					v_r[VREGS] <= stack_data_out;  // remember N
 					state <= s_PEEK_PROC;
 				end
 			end
 			3: begin
-				r_b <= stack_data_out;  // remember Nth element
+				v_r[VREGS + 1] <= stack_data_out;  // remember Nth element
 				stack_index <= 0;
 				state <= s_PEEK_PROC;
 			end
 			2: begin
 				stack_data_in <= stack_data_out; // top element
-				stack_index <= r_a;
+				stack_index <= v_r[VREGS];
 				state <= s_POKE_PROC;
 			end
 			1: begin
-				stack_data_in <= r_b;
+				stack_data_in <= v_r[VREGS + 1];
 				stack_index <= 0;
 				state <= s_POKE_PROC;
 			end
@@ -785,24 +782,24 @@ always @(posedge clk) begin
 					state <= s_POP_PROC;
 			end
 			5: begin
-				r_c <= stack_data_out;
+				v_r[VREGS + 2] <= stack_data_out;
 				state <= s_POP_PROC;
 			end
 			4: begin
-				r_b <= stack_data_out;
+				v_r[VREGS + 1] <= stack_data_out;
 				state <= s_POP_PROC;
 			end
 			3: begin
-				r_a <= stack_data_out;
-				stack_data_in <= r_b;
+				v_r[VREGS] <= stack_data_out;
+				stack_data_in <= v_r[VREGS + 1];
 				state <= s_PUSH_PROC;
 			end
 			2: begin
-				stack_data_in <= r_c;
+				stack_data_in <= v_r[VREGS + 2];
 				state <= s_PUSH_PROC;
 			end
 			1: begin
-				stack_data_in <= r_a;
+				stack_data_in <= v_r[VREGS];
 				state <= s_PUSH_PROC;
 			end
 			default: begin
@@ -847,7 +844,7 @@ always @(posedge clk) begin
 		
 		s_UNTIL_WHILE_STEP0: begin
 			$display("UNTIL_WHILE_STEP0 %d, car %b", cstack_data_out, car);
-			r_a <= cstack_data_out;
+			v_r[VREGS] <= cstack_data_out;
 			if ((car & `CA_MASK) == `CA_EXEC) begin
 				state <= s_POP_PROC;
 				next_state <= s_UNTIL_WHILE_STEP1;
@@ -861,14 +858,14 @@ always @(posedge clk) begin
 		s_UNTIL_WHILE_STEP1: begin
 			$display("UNTIL_WHILE_STEP1 %d car %b", stack_data_out, car);
 			if ((opcode == `i_WHILE) ? stack_data_out : !stack_data_out) begin
-				if ((r_a & 1) == 0)
+				if ((v_r[VREGS] & 1) == 0)
 					reset(`ERR_ALIGN);
 				else begin
-					pcp <= r_a & ~1;
+					pcp <= v_r[VREGS] & ~1;
 					if (pcp >= PROGRAM_SIZE)
 						reset(`ERR_INVMEM);
 					state <= s_CALL_PUSH_PROC;
-					cstack_data_in <= r_a | 1;
+					cstack_data_in <= v_r[VREGS] | 1;
 					next_state <= s_PCP_CHANGED;
 				end
 			end
