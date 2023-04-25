@@ -7,17 +7,14 @@ module stack
 	parameter DEPTH = 256
 )
 (
-	input logic clk,
-
-	input logic rst_n,					// reset
-
-	input logic push_en,			  	// push enable (add on top)
-	input logic pop_en,			  		// pop enable (remove from top)
-	input logic peek_en,			  	// peek enable (return item at index, no change)
-	input logic poke_en,			  	// poke enable (replace item at index)
-
-	input logic [WIDTH-1:0] data_in,	// data to push|poke
-	input logic [$clog2(DEPTH):0] index,	// element index t (0 is top)
+	input wire logic clk,
+	input wire logic rst_n,					// reset
+	input wire logic push_en,			  	// push enable (add on top)
+	input wire logic pop_en,			  	// pop enable (remove from top)
+	input wire logic peek_en,			  	// peek enable (return item at index, no change)
+	input wire logic poke_en,			  	// poke enable (replace item at index)
+	input wire logic [WIDTH - 1:0] data_in,	// data to push|poke
+	input wire logic [$clog2(DEPTH) - 1:0] index,	// element index t (0 is top)
 
 	output logic [WIDTH-1:0] data_out, 	// data returned for pop|peek
 
@@ -26,9 +23,9 @@ module stack
 	output logic [$clog2(DEPTH):0] depth	// returns how many items are in stack
 );
 
-logic [$clog2(DEPTH):0] addr_write;
+logic [$clog2(DEPTH) - 1:0] addr_write;
 
-logic [$clog2(DEPTH):0] addr_write_proxy, addr_read_proxy;
+logic [$clog2(DEPTH) - 1:0] addr_write_proxy, addr_read_proxy;
 logic we_proxy;
 
 assign we_proxy = (push_en && !full) || (poke_en && index < depth);
