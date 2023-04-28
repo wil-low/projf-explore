@@ -45,7 +45,7 @@ module core #(
 
 logic [31:0] car; // conditional action register
 					// only the two lowest order bits are monitored to determine the current condition
-logic [55:0] v_r[VREGS + 3]; // variable registers, VREGS are user's and 3 other are R0-R2
+logic [55:0] v_r[VREGS + 2]; // variable registers, VREGS are user's and 2 others are R0, R1
 
 logic [13:0] icr; // instruction code register
 					// contains two 7-bit instruction codes with the one in the lower
@@ -778,29 +778,35 @@ always @(posedge clk) begin
 			6: begin
 				if (stack_depth < 3)
 					reset(`ERR_DSINDEX);
-				else
-					state <= s_POP_PROC;
+				else begin
+					stack_index <= 2;
+					state <= s_PEEK_PROC;
+				end
 			end
 			5: begin
-				v_r[VREGS + 2] <= stack_data_out;
-				state <= s_POP_PROC;
+				v_r[VREGS] <= stack_data_out;
+				stack_index <= 1;
+				state <= s_PEEK_PROC;
 			end
 			4: begin
 				v_r[VREGS + 1] <= stack_data_out;
-				state <= s_POP_PROC;
+				stack_index <= 0;
+				state <= s_PEEK_PROC;
 			end
 			3: begin
-				v_r[VREGS] <= stack_data_out;
-				stack_data_in <= v_r[VREGS + 1];
-				state <= s_PUSH_PROC;
+				stack_data_in <= stack_data_out;
+				stack_index <= 1;
+				state <= s_POKE_PROC;
 			end
 			2: begin
-				stack_data_in <= v_r[VREGS + 2];
-				state <= s_PUSH_PROC;
+				stack_data_in <= v_r[VREGS + 1];
+				stack_index <= 2;
+				state <= s_POKE_PROC;
 			end
 			1: begin
 				stack_data_in <= v_r[VREGS];
-				state <= s_PUSH_PROC;
+				stack_index <= 0;
+				state <= s_POKE_PROC;
 			end
 			default: begin
 				state <= s_INSTR_DONE;
