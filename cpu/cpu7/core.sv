@@ -185,7 +185,7 @@ assign delayed = dcr && (dlyc < dcr);
 assign idle = (state == s_IDLE) && !push_en && !instr_en;
 
 logic instr_counter;
-logic [DSP_WIDTH - 1:0] step_counter;  // for multi-step instructions
+logic [2:0] step_counter;  // for multi-step instructions
 logic [6:0] opcode;  // for generalized instructions
 
 task reset;
