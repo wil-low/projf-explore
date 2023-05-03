@@ -1,0 +1,29 @@
+# iCESugar-v1.5
+
+# J1 (CLK) on
+# J3 always in Prog Flash mode (iCE not supported)
+# J5 both on
+
+set_io --warn-no-port RX 4
+set_io --warn-no-port TX 6
+
+set_io CLK 35
+
+set_io --warn-no-port LED_G 41
+set_io --warn-no-port LED_R 40
+set_io --warn-no-port LED_B 39
+
+#> PMOD 1
+set_io --warn-no-port LK_CLK 10
+set_io --warn-no-port LK_DIO  3
+set_io --warn-no-port LK_STB  9
+
+#> PMOD 3
+set_io --warn-no-port LED[0] 32
+set_io --warn-no-port LED[1] 28
+set_io --warn-no-port LED[2] 26
+set_io --warn-no-port LED[3] 23
+set_io --warn-no-port LED[4] 34
+set_io --warn-no-port LED[5] 31
+set_io --warn-no-port LED[6] 27
+set_io --warn-no-port LED[7] 25
