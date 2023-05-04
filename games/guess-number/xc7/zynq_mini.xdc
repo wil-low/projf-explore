@@ -1,3 +1,4 @@
+create_clock -period 20.000 -name CLK -waveform {0.000 10.000} [get_ports CLK]
 set_property IOSTANDARD LVCMOS33 [get_ports CLK]
 set_property IOSTANDARD LVCMOS33 [get_ports IR]
 set_property IOSTANDARD LVCMOS33 [get_ports LED1]

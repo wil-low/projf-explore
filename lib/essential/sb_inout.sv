@@ -3,10 +3,10 @@
 
 // Implementation of tristateable output.
 module sb_inout(
-	inout pin,
-	input out_enable,
-	input out_value,
-	output in_value
+	inout wire pin,
+	input wire out_enable,
+	input wire out_value,
+	output wire in_value
 );
 
 assign pin = out_enable ? out_value : 1'bz;

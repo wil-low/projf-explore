@@ -54,3 +54,8 @@ __pycache__
 
 # Mac
 .DS_Store
+
+# Project Trellis
+*.bit
+*.svf
+*_out.config
