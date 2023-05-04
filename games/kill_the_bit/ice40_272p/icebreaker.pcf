@@ -10,8 +10,8 @@
 
 set_io CLK 35
 
-set_io --warn-no-port LK_CLK 15
-set_io --warn-no-port LK_STB 13
+set_io --warn-no-port LK_CLK 45
+set_io --warn-no-port LK_STB 43
 set_io --warn-no-port LK_DIO 38
 
 
