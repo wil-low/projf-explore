@@ -14,7 +14,7 @@ ICELINK_DIR = /tmp/iCELink
 PATH_LIB = ../../../lib
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key.sv
-ADD_SRC += ${PATH_LIB}/essential/sb_inout.sv
+ADD_SRC += ${PATH_LIB}/essential/ice40/sb_inout.sv
 ADD_SRC += ../kill_the_bit.sv
 
 

@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Tue Apr  4 19:50:23 2023
+# Generated on: Wed May  3 21:57:56 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -25,16 +25,16 @@ set make_assignments 1
 
 # Check that the right project is open
 if {[is_project_open]} {
-	if {[string compare $quartus(project) "ladder"]} {
-		puts "Project ladder is not open"
+	if {[string compare $quartus(project) "kill_the_bit"]} {
+		puts "Project kill_the_bit is not open"
 		set make_assignments 0
 	}
 } else {
 	# Only open if not already open
-	if {[project_exists ladder]} {
-		project_open -revision top ladder
+	if {[project_exists kill_the_bit]} {
+		project_open -revision top kill_the_bit
 	} else {
-		project_new -revision top ladder
+		project_new -revision top kill_the_bit
 	}
 	set need_to_close_project 1
 }
@@ -43,7 +43,7 @@ if {[is_project_open]} {
 if {$make_assignments} {
 	set_global_assignment -name FAMILY "Cyclone IV E"
 	set_global_assignment -name DEVICE EP4CE6F17C8
-	set_global_assignment -name TOP_LEVEL_ENTITY top_ladder
+	set_global_assignment -name TOP_LEVEL_ENTITY top_kill_the_bit
 	set_global_assignment -name ORIGINAL_QUARTUS_VERSION 22.1STD.0
 	set_global_assignment -name PROJECT_CREATION_TIME_DATE "20:42:48  січня 23, 2023"
 	set_global_assignment -name LAST_QUARTUS_VERSION "22.1std.0 Lite Edition"
@@ -75,33 +75,24 @@ if {$make_assignments} {
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/segNx7/seg7_sym.sv
-	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/segNx7/segNx7.sv
-	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/essential/debounce.sv
-	set_global_assignment -name SYSTEMVERILOG_FILE ../../ladder.sv
-	set_global_assignment -name SYSTEMVERILOG_FILE ../top_ladder.sv
-	set_location_assignment PIN_D6 -to LED7
-	set_location_assignment PIN_E9 -to LED0
-	set_location_assignment PIN_F8 -to LED2
-	set_location_assignment PIN_D8 -to LED1
-	set_location_assignment PIN_C6 -to LED3
-	set_location_assignment PIN_E8 -to LED4
-	set_location_assignment PIN_C8 -to LED5
-	set_location_assignment PIN_E7 -to LED6
-	set_location_assignment PIN_P9 -to AN2
-	set_location_assignment PIN_N9 -to AN1
-	set_location_assignment PIN_M10 -to AN3
-	set_location_assignment PIN_N11 -to AN4
-	set_location_assignment PIN_R14 -to CA
-	set_location_assignment PIN_N16 -to CB
-	set_location_assignment PIN_P16 -to CC
-	set_location_assignment PIN_T15 -to CD
-	set_location_assignment PIN_P15 -to CE
-	set_location_assignment PIN_N12 -to CF
-	set_location_assignment PIN_N15 -to CG
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/essential/sb_inout.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/tm1638/tm1638_led_key.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/tm1638/tm1638.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../kill_the_bit.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../top_kill_the_bit.sv
 	set_location_assignment PIN_E1 -to CLK
-	set_location_assignment PIN_R16 -to DP
-	set_location_assignment PIN_M15 -to BTN
+	set_location_assignment PIN_N13 -to rst_n
+	set_location_assignment PIN_C6 -to LED[0]
+	set_location_assignment PIN_F8 -to LED[1]
+	set_location_assignment PIN_D8 -to LED[2]
+	set_location_assignment PIN_E9 -to LED[3]
+	set_location_assignment PIN_B12 -to LED[4]
+	set_location_assignment PIN_B13 -to LED[5]
+	set_location_assignment PIN_D5 -to LED[6]
+	set_location_assignment PIN_B11 -to LED[7]
+	set_location_assignment PIN_B1 -to LK_CLK
+	set_location_assignment PIN_B3 -to LK_STB
+	set_location_assignment PIN_B4 -to LK_DIO
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments

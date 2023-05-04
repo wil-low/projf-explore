@@ -10,14 +10,7 @@ module top_kill_the_bit
 	output logic LK_STB,
 	
 	output logic [7:0] LED
-	//output logic CLK_COPY,
-	//output logic STB_COPY,
-	//output logic DIO_COPY
 );
-
-//assign CLK_COPY = LK_CLK;
-//assign STB_COPY = LK_STB;
-//assign DIO_COPY = LK_DIO;
 
 //// Reset emulation for ice40
 logic [7:0] reset_counter = 0;
@@ -30,7 +23,7 @@ end
 
 kill_the_bit
 #(
-	.CLOCK_FREQ_MHz(12)
+	.CLOCK_FREQ_MHz(25)
 )
 kill_the_bit_inst
 (

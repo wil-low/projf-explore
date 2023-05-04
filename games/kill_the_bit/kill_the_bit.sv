@@ -3,10 +3,12 @@
 
 module kill_the_bit
 #(
-	parameter CLOCK_FREQ_MHz = 12
+	parameter CLOCK_FREQ_MHz = 12,
+	parameter WAIT_USEC = 512
 )
 (
 	input wire i_clk,
+	input wire rst_n,
 	
 	output logic o_ledkey_clk,
 	output logic o_ledkey_stb,
@@ -15,6 +17,7 @@ module kill_the_bit
 	output logic [7:0] o_LED
 );
 
+logic en_init = 0;
 logic en_raw = 0;
 logic [7:0] raw_data = 0;
 logic en_led = 0;
@@ -31,11 +34,13 @@ assign o_LED = 0;
 
 tm1638_led_key
 #(
-	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHz)
+	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHz),
+	.WAIT_USEC(WAIT_USEC)
 )
 tm1638_led_key_inst
 (
 	.i_clk(i_clk),
+	.rst_n(rst_n),					// perform startup init sequence
 	.i_en_raw(en_raw),				// enable sending raw data
 	.i_raw_data(raw_data),			// raw data to send (e.g. for init or custom commands)
 
@@ -57,6 +62,6 @@ tm1638_led_key_inst
 	.o_idle(ledkey_idle)
 );
 
-logic _unused_ok = &{1'b1, button_state, ledkey_idle, 1'b0};
+logic _unused_ok = &{1'b1, button_state, ledkey_idle, en_init, 1'b0};
 
 endmodule
