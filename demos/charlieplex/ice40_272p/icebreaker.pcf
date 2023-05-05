@@ -1,0 +1,42 @@
+# iCESugar-v1.5
+
+# J1 (CLK) on
+# J3 always in Prog Flash mode (iCE not supported)
+# J5 both on
+
+set_io CLK 35
+
+set_io --warn-no-port io_pin[0]  9
+set_io --warn-no-port io_pin[1]  4
+set_io --warn-no-port io_pin[2]  2
+
+#> PMOD 1
+#set_io --warn-no-port LED[0]  9
+#set_io --warn-no-port LED[1]  4
+#set_io --warn-no-port LED[2]  2
+#set_io --warn-no-port LED[3] 47
+#set_io --warn-no-port LED[4] 48
+#set_io --warn-no-port LED[5]  3
+#set_io --warn-no-port LED[6]  6
+#set_io --warn-no-port LED[7] 10
+
+
+#> PMOD 2
+#set_io --warn-no-port LED[0] 45
+#set_io --warn-no-port LED[1] 43
+#set_io --warn-no-port LED[2] 38
+#set_io --warn-no-port LED[3] 36
+#set_io --warn-no-port LED[4] 37
+#set_io --warn-no-port LED[5] 42
+#set_io --warn-no-port LED[6] 44
+#set_io --warn-no-port LED[7] 46
+
+#> PMOD 3
+#set_io --warn-no-port LED[0] 32
+#set_io --warn-no-port LED[1] 28
+#set_io --warn-no-port LED[2] 26
+#set_io --warn-no-port LED[3] 23
+#set_io --warn-no-port LED[4] 34
+#set_io --warn-no-port LED[5] 31
+#set_io --warn-no-port LED[6] 27
+#set_io --warn-no-port LED[7] 25
