@@ -91,7 +91,7 @@
 `define i_NEQ 'h2b      // alias: <>
 `define i_GTEQ 'h2c     // alias: >=
 `define i_GT 'h2d       // alias: >
-// `define i_ 'h2e
+`define i_TYPE 'h2e
 // `define i_ 'h2f
 // `define i_ 'h30
 // `define i_ 'h31
@@ -260,6 +260,7 @@ begin
 	`i_PRINT_CSTACK    : opcode2str = "PRINT_CSTACK";
 	`i_PRINT_STACK     : opcode2str = "PRINT_STACK";
 	`i_TRACE           : opcode2str = "TRACE";
+	`i_TYPE            : opcode2str = "TYPE";
 	default            : opcode2str = "???";
 	endcase
 end

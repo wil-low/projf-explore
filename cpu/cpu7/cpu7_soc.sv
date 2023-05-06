@@ -40,6 +40,10 @@ logic [CORES - 1: 0] acore_delayed;
 logic [CORES - 1: 0] acore_idle;		// core finished executing a command
 logic [PCP_WIDTH * CORES - 1:0] acore_pcp;		// program code pointers
 logic [8 * CORES - 1:0] acore_trace;	// trace from cores
+logic [56 * CORES - 1:0] acore_mem_addr;	// memory addresses from cores
+logic [CORES - 1:0] acore_mem_read8_en;		// read signal from cores
+logic [8 * CORES - 1:0] acore_mem_write8;	// write byte from cores
+logic [CORES - 1:0] acore_mem_write8_en;	// write signal from cores
 
 logic [55:0] push_value;
 logic push_en;
@@ -47,11 +51,20 @@ logic [13:0] instr;
 logic instr_en;
 logic pcp_step_en;
 
+logic [55:0] mem_value;
+
 logic [PCP_WIDTH - 1 : 0] addr_read;
 logic [PCP_WIDTH - 1 : 0] addr_write = 0;
 logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
+
+localparam MEM_SIZE = 1024;
+localparam MEM_SIZE_WIDTH = $clog2(MEM_SIZE);
+logic [MEM_SIZE_WIDTH - 1 : 0] mem_addr;
+logic [7:0] mem_read_value;
+logic [7:0] mem_write_value;
+logic mem_write_en = 0;
 
 assign addr_read = acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH] / 2; // in words
 
@@ -63,6 +76,13 @@ bram_read_async (
 	.clk, .we(write_en),
 	.addr_write(addr_write), .addr_read(addr_read),
 	.data_in, .data_out
+);
+
+bram_read_async #(.WIDTH(8), .DEPTH(MEM_SIZE), .INIT_F("/home/willow/prj/fpga-other/projf-explore/cpu/mc14500b/ice40_272p/cmd.mem"))
+memory_inst (
+	.clk, .we(mem_write_en),
+	.addr_write(mem_addr), .addr_read(mem_addr),
+	.data_in(mem_write_value), .data_out(mem_read_value)
 );
 
 genvar i;
@@ -90,19 +110,24 @@ for (i = 0; i < CORES; i = i + 1) begin : generate_core
 		.instr_en,
 		.pcp_step_en,
 		.dlyc,
+		.mem_read8(mem_read_value),
 		.pcp(acore_pcp[(i + 1) * PCP_WIDTH - 1 -: PCP_WIDTH]),
 		.executing(acore_executing[i]),
 		.delayed(acore_delayed[i]),
 		.errcode(acore_errcode[(i + 1) * 9 - 1 -: 9]),
 		.trace(acore_trace[(i + 1) * 8 - 1 -: 8]),
-		.idle(acore_idle[i])
+		.idle(acore_idle[i]),
+		.mem_addr(acore_mem_addr[(i + 1) * 56 - 1 -: 56]),
+		.mem_read8_en(acore_mem_read8_en[i]),
+		.mem_write8(acore_mem_write8[(i + 1) * 8 - 1 -: 8]),
+		.mem_write8_en(acore_mem_write8_en[i])
 	);
 end
 endgenerate
 
 enum {s_RESET, s_HALT,
 	s_BEFORE_READ, s_READ_WORD, s_DECODE_WORD,
-	s_WAIT_CORE, s_NEXT_CORE, s_NEXT_CORE_STEP
+	s_WAIT_CORE, s_NEXT_CORE, s_NEXT_CORE_STEP, s_READ_MEM, s_WRITE_MEM
 } state, next_state;
 
 logic [7:0] bit_counter;
@@ -162,8 +187,26 @@ always @(posedge clk) begin
 		end
 		
 		s_WAIT_CORE: begin
-			//$display("s_WAIT_CORE %d, idle %b", pxr, acore_idle[pxr]);
-			if (acore_idle[pxr])
+			$display("s_WAIT_CORE %d, idle %b", pxr, acore_idle[pxr]);
+			if (acore_mem_read8_en[pxr]) begin
+				mem_write_en <= 0;
+				write_en <= 0;
+				if (acore_mem_addr[(pxr + 1) * 56 - 1 -: 56] >= PROGRAM_SIZE) begin
+					mem_addr <= acore_mem_addr[(pxr + 1) * 56 - 1 -: 56] - PROGRAM_SIZE;
+					state <= s_READ_MEM;
+				end
+				/*else begin
+					mem_addr <= acore_mem_addr[(pxr + 1) * 56 - 1 -: 56];
+					state <= s_READ_MEM;
+				end*/
+			end
+			else if (acore_mem_write8_en[pxr]) begin
+				mem_addr <= acore_mem_addr[(pxr + 1) * 56 - 1 -: 56] - PROGRAM_SIZE;
+				mem_write_value <= acore_mem_write8[(pxr + 1) * 8 - 1 -: 8];
+				mem_write_en <= 1;
+				state <= s_WRITE_MEM;
+			end
+			else if (acore_idle[pxr])
 				state <= next_state;
 		end
 		
@@ -196,6 +239,16 @@ always @(posedge clk) begin
 				acore_en <= 1 << pxr;
 				state <= s_BEFORE_READ;
 			end
+		end
+
+		s_READ_MEM: begin
+			$display("mem_addr %d, mem_read_value %b, mem_write_value %b", mem_addr, mem_read_value, mem_write_value);
+			state <= s_WAIT_CORE;
+		end
+
+		s_WRITE_MEM: begin
+			$display("mem_addr %d, mem_read_value %b, mem_write_value %b", mem_addr, mem_read_value, mem_write_value);
+			state <= s_WAIT_CORE;
 		end
 
 		s_HALT: begin

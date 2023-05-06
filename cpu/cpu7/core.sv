@@ -35,12 +35,17 @@ module core #(
 	input wire logic instr_en,			// do execute
 	input wire logic pcp_step_en,		// advance pcp by 2
 	input wire logic [DELAY_REG_WIDTH - 1:0] dlyc,	// free-running delay counter
+	input wire [7:0] mem_read8,			// byte read from memory
 	output logic [PCP_WIDTH - 1:0] pcp,	// program code pointer (in bytes)
 	output logic executing,			// core status by condition action register
 	output logic delayed,			// core is executing DELAY
 	output logic [8:0] errcode,		// core errcode
 	output logic [7:0] trace,		// core trace
-	output logic idle				// core finished executing a command
+	output logic idle,				// core finished executing a command
+	output logic [55:0] mem_addr,	// memory address to read/write
+	output logic mem_read8_en,		// command SoC to read memory at mem_addr and return result in push_value
+	output logic [7:0] mem_write8,	// byte to be written to memory
+	output logic mem_write8_en		// command SoC to write memory at mem_addr, value mem_write
 );
 
 logic [31:0] car; // conditional action register
@@ -173,7 +178,7 @@ divu_int_inst(
 enum {
 	s_IDLE, s_INSTR, s_INSTR_DONE, s_PCP_CHANGED,
 	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
-	s_OP_1, s_OP_2,
+	s_OP_1, s_OP_2, s_READMEM, s_READMEM_STEP1, s_READMEM_STEP2, s_READMEM_STEP3,
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
 	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP, s_RETURN_STEP,
 	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP, s_DELAY_STEP, s_SKIP_STEP, s_CALL_STEP0, s_CALL_STEP1,
@@ -200,7 +205,7 @@ endtask
 always @(posedge clk) begin
 	{stack_push_en, stack_pop_en, stack_peek_en, stack_poke_en} <= 0;
 	{cstack_push_en, cstack_pop_en, cstack_peek_en, cstack_poke_en} <= 0;
-	{mul_en, divu_en} <= 0;
+	{mul_en, divu_en, mem_read8_en, mem_write8_en} <= 0;
 	stack_rst_n <= 1;
 	cstack_rst_n <= 1;
 
@@ -449,7 +454,13 @@ always @(posedge clk) begin
 				state <= s_OP_1;
 			end
 
+			`i_RD8: begin
+				state <= s_READMEM;
+			end
+
+			`i_WR8,
 			`i_SETVAR,
+			`i_TYPE,
 			`i_GT,
 			`i_GTEQ,
 			`i_SM,
@@ -583,6 +594,32 @@ always @(posedge clk) begin
 			next_state <= s_INSTR_DONE;
 		end
 
+		s_READMEM: begin
+			$display("READMEM for opcode %h", opcode);
+			stack_index <= 0;
+			state <= s_POP_PROC;
+			next_state <= s_READMEM_STEP1;
+		end
+
+		s_READMEM_STEP1: begin
+			$display("READMEM_STEP for opcode %h", opcode);
+			mem_addr <= stack_data_out;
+			mem_read8_en <= 1;
+			state <= s_READMEM_STEP2;
+		end
+
+		s_READMEM_STEP2: begin
+			$display("READMEM_STEP2 for opcode %h", opcode);
+			state <= s_READMEM_STEP3;
+		end
+
+		s_READMEM_STEP3: begin
+			$display("READMEM_STEP3 for opcode %h, mem_read8 %b", opcode, mem_read8);
+			stack_data_in <= mem_read8;
+			state <= s_PUSH_PROC;
+			next_state <= s_INSTR_DONE;
+		end
+
 		s_OP_1: begin
 			//$display("OP_1 for opcode %h", opcode);
 			stack_index <= 0;
@@ -629,12 +666,26 @@ always @(posedge clk) begin
 				state <= s_POP_PROC;
 			end
 			1: begin
+				$display("OP_2_STEP for opcode %h, top %d, prev %d", opcode, stack_data_out, v_r[VREGS]);
 				state <= s_PUSH_PROC;
 				case (opcode)
 				`i_SETVAR:
 					begin
 						v_r[v_r[VREGS] % VREGS] <= stack_data_out;
 						$display("SETVAR %d = %d", v_r[VREGS] % VREGS, stack_data_out);
+						state <= s_INSTR_DONE;
+					end
+				`i_WR8:
+					begin
+						mem_addr <= v_r[VREGS];
+						mem_write8 <= stack_data_out;
+						mem_write8_en <= 1;
+						state <= s_INSTR_DONE;
+					end
+				`i_TYPE:
+					begin
+						//state <= s_TYPE_STEP;
+						step_counter <= stack_data_out;
 						state <= s_INSTR_DONE;
 					end
 				`i_GT:
