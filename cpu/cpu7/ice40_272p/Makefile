@@ -65,4 +65,4 @@ generate_mem: ../test.mem
 clean:
 	rm -f *.json *.asc *.rpt *.bin *yosys.log *.out *.vcd
 
-.PHONY: all clean
+.PHONY: all clean cpu7.sim generate_mem

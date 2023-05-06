@@ -24,19 +24,38 @@ close (INF);
 #make_opcode2str();
 
 $instr{';'} = $instr{RETURN};  # alias for RETURN
-$instr{'(NOP)'} = $instr{NOP};  # NOP forced (for alignment)
+
+force('NOP');	# NOP forced (for alignment)
+force('SKIP');	# SKIP forced (for inline strings)
+force('DO');	# DO forced (for inline strings)
+
+$instr{'S"'} = '';
 
 %instr = (%instr, %alias);
 
 #print Dumper(\%instr);
 
-my @token;
+my @token;  # array of array refs, 0-th element is the type: 0 - ordinary token, 1 - string token (item contains token+string)
+my $line_backup = '';
+
 open (INF, "<$program_file") or die "$!: $program_file";
 while (my $line = <INF>) {
 	$line =~ s/[\r\n]//sg;
+	$line_backup = $line;
 	$line =~ s/`!.+//sg;  # remove comment
 	while ($line =~ s/\s*(\S+)\s*//s) {
-		push(@token, $1);
+		my $t = $1;
+		if (is_string_token($t)) {
+			if ($line =~ s/([^"].+?)"//s) {
+				push(@token, [1, $t, $1]);
+			}
+			else {
+				die "String not terminated at line \n$line_backup\n";
+			}
+		}
+		else {
+			push(@token, [0, $t]);
+		}
 	}
 }
 close (INF);
@@ -58,6 +77,7 @@ my $addr = 0;
 my $addr_save = $addr;
 
 my %label;
+my $insert_str = 0;
 
 foreach my $orig_tok (@token) {
 	#print "token: '$tok'\n";
@@ -73,12 +93,32 @@ foreach my $key (sort(keys(%label))) {
 warn Dumper(\%label);
 
 sub add_token {  # token
-	my $orig_tok = shift;
+	my $array_ref = shift;
+	my ($type, $orig_tok, $str) = @$array_ref;
+	$str = '' if !defined($str);
 	my $tok = uc($orig_tok);
-	if (defined($instr{$tok})) {
+	if ($type == 1) {
+		if (defined($instr{$tok})) {
+			my $len = length($str);
+			my $aligned_len = $len;
+			++$aligned_len if $len % 2;
+			add_token([0, $aligned_len]);
+			add_token([0, "(SKIP)"]);
+			check_add_nopf();
+			my $saved_addr = $addr;
+			add_string($tok, $str);
+			add_token([0, "(DO)"]);
+			add_token([0, $saved_addr]);
+			add_token([0, $len]);
+		}
+		else {
+			die "Unknown string token '$orig_tok' at line\n$line_backup\n";
+		}
+	}
+	elsif (defined($instr{$tok})) {
 		check_align_before($tok);
 		$instr_word += $instr_idx ? $instr{$tok} << 7 : $instr{$tok};
-		$comment .= "$orig_tok ";
+		$comment .= "$orig_tok $str";
 		$addr++;
 		if ($instr_idx) {
 			print sprintf("%04x  // %06d: %s\n", $instr_word, $addr_save, $comment);
@@ -109,19 +149,19 @@ sub add_token {  # token
 			else {
 				if ($label_op eq '_') {
 					add_offset($tok, $orig_tok);
-					add_token('CALL');
+					add_token([0, 'CALL']);
 				}
 				elsif ($label_op eq '_!') {
 					add_offset($tok, $orig_tok);
-					add_token('NTCALL');
+					add_token([0, 'NTCALL']);
 				}
 				elsif ($label_op eq '&') {
 					add_token(".$tok", $orig_tok);
-					add_token('ACALL');
+					add_token([0, 'ACALL']);
 				}
 				elsif ($label_op eq '&!') {
 					add_token(".$tok", $orig_tok);
-					add_token('NTACALL');
+					add_token([0, 'NTACALL']);
 				}
 			}
 		}
@@ -130,7 +170,7 @@ sub add_token {  # token
 		}
 	}
 	else {
-		die "Unknown token '$orig_tok'\n";
+		die "Unknown token '$orig_tok' at line\n$line_backup\n";
 	}
 }
 
@@ -166,9 +206,27 @@ sub add_number {  # number, orig_tok
 	$addr_save = $addr;
 }
 
+sub add_string {  # orig_tok, string
+	my ($orig_tok, $str) = @_;
+	my $len = length($str);
+	for (my $i = 0; $i < $len; ++$i) {
+		print sprintf("%x", ord(substr($str, $i, 1)));
+		if ($i % 2) {
+			print ' ';
+		}
+	}
+	if ($len % 2) {
+		print '00 ';
+		++$addr;
+	}
+	print sprintf(" // %06d: %s %s\"\n", $addr_save, $orig_tok, $str);
+	$addr += $len;
+	$addr_save = $addr;
+}
+
 sub check_add_nopf {
 	if ($instr_idx) {
-		add_token('(NOP)');
+		add_token([0, '(NOP)']);
 	}
 }
 
@@ -226,4 +284,13 @@ endfunction
 EOF
 	print $text;
 	die;
+}
+
+sub is_string_token {
+	return $_[0] =~ /^(S")$/;
+}
+
+sub force {
+	my $token = shift;
+	$instr{"($token)"} = $instr{$token};
 }
