@@ -24,8 +24,7 @@ logic rst_n;
 
 kill_the_bit
 #(
-	.CLOCK_FREQ_MHz(12),
-	.WAIT_USEC(4)
+	.CLOCK_FREQ_MHz(12)
 )
 kill_the_bit_inst
 (
@@ -63,7 +62,7 @@ initial begin
 end
 
 always @(posedge CLK) begin
-	#10000 $finish;
+	#400000 $finish;
 end
 
 wire _unused_ok = &{1'b1, LK_CLK, LK_DIO, LK_STB, counter, LED, 1'b0};

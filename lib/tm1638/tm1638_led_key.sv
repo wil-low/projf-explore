@@ -5,25 +5,26 @@
 
 module tm1638_led_key
 #(
-	parameter CLOCK_FREQ_MHz = 12,
-	parameter WAIT_USEC = 512
+	parameter CLOCK_FREQ_MHz = 12
 )
 (
 	input wire i_clk,
-	input wire rst_n,					// perform startup init sequence
-	input wire i_en_raw,				// enable sending raw data
-	input wire [7:0] i_raw_data,		// raw data to send (e.g. for init or custom commands)
+	input wire i_cmd_en,				// enable sending a command
+	input wire i_seg7_en,				// enable setting one seg7's state
+	input wire i_led_en,				// enable setting one LED state
+	input wire i_all_led_en,			// enable setting all LED states at once
+	input wire i_batch_en,				// enable sending up to 17 bytes of batch_data
+	input wire i_btn_en,				// enable reading buttons' state
 
-	input wire i_en_led,				// enable setting LED state
-	input wire [7:0] i_led_state,		// LED1-8 state (1 = lit)
+	input wire [2:0] i_idx,				// seg7/led index (0-7)
 
-	input wire i_en_seg7,				// enable setting one seg7's state
-	input wire [2:0] i_seg7_idx,		// seg7 index (0-7)
-	input wire [7:0] i_seg7_state,		// seg7 state (1 = lit)
+	input wire [7:0] i_data,			// byte to send
+	output logic [7:0] o_btn_state,		// button0-7 state (1 = pressed) 
 
-	input wire i_en_buttons,			// enable reading buttons' state
-	output logic [7:0] o_button_state,	// button1-8 state (1 = pressed) 
-
+	input logic [4:0] i_batch_data_size,
+	input logic [8 * 17 - 1 : 0] i_batch_data,
+	input logic [27:0] i_wait_counter,
+	
 	// shield pins
 	output logic o_tm1638_clk,
 	output logic o_tm1638_stb,
@@ -37,41 +38,13 @@ logic tm1638_en = 0;
 logic [7:0] raw_data;
 logic tm1638_idle;
 
-logic [5:0] data_size;
-logic [5:0] data_counter;
+logic [4:0] data_counter;
 /* verilator lint_off LITENDIAN */
 logic [8 * 17 - 1 : 0] data;
 /* verilator lint_on LITENDIAN */
 
-task send_command;
-	input [7:0] cmd2send;
-	input [27:0] wait_cycles;
-begin
-	o_tm1638_stb <= 0;
-	data_size <= 1;
-	data_counter <= 1;
-	data[7:0] <= cmd2send;
-	wait_counter <= wait_cycles;
-	state <= s_SEND_DATA;
-end
-endtask
-
-task send_data;
-	input [4:0] size;
-	input [8 * 17 - 1 : 0] data2send;
-	input [27:0] wait_cycles;
-begin
-	o_tm1638_stb <= 0;
-	data_size <= size;
-	data_counter <= size;
-	data <= data2send;
-	wait_counter <= wait_cycles;
-	state <= s_SEND_DATA;
-end
-endtask
-
-assign o_button_state = 0;
-assign o_idle = tm1638_idle;
+assign o_btn_state = 0;
+assign o_idle = (state == s_IDLE) && tm1638_idle && !i_cmd_en && !i_seg7_en && !i_led_en && !i_batch_en && !i_btn_en && !i_all_led_en;
 
 tm1638
 #(
@@ -88,101 +61,111 @@ tm1638_inst
 );
 
 enum {
-	s_IDLE, s_RESET, s_INIT_STEP, s_SEND_DATA, s_DELAY
+	s_IDLE, s_INIT_STEP, s_SEND_DATA, s_SEND_CMD, s_SET_ALL_LED, s_SET_ALL_LED_STEP, s_DELAY
 } state, next_state;
 
 logic [3:0] state_counter;
 
-localparam ONE_USEC = CLOCK_FREQ_MHz;
 logic [27:0] wait_counter;
 
 always @(posedge i_clk) begin
 	tm1638_en <= 0;
-	if (!rst_n) begin
-		state <= s_RESET;
-		o_tm1638_stb <= 1;
-		$display($time, "RESET");
+
+	case (state)
+
+	s_IDLE: begin
+		next_state <= s_DELAY;
+		if (i_cmd_en) begin
+			o_tm1638_stb <= 0;
+			raw_data <= i_data;
+			wait_counter <= i_wait_counter;
+			tm1638_en <= 1;
+			state <= s_SEND_CMD;			
+		end
+		else if (i_batch_en) begin
+			o_tm1638_stb <= 0;
+			data_counter <= i_batch_data_size;
+			data <= i_batch_data;
+			wait_counter <= i_wait_counter;
+			state <= s_SEND_DATA;
+		end
+		else if (i_seg7_en) begin
+			o_tm1638_stb <= 0;
+			data_counter <= 2;
+			data <= {8'hc0 + (i_idx << 1), i_data};
+			wait_counter <= i_wait_counter;
+			state <= s_SEND_DATA;
+		end
+		else if (i_led_en) begin
+			o_tm1638_stb <= 0;
+			data_counter <= 2;
+			data <= {8'hc1 + (i_idx << 1), i_data};
+			wait_counter <= i_wait_counter;
+			state <= s_SEND_DATA;
+		end
+		else if (i_all_led_en) begin
+			state_counter <= 0;
+			data[23:8] <= {i_data, 8'hbf};  // c1 - 02
+			state <= s_SET_ALL_LED;
+			wait_counter <= i_wait_counter;
+		end
 	end
-	else begin
-		case (state)
 
-		s_RESET: begin
-			state <= s_INIT_STEP;
-			state_counter <= 9;
-		end
-
-		s_INIT_STEP: begin
-			next_state <= s_INIT_STEP;
-			if (tm1638_idle) begin
-				if (state_counter == 0)
-					state_counter <= 4;
-					//state <= s_IDLE;
-				case (state_counter)
-				9: begin
-					send_command(8'h8f, ONE_USEC);  // activate
-				end
-				8: begin
-					send_command(8'h40, ONE_USEC);  // set auto increment mode
-				end
-				7: begin
-					send_data(17, {8'hc0, 128'h0}, ONE_USEC * 1000000);  // set starting address to 0, then send 16 zero bytes
-				end
-				6: begin
-					send_data(17, {8'hc0, 8'h3f, 8'h01, 8'h06, 8'h01, 8'h5b, 8'h00, 8'h4f, 8'h00, 8'h66, 8'h00, 8'h6d, 8'h00, 8'h7d, 8'h03, 8'h07, 8'h01},
-						ONE_USEC * 1000000);
-				end
-				5: begin
-					send_command(8'h88, ONE_USEC * 1000000);  // set pulse width 1/16
-				end
-				4: begin
-					send_command(8'h8f, ONE_USEC * 1000000);  // set pulse width full
-				end
-				3: begin
-					send_data(3, {8'hc4, 8'h73, 8'h01},
-						ONE_USEC * 1000000);
-				end
-				/*2: begin
-					send_data(15, {8'hc0, 8'h3f, 8'h01, 8'h06, 8'h01, 8'h5b, 8'h00, 8'h4f, 8'h00, 8'h66, 8'h00, 8'h6d, 8'h00, 8'h7d, 8'h03, 8'h00, 8'h00},
-						ONE_USEC * 1000000);
-				end*/
-				default:
-					state <= s_IDLE;
-				endcase
-				state_counter <= state_counter - 1;
-			end
-		end
-
-		s_IDLE: begin
-			//$display("IDLE");
-		end
-
-		s_DELAY: begin
-			if (wait_counter == 0)
-				state <= next_state;
-			wait_counter <= wait_counter - 1;
-		end
-
-		s_SEND_DATA: begin
-			if (tm1638_idle) begin
-				if (data_counter == 0) begin
-					o_tm1638_stb <= 1;
-					state <= s_DELAY;
-				end
-				else begin
-					tm1638_en <= 1;
-					raw_data <= data[data_counter * 8 - 1 -: 8];
-					data_counter <= data_counter - 1;
-				end
-			end
-		end
-
-		default:
+	s_DELAY: begin
+		if (wait_counter == 0) begin
+			o_tm1638_stb <= 1;
 			state <= s_IDLE;
-
-		endcase
+		end
+		wait_counter <= wait_counter - 1;
 	end
+
+	s_SEND_CMD: begin
+		if (tm1638_idle) begin
+			state <= s_DELAY;
+		end
+	end
+
+	s_SEND_DATA: begin
+		if (tm1638_idle) begin
+			if (data_counter == 0) begin
+				state <= next_state;
+			end
+			else begin
+				tm1638_en <= 1;
+				raw_data <= data[data_counter * 8 - 1 -: 8];
+				data_counter <= data_counter - 1;
+			end
+		end
+	end
+
+	s_SET_ALL_LED: begin
+		if (tm1638_idle) begin
+			if (state_counter == 8) begin
+				state <= s_DELAY;
+			end
+			else begin
+				o_tm1638_stb <= 0;
+				data_counter <= 2;
+				data[15:8] <= data[15:8] + 2;
+				data[7:0] <= data[16 + state_counter];
+				state <= s_SEND_DATA;
+				next_state <= s_SET_ALL_LED_STEP;
+				state_counter <= state_counter + 1;
+			end
+		end
+	end
+
+	s_SET_ALL_LED_STEP: begin
+		o_tm1638_stb <= 1;
+		state <= s_SET_ALL_LED;
+	end
+
+	default:
+		state <= s_IDLE;
+
+	endcase
 end
 
-wire _unused_ok = &{1'b1, i_en_raw, i_en_led, i_led_state, i_en_seg7, i_seg7_idx, i_seg7_state, i_en_buttons, i_raw_data, 1'b0};
+wire _unused_ok = &{1'b1, 1'b0};
 
 endmodule
