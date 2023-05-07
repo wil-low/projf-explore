@@ -20,7 +20,7 @@ module tm1638
 	output logic o_idle
 );
 
-localparam INNER_CLOCK_8TH = CLOCK_FREQ_MHz * 2;
+localparam INNER_CLOCK_8TH = CLOCK_FREQ_MHz;
 
 logic [$clog2(INNER_CLOCK_8TH) + 4:0] inner_clock;
 

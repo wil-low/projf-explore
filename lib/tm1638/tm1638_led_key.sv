@@ -40,8 +40,35 @@ logic tm1638_idle;
 logic [5:0] data_size;
 logic [5:0] data_counter;
 /* verilator lint_off LITENDIAN */
-logic [0:8 * 17 - 1] data;
+logic [8 * 17 - 1 : 0] data;
 /* verilator lint_on LITENDIAN */
+
+task send_command;
+	input [7:0] cmd2send;
+	input [27:0] wait_cycles;
+begin
+	o_tm1638_stb <= 0;
+	data_size <= 1;
+	data_counter <= 1;
+	data[7:0] <= cmd2send;
+	wait_counter <= wait_cycles;
+	state <= s_SEND_DATA;
+end
+endtask
+
+task send_data;
+	input [4:0] size;
+	input [8 * 17 - 1 : 0] data2send;
+	input [27:0] wait_cycles;
+begin
+	o_tm1638_stb <= 0;
+	data_size <= size;
+	data_counter <= size;
+	data <= data2send;
+	wait_counter <= wait_cycles;
+	state <= s_SEND_DATA;
+end
+endtask
 
 assign o_button_state = 0;
 assign o_idle = tm1638_idle;
@@ -67,7 +94,7 @@ enum {
 logic [3:0] state_counter;
 
 localparam ONE_USEC = CLOCK_FREQ_MHz;
-logic [15:0] wait_counter;
+logic [27:0] wait_counter;
 
 always @(posedge i_clk) begin
 	tm1638_en <= 0;
@@ -81,64 +108,43 @@ always @(posedge i_clk) begin
 
 		s_RESET: begin
 			state <= s_INIT_STEP;
-			state_counter <= 8;
+			state_counter <= 9;
 		end
 
 		s_INIT_STEP: begin
 			next_state <= s_INIT_STEP;
 			if (tm1638_idle) begin
 				if (state_counter == 0)
-					state <= s_IDLE;
+					state_counter <= 4;
+					//state <= s_IDLE;
 				case (state_counter)
+				9: begin
+					send_command(8'h8f, ONE_USEC);  // activate
+				end
 				8: begin
-					o_tm1638_stb <= 0;
-					data_size <= 1;
-					data_counter <= 0;
-					data[0:7] <= 8'h8f; // activate
-					state <= s_SEND_DATA;
+					send_command(8'h40, ONE_USEC);  // set auto increment mode
 				end
 				7: begin
-					o_tm1638_stb <= 1;
-					wait_counter <= ONE_USEC * WAIT_USEC;
-					state <= s_DELAY;
+					send_data(17, {8'hc0, 128'h0}, ONE_USEC * 1000000);  // set starting address to 0, then send 16 zero bytes
 				end
 				6: begin
-					o_tm1638_stb <= 0;
-					data_size <= 1;
-					data_counter <= 0;
-					data[0:7] <= 8'h40; // set auto increment mode
-					state <= s_SEND_DATA;
+					send_data(17, {8'hc0, 8'h3f, 8'h01, 8'h06, 8'h01, 8'h5b, 8'h00, 8'h4f, 8'h00, 8'h66, 8'h00, 8'h6d, 8'h00, 8'h7d, 8'h03, 8'h07, 8'h01},
+						ONE_USEC * 1000000);
 				end
 				5: begin
-					o_tm1638_stb <= 1;
-					wait_counter <= ONE_USEC * WAIT_USEC;
-					state <= s_DELAY;
+					send_command(8'h88, ONE_USEC * 1000000);  // set pulse width 1/16
 				end
 				4: begin
-					o_tm1638_stb <= 0;
-					data_size <= 17;
-					data_counter <= 0;
-					data <= {8'hc0, 128'h0}; // set starting address to 0, then send 16 zero bytes
-					state <= s_SEND_DATA;
+					send_command(8'h8f, ONE_USEC * 1000000);  // set pulse width full
 				end
 				3: begin
-					o_tm1638_stb <= 1;
-					wait_counter <= ONE_USEC * WAIT_USEC;
-					state <= s_DELAY;
+					send_data(3, {8'hc4, 8'h73, 8'h01},
+						ONE_USEC * 1000000);
 				end
-				2: begin
-					o_tm1638_stb <= 0;
-					data_size <= 17;
-					data_counter <= 0;
-					data <= {8'hc0, 8'h3f, 8'h00, 8'h06, 8'h00, 8'h5b, 8'h00, 8'h4f, 8'h00, 8'h66, 8'h00, 8'h6d, 8'h00, 8'h7d, 8'h00, 8'h07, 8'h00};
-					//data <= {8'hc0, 128'h0}; // set starting address to 0, then send 16 zero bytes
-					state <= s_SEND_DATA;
-				end
-				1: begin
-					o_tm1638_stb <= 1;
-					wait_counter <= ONE_USEC * WAIT_USEC;
-					state <= s_DELAY;
-				end
+				/*2: begin
+					send_data(15, {8'hc0, 8'h3f, 8'h01, 8'h06, 8'h01, 8'h5b, 8'h00, 8'h4f, 8'h00, 8'h66, 8'h00, 8'h6d, 8'h00, 8'h7d, 8'h03, 8'h00, 8'h00},
+						ONE_USEC * 1000000);
+				end*/
 				default:
 					state <= s_IDLE;
 				endcase
@@ -158,12 +164,14 @@ always @(posedge i_clk) begin
 
 		s_SEND_DATA: begin
 			if (tm1638_idle) begin
-				if (data_counter == data_size)
-					state <= next_state;
+				if (data_counter == 0) begin
+					o_tm1638_stb <= 1;
+					state <= s_DELAY;
+				end
 				else begin
 					tm1638_en <= 1;
-					raw_data <= data[data_counter * 8 +: 8];
-					data_counter <= data_counter + 1;
+					raw_data <= data[data_counter * 8 - 1 -: 8];
+					data_counter <= data_counter - 1;
 				end
 			end
 		end
