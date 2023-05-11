@@ -1,0 +1,36 @@
+`! ==== counter ====
+154 trace 1 =!
+1 ! trace print_stack
+acall
+
+1000 1 =!
+6
+repeat
+	:collatz_count
+	0 0 =!
+	repeat
+		0 ! ++ 0 =!
+		trace 
+		--
+		1000000 delay
+		dup 1 == 
+		print_stack
+	until
+	154 trace
+	1000000 delay drop
+	++
+	trace 
+	1000000 delay
+	dup 1 ! 
+	>
+until
+
+255 trace
+1000000 delay
+0 trace
+1000000 delay
+255 trace
+1000000 delay
+0 trace
+1000000 delay
+acall

@@ -180,7 +180,7 @@ enum {
 	s_CALL_PUSH_PROC, s_CALL_POP_PROC, s_PUSH_PROC, s_POP_PROC, s_PEEK_PROC, s_POKE_PROC,
 	s_OP_1, s_OP_2, s_READMEM, s_READMEM_STEP1, s_READMEM_STEP2, s_READMEM_STEP3,
 	s_MUL_WAIT, s_DIV_MOD_WAIT,
-	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP, s_RETURN_STEP,
+	s_DUP_STEP, s_PRINT_STACK_STEP, s_PRINT_CSTACK_STEP, s_TRACE_STEP, s_RETURN_STEP, s_BREAK_STEP,
 	s_OP_1_STEP, s_OP_2_STEP, s_SWAP_STEP, s_DELAY_STEP, s_SKIP_STEP, s_CALL_STEP0, s_CALL_STEP1,
 	s_ROT_STEP, s_OVER_STEP, s_IF_STEP0, s_IF_STEP1, s_UNTIL_WHILE_STEP0, s_UNTIL_WHILE_STEP1
 } state, next_state;
@@ -551,6 +551,19 @@ always @(posedge clk) begin
 					next_state <= s_UNTIL_WHILE_STEP0;					
 				end
 			end
+
+			`i_BREAK: begin
+				// x break
+				// break the current REPEAT structure if X is not 0
+
+				if ((car & `CA_MASK) != `CA_EXEC && (car & `CA_MASK) != `CA_NOEXEC)
+					reset(`ERR_ECST);
+				else begin
+					state <= s_POP_PROC;
+					next_state <= s_BREAK_STEP;					
+				end
+			end
+			
 /* template
 			`i_: begin
 				$display("  ?");
@@ -930,6 +943,12 @@ always @(posedge clk) begin
 				car <= car >> `CA_LENGTH;
 				state <= s_INSTR_DONE;
 			end
+		end
+
+		s_BREAK_STEP: begin
+			if (stack_data_out)
+				car <= (car & ~`CA_MASK) | `CA_NOEXEC;
+			state <= s_INSTR_DONE;
 		end
 
 		s_MUL_WAIT: begin

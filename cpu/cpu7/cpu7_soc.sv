@@ -187,7 +187,7 @@ always @(posedge clk) begin
 		end
 		
 		s_WAIT_CORE: begin
-			$display("s_WAIT_CORE %d, idle %b", pxr, acore_idle[pxr]);
+			//$display("s_WAIT_CORE %d, idle %b", pxr, acore_idle[pxr]);
 			if (acore_mem_read8_en[pxr]) begin
 				mem_write_en <= 0;
 				write_en <= 0;

@@ -1,8 +1,153 @@
-30 40 drop
+`! square root
+54774
+70997476
 
-30 nop 
-PRINT_STACK
+0 1 =! 	`! n => R1
+0 =! 	`! Input => R0
+repeat
+	print_cstack
+	1 ! dup + ++		`! 2n + 1
+	dup
+	0 ! > break
+	print_stack
+	1 ! ++
+	1 =!
 
->
-PRINT_STACK
-ACALL
+	0 ! 1 swap
+	print_stack
+	- trace
+	0 =!	`! new Input
+	1
+while
+drop
+1 !
+trace
+print_stack
+acall
+
+
+S" Hello world2" drop rd8
+print_stack
+acall
+
+`! ==== collatz sequence ====
+200 1 =!
+2
+repeat
+	dup
+	:collatz_count
+	0 0 =!
+	repeat
+		dup 1 and if
+		3 * 1 + else
+		1 shr endif
+		0 ! ++ 0 =!
+		trace 
+		100000 delay
+		dup 1 == 
+	until
+	drop
+	0 trace
+	1000000 delay drop
+	++
+	trace 
+	1000000 delay
+	dup 1 ! >
+
+until
+	print_stack
+	acall
+
+
+`! ==== sum of squares ====
+MAXTHDS
+
+1 2 3 4 5
+5
+
+42 skip  `! till :main
+
+:sq dup * print_cstack ;
+
+:sum_n  `! n1 n2 ... nN N sum_n
+print_stack
+0 =!   		`! N => V0
+0 1 =! 		`! Sum => V1
+
+repeat
+_sq
+1 ! + 1 =!
+0 ! -- dup 0 =!
+while 
+1 ! ;
+
+
+:main
+do
+
+_sum_n
+print_stack
+print_cstack
+
+
+acall
+
+
+
+`! ==== hail numbers ====
+
+7
+dup 
+repeat
+1 == break
+
+
+if
+5
+
+0
+if
+67
+else
+68
+endif
+
+else
+4
+endif
+
+
+print_stack
+print_cstack
+acall
+
+
+`! ==== counter ====
+0 trace drop
+print_cstack
+
+10000
+
+repeat
+++
+7
+repeat
+trace
+++
+200000 delay
+dup trace
+200 >= 
+
+until
+
+drop dup
+print_stack
+print_cstack
+
+10010 >=
+until
+
+
+acall
+
+
