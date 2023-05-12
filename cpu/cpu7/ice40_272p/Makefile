@@ -13,6 +13,7 @@ ICELINK_DIR = /tmp/iCELink
 # included modules
 PATH_LIB = ../../../lib
 ADD_SRC += ${PATH_LIB}/memory/bram_read_async.sv
+ADD_SRC += ${PATH_LIB}/memory/bram_sdp.sv
 ADD_SRC += ${PATH_LIB}/container/stack.sv
 ADD_SRC += ${PATH_LIB}/3rd_party/zipcpu/rtl/core/slowmpy.v
 ADD_SRC += ${PATH_LIB}/maths/divu_int.sv

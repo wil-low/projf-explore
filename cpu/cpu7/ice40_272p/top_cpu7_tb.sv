@@ -15,7 +15,7 @@ always #(CLK_PERIOD / 2) clk <= ~clk;
 cpu7_soc #(
 	.CLOCK_FREQ_MHZ(1),
 	.CORES(1),
-	.PROGRAM_SIZE(1024),
+	.PROGRAM_SIZE(256),
 	.VREGS(8),
 	.DATA_STACK_DEPTH(8),
 	.CALL_STACK_DEPTH(8),
@@ -39,7 +39,7 @@ initial begin
 	#2;
 	//$display("rst_n %b", rst_n);
 
-	#100000 $finish;
+	#1000000 $finish;
 end
 
 logic _unused_ok = &{1'b1, 1'b0};

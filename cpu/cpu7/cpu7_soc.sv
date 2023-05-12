@@ -10,6 +10,7 @@ module cpu7_soc #(
 	parameter DELAY_REG_WIDTH = 36,	// max running time in microseconds
 	parameter VREGS = 8,			// number of V-registers in this realisation
 	parameter PROGRAM_SIZE = 1024,	// program size (in bytes)
+	parameter MEM_SIZE = 4,			// memory size (in bytes)
 	parameter DATA_STACK_DEPTH = 8,	// max item count in data stack
 	parameter CALL_STACK_DEPTH = 8,	// max item count in call stack
 	
@@ -59,7 +60,6 @@ logic [15:0] data_in = 0;
 logic [15:0] data_out;
 logic write_en = 0;
 
-localparam MEM_SIZE = 1024;
 localparam MEM_SIZE_WIDTH = $clog2(MEM_SIZE);
 logic [MEM_SIZE_WIDTH - 1 : 0] mem_addr;
 logic [7:0] mem_read_value;
@@ -71,9 +71,9 @@ assign addr_read = acore_pcp[(pxr + 1) * PCP_WIDTH - 1 -: PCP_WIDTH] / 2; // in 
 assign trace[7:0] = acore_trace[(pxr + 1) * 8 - 1 -: 8];
 assign trace[11:8] = state;
 
-bram_read_async #(.WIDTH(16), .DEPTH(PROGRAM_SIZE / 2), .INIT_F(INIT_F))
-bram_read_async (
-	.clk, .we(write_en),
+bram_sdp #(.WIDTH(16), .DEPTH(PROGRAM_SIZE / 2), .INIT_F(INIT_F))
+program_inst (
+	.clk_write(clk), .clk_read(clk), .we(write_en),
 	.addr_write(addr_write), .addr_read(addr_read),
 	.data_in, .data_out
 );
@@ -126,7 +126,7 @@ end
 endgenerate
 
 enum {s_RESET, s_HALT,
-	s_BEFORE_READ, s_READ_WORD, s_DECODE_WORD,
+	s_BEFORE_READ, s_READ_WORD, s_DECODE_WORD, s_WAIT_PCP,
 	s_WAIT_CORE, s_NEXT_CORE, s_NEXT_CORE_STEP, s_READ_MEM, s_WRITE_MEM
 } state, next_state;
 
@@ -170,7 +170,7 @@ always @(posedge clk) begin
 			bit_counter <= bit_counter + 14;
 			pcp_step_en <= 1;
 			state <= s_WAIT_CORE;
-			next_state <= s_READ_WORD;
+			next_state <= s_WAIT_PCP;
 			if ((data_out & `WT_MASK) != `WT_DNL) begin
 				if ((data_out & `WT_MASK) == `WT_CPU) begin
 					instr <= data_out & `MASK14;
@@ -186,6 +186,10 @@ always @(posedge clk) begin
 			end
 		end
 		
+		s_WAIT_PCP: begin
+			state <= s_READ_WORD;
+		end
+
 		s_WAIT_CORE: begin
 			//$display("s_WAIT_CORE %d, idle %b", pxr, acore_idle[pxr]);
 			if (acore_mem_read8_en[pxr]) begin

@@ -19,7 +19,7 @@ module bram_sdp #(
     output     logic [WIDTH-1:0] data_out     // data out (port b)
     );
 
-    logic [WIDTH-1:0] memory [DEPTH];
+    (* ramstyle="no_rw_check" *) logic [WIDTH-1:0] memory [DEPTH];
 
     initial begin
         if (INIT_F != 0) begin
