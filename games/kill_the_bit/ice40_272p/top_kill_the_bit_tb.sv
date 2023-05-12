@@ -46,7 +46,7 @@ initial begin
 	$dumpvars(0, top_kill_the_bit_tb);
 	rst_n = 0;
 
-	$monitor("[mon] start %b, command %b, clock %b, strobe %b, data %b", start, command, LK_CLK, LK_STB, LK_DIO);
+	//$monitor("[mon] start %b, command %b, clock %b, strobe %b, data %b", start, command, LK_CLK, LK_STB, LK_DIO);
 
 	#10 rst_n = 1;
 /*
@@ -62,7 +62,7 @@ initial begin
 end
 
 always @(posedge CLK) begin
-	#400000 $finish;
+	#640000 $finish;
 end
 
 wire _unused_ok = &{1'b1, LK_CLK, LK_DIO, LK_STB, counter, LED, 1'b0};

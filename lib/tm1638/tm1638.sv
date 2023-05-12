@@ -96,26 +96,25 @@ always @(posedge i_clk) begin
 		else if (inner_clock == INNER_CLOCK_8TH * 5) begin
 			o_tm1638_clk <= 1;
 		end
-		else if (inner_clock == INNER_CLOCK_8TH * 2) begin
+		else if (inner_clock == INNER_CLOCK_8TH * 4) begin
 			$display("%t bit_counter %d", $time, bit_counter);
-			if (bit_counter == 0 || bit_counter == 1)
-				buffer[bit_counter] <= 1;
-			else
-				buffer[bit_counter] <= 0;
-			//buffer[bit_counter] <= dio_in;
-			if (bit_counter == 7)
-				state <= s_READ_STEP;
-			else
-				bit_counter <= bit_counter + 1;
+			buffer[bit_counter] <= dio_in;
 		end
 		else if (inner_clock == 0) begin
 			inner_clock <= INNER_CLOCK_8TH * 8 - 1;
+			if (bit_counter == 7) begin
+				o_btn_state <= o_btn_state >> 1;
+				state <= s_READ_STEP;
+			end
+			else
+				bit_counter <= bit_counter + 1;
 		end
 	end
 
 	s_READ_STEP: begin
 		$display("%t o_btn_state %b", $time, o_btn_state);
-		o_btn_state <= {buffer[1:0], o_btn_state[7:2]};
+		o_btn_state[3] <= buffer[0];
+		o_btn_state[7] <= buffer[4];
 		read_counter <= read_counter - 1;
 		bit_counter <= 0;
 		state <= read_counter == 0 ? s_IDLE : s_READ;

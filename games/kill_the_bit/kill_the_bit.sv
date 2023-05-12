@@ -64,7 +64,7 @@ tm1638_led_key_inst
 );
 
 enum {
-	s_INIT, s_IDLE
+	s_INIT, s_IDLE, s_READ_BTN, s_UPDATE_LED, s_UPDATE_SEG7
 } state;
 
 logic [5:0] state_counter;
@@ -228,7 +228,7 @@ always @(posedge i_clk) begin
 					send_cmd(8'h88, ONE_SEC);  // activate
 				end
 				3: begin
-					send_batch(17, {
+					/*send_batch(17, {
 							8'hc0,
 							siekoo("k"), 8'h00,
 							siekoo("i"), 8'h00,
@@ -239,16 +239,16 @@ always @(posedge i_clk) begin
 							siekoo("i"), 8'h00,
 							siekoo("t"), 8'h00
 						},
-						ONE_SEC * 16);
+						ONE_SEC * 16);*/
 				end
 				4: begin
 					//set_seg7(4, 8'h40, ONE_SEC);
 				end
 				5: begin
-					set_led(7, 1, ONE_SEC);
+					//set_seg7(7, siekoo("g"), ONE_SEC);
 				end
 				6: begin
-					set_all_led(8'b11001111, ONE_SEC);
+					//set_all_led(8'b11001111, ONE_SEC);
 				end
 				7: begin
 					send_cmd(8'h80, ONE_SEC);  // deactivate
@@ -259,27 +259,50 @@ always @(posedge i_clk) begin
 				9: begin
 					send_cmd(8'h88, ONE_SEC);  // activate
 				end
+				10: begin
+					state <= s_READ_BTN;
+				end
 				default:
 					state <= s_IDLE;
 				endcase
 
-				if (state_counter == 20)
-					state <= s_IDLE;
-				else
-					state_counter <= state_counter + 1;
+				state_counter <= state_counter + 1;
+			end
+		end
+
+		s_READ_BTN: begin
+			if (ledkey_idle) begin
+				btn_en <= 1;
+				state <= s_UPDATE_LED;
+			end
+		end
+
+		s_UPDATE_LED: begin
+			if (ledkey_idle) begin
+				set_all_led(btn_state, ONE_USEC * 60000);
+				state <= s_UPDATE_SEG7;
+			end
+		end
+
+		s_UPDATE_SEG7: begin
+			if (ledkey_idle) begin
+				send_batch(17, {
+						8'hc0,
+						btn_state & 8'b0000_0001 ? siekoo(0) : siekoo("k"), 8'h00,
+						btn_state & 8'b0000_0010 ? siekoo(0) : siekoo("i"), 8'h00,
+						btn_state & 8'b0000_0100 ? siekoo(0) : siekoo("l"), 8'h00,
+						btn_state & 8'b0000_1000 ? siekoo(0) : siekoo("l"), 8'h00,
+						btn_state & 8'b0001_0000 ? siekoo(0) : siekoo(" "), 8'h00,
+						btn_state & 8'b0010_0000 ? siekoo(0) : siekoo("b"), 8'h00,
+						btn_state & 8'b0100_0000 ? siekoo(0) : siekoo("i"), 8'h00,
+						btn_state & 8'b1000_0000 ? siekoo(0) : siekoo("t"), 8'h00
+					},
+					ONE_SEC * 16);
+				state <= s_READ_BTN;
 			end
 		end
 
 		s_IDLE: begin
-			if (ledkey_idle) begin
-				btn_en <= 1;
-
-				/*set_all_led(1 << led_counter, ONE_USEC * 60000);
-				if (led_counter == 8)
-					led_counter <= 0;
-				else
-					led_counter <= led_counter + 1;*/
-			end
 		end
 
 		default:

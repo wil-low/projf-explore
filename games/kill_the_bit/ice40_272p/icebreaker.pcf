@@ -4,9 +4,9 @@
 # J3 always in Prog Flash mode (iCE not supported)
 # J5 both on
 
-#set_io --warn-no-port CLK_COPY 4
-#set_io --warn-no-port DIO_COPY 6
-#set_io --warn-no-port STB_COPY 16
+set_io --warn-no-port CLK_COPY 9
+set_io --warn-no-port STB_COPY 10
+set_io --warn-no-port DIO_COPY 2
 
 set_io CLK 35
 
