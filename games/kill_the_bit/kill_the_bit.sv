@@ -64,7 +64,7 @@ tm1638_led_key_inst
 );
 
 enum {
-	s_INIT, s_IDLE, s_READ_BTN, s_UPDATE_LED, s_UPDATE_SEG7
+	s_INIT, s_IDLE, s_READ_BTN, s_UPDATE_BITS, s_UPDATE_LED, s_UPDATE_SEG7
 } state;
 
 logic [5:0] state_counter;
@@ -75,6 +75,8 @@ localparam ONE_SEC = 10;//ONE_USEC * 1000000;
 logic [27:0] wait_counter = 0;
 
 logic [7:0] led_counter;
+
+logic [0 : 8 * 8 - 1] message = "kill bit";
 
 task send_cmd;
 	input [7:0] cmd2send;
@@ -209,7 +211,7 @@ always @(posedge i_clk) begin
 	if (!rst_n) begin
 		state <= s_INIT;
 		state_counter <= 0;
-		led_counter <= 0;
+		led_counter <= 1;
 		$display($time, "RESET");
 	end
 	else begin
@@ -273,13 +275,22 @@ always @(posedge i_clk) begin
 		s_READ_BTN: begin
 			if (ledkey_idle) begin
 				btn_en <= 1;
+				led_counter <= {led_counter[6:0], led_counter[7]};
+				state <= s_UPDATE_BITS;
+			end
+		end
+
+		s_UPDATE_BITS: begin
+			if (ledkey_idle) begin
+				if (led_counter)
+					led_counter <= led_counter ^ btn_state;
 				state <= s_UPDATE_LED;
 			end
 		end
 
 		s_UPDATE_LED: begin
 			if (ledkey_idle) begin
-				set_all_led(btn_state, ONE_USEC * 60000);
+				set_all_led(led_counter, ONE_USEC * 200000);
 				state <= s_UPDATE_SEG7;
 			end
 		end
@@ -288,16 +299,18 @@ always @(posedge i_clk) begin
 			if (ledkey_idle) begin
 				send_batch(17, {
 						8'hc0,
-						btn_state & 8'b0000_0001 ? siekoo(0) : siekoo("k"), 8'h00,
-						btn_state & 8'b0000_0010 ? siekoo(0) : siekoo("i"), 8'h00,
-						btn_state & 8'b0000_0100 ? siekoo(0) : siekoo("l"), 8'h00,
-						btn_state & 8'b0000_1000 ? siekoo(0) : siekoo("l"), 8'h00,
-						btn_state & 8'b0001_0000 ? siekoo(0) : siekoo(" "), 8'h00,
-						btn_state & 8'b0010_0000 ? siekoo(0) : siekoo("b"), 8'h00,
-						btn_state & 8'b0100_0000 ? siekoo(0) : siekoo("i"), 8'h00,
-						btn_state & 8'b1000_0000 ? siekoo(0) : siekoo("t"), 8'h00
+						btn_state & 8'b0000_0001 ? siekoo(0) : siekoo(message[0 * 8 +: 8]), 8'h00,
+						btn_state & 8'b0000_0010 ? siekoo(0) : siekoo(message[1 * 8 +: 8]), 8'h00,
+						btn_state & 8'b0000_0100 ? siekoo(0) : siekoo(message[2 * 8 +: 8]), 8'h00,
+						btn_state & 8'b0000_1000 ? siekoo(0) : siekoo(message[3 * 8 +: 8]), 8'h00,
+						btn_state & 8'b0001_0000 ? siekoo(0) : siekoo(message[4 * 8 +: 8]), 8'h00,
+						btn_state & 8'b0010_0000 ? siekoo(0) : siekoo(message[5 * 8 +: 8]), 8'h00,
+						btn_state & 8'b0100_0000 ? siekoo(0) : siekoo(message[6 * 8 +: 8]), 8'h00,
+						btn_state & 8'b1000_0000 ? siekoo(0) : siekoo(message[7 * 8 +: 8]), 8'h00
 					},
-					ONE_SEC * 16);
+					ONE_USEC);
+				if (led_counter == 0)
+					message <= "victory!";
 				state <= s_READ_BTN;
 			end
 		end
