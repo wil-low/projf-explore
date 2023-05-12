@@ -30,7 +30,7 @@ logic [8 * 17 - 1 : 0] batch_data;
 
 logic ledkey_idle;
 
-assign o_LED = 0;
+assign o_LED = ledkey_idle ? ~btn_state : ~0;
 
 tm1638_led_key
 #(
@@ -70,7 +70,7 @@ enum {
 logic [5:0] state_counter;
 
 localparam ONE_USEC = CLOCK_FREQ_MHz;
-localparam ONE_SEC = ONE_USEC * 1000000;
+localparam ONE_SEC = 10;//ONE_USEC * 1000000;
 
 logic [27:0] wait_counter = 0;
 
@@ -181,7 +181,7 @@ begin
 	"=": siekoo = 8'b0100_1000;
 	"+": siekoo = 8'b0100_0110;
 	"/": siekoo = 8'b0101_0010;
-	"\\":siekoo = 8'b0110_0100;
+	8'h5c:siekoo = 8'b0110_0100; // backslash
 	"!": siekoo = 8'b0110_1011;
 	"?": siekoo = 8'b0100_1011;
 	"_": siekoo = 8'b0000_1000;
@@ -272,11 +272,13 @@ always @(posedge i_clk) begin
 
 		s_IDLE: begin
 			if (ledkey_idle) begin
-				set_all_led(1 << led_counter, ONE_USEC * 60000);
+				btn_en <= 1;
+
+				/*set_all_led(1 << led_counter, ONE_USEC * 60000);
 				if (led_counter == 8)
 					led_counter <= 0;
 				else
-					led_counter <= led_counter + 1;
+					led_counter <= led_counter + 1;*/
 			end
 		end
 

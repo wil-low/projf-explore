@@ -9,8 +9,11 @@ module tm1638
 )
 (
 	input wire i_clk,
-	input wire i_en,
+	input wire i_write_en,
 	input wire [7:0] i_raw_data,
+
+	input wire i_read_en,
+	output logic [7:0] o_btn_state,
 
 	// shield pins
 	output logic o_tm1638_clk,
@@ -25,18 +28,20 @@ localparam INNER_CLOCK_8TH = CLOCK_FREQ_MHz;
 logic [$clog2(INNER_CLOCK_8TH) + 4:0] inner_clock;
 
 enum {
-	s_IDLE, s_SENDING, s_DONE
+	s_IDLE, s_WRITE, s_READ, s_READ_STEP
 } state;
 
-logic [7:0] tx_buffer;
+logic [7:0] buffer;
 logic [2:0] bit_counter;
+logic [1:0] read_counter;
 
 logic dio_in;
 logic dio_out;
+logic dio_write_en;
 
-assign o_idle = (state == s_IDLE) && !i_en;
+assign o_idle = (state == s_IDLE) && !i_write_en && !i_read_en;
 
-sb_inout io (io_tm1638_data, 1'b1, dio_out, dio_in);
+sb_inout io (io_tm1638_data, dio_write_en, dio_out, dio_in);
 
 always @(posedge i_clk) begin
 
@@ -44,16 +49,28 @@ always @(posedge i_clk) begin
 
 	s_IDLE: begin
 		o_tm1638_clk <= 0;
-		if (i_en) begin
+		if (i_write_en) begin
+			dio_write_en <= 1;
 			inner_clock <= INNER_CLOCK_8TH * 8 - 1;
 			dio_out <= i_raw_data[0];
-			tx_buffer <= i_raw_data;
+			buffer <= i_raw_data;
 			bit_counter <= 1;
-			state <= s_SENDING;
+			state <= s_WRITE;
 		end
+		else if (i_read_en) begin
+			dio_write_en <= 0;
+			o_btn_state <= 0;
+			buffer <= 0;
+			inner_clock <= INNER_CLOCK_8TH * 8 - 1;
+			bit_counter <= 0;
+			read_counter <= 3;
+			state <= s_READ;
+		end
+		else
+			$display("%t o_btn_state3 %b", $time, o_btn_state);
 	end
 
-	s_SENDING: begin
+	s_WRITE: begin
 		inner_clock <= inner_clock - 1;
 		if (inner_clock == INNER_CLOCK_8TH * 3) begin
 			o_tm1638_clk <= 0;
@@ -63,19 +80,45 @@ always @(posedge i_clk) begin
 		end
 		else if (inner_clock == 0) begin
 			inner_clock <= INNER_CLOCK_8TH * 8 - 1;
-			dio_out <= tx_buffer[bit_counter];
-			if (bit_counter == 0) begin
+			dio_out <= buffer[bit_counter];
+			if (bit_counter == 0)
 				state <= s_IDLE;
-			end
 			else
 				bit_counter <= bit_counter + 1;
 		end
 	end
 
-	s_DONE: begin
+	s_READ: begin
 		inner_clock <= inner_clock - 1;
-		if (inner_clock == 0)
-			state <= s_IDLE;
+		if (inner_clock == INNER_CLOCK_8TH * 3) begin
+			o_tm1638_clk <= 0;
+		end
+		else if (inner_clock == INNER_CLOCK_8TH * 5) begin
+			o_tm1638_clk <= 1;
+		end
+		else if (inner_clock == INNER_CLOCK_8TH * 2) begin
+			$display("%t bit_counter %d", $time, bit_counter);
+			if (bit_counter == 0 || bit_counter == 1)
+				buffer[bit_counter] <= 1;
+			else
+				buffer[bit_counter] <= 0;
+			//buffer[bit_counter] <= dio_in;
+			if (bit_counter == 7)
+				state <= s_READ_STEP;
+			else
+				bit_counter <= bit_counter + 1;
+		end
+		else if (inner_clock == 0) begin
+			inner_clock <= INNER_CLOCK_8TH * 8 - 1;
+		end
+	end
+
+	s_READ_STEP: begin
+		$display("%t o_btn_state %b", $time, o_btn_state);
+		o_btn_state <= {buffer[1:0], o_btn_state[7:2]};
+		read_counter <= read_counter - 1;
+		bit_counter <= 0;
+		state <= read_counter == 0 ? s_IDLE : s_READ;
 	end
 
 	default:
