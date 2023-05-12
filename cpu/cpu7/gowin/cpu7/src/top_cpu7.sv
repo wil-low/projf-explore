@@ -28,7 +28,7 @@ cpu7_soc #(
 	.MUL_DATA_WIDTH(28),
 	.USE_DIV(1),
 	.DIV_DATA_WIDTH(28),
-    .INIT_F("../collatz.mem")
+    .INIT_F("../../collatz.mem")
 )
 cpu7_soc_inst (
 	.rst_n,
