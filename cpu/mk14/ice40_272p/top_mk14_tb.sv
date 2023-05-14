@@ -4,7 +4,7 @@
 module top_mk14_tb();
 
 localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
-localparam INIT_F = "../test.mem";
+localparam INIT_F = "../programs/multiply.mem";
 
 logic rst_n;
 logic clk;
@@ -36,7 +36,7 @@ initial begin
 	#2;
 	//$display("rst_n %b", rst_n);
 
-	#10000 $finish;
+	#100000 $finish;
 end
 
 logic _unused_ok = &{1'b1, 1'b0};

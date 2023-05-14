@@ -35,6 +35,7 @@ output_files/
 
 # IceStorm
 *yosys.log
+*nextpnr.log
 *.bin
 *.rpt
 *.asc

@@ -50,7 +50,8 @@ logic [15:0] delay_cycles;
 
 //============ State machine ============
 enum {
-	s_IDLE, s_FETCH, s_MEM_WAIT, s_DECODE, s_EXEC_IMM, s_LOAD_INC_DEC, s_EXEC_INC_DEC,
+	s_IDLE, s_FETCH, s_MEM_WAIT, s_SET_OPCODE, s_DECODE, s_EXEC_IMM,
+	s_LOAD_INC_DEC, s_EXEC_INC_DEC, s_STORE_INC_DEC,
 	s_EXEC_JUMP, s_CALC_DELAY, s_EXEC_DELAY,
 	s_LOAD_FROM_EA, s_STORE_TO_EA, s_EXEC_MEM, s_UNKNOWN
 } state, next_state;
@@ -72,20 +73,25 @@ always @(posedge clk) begin
 		end
 
 		s_FETCH: begin
-			mem_addr <= PC;
+			mem_addr <= PC + 1;
 			PC <= PC + 1;
 			state <= s_MEM_WAIT;
-			next_state <= s_DECODE;
+			next_state <= s_SET_OPCODE;
 		end
 
 		s_MEM_WAIT: begin
 			state <= next_state;
 		end
 
-		s_DECODE: begin
-			state <= s_FETCH;
+		s_SET_OPCODE: begin
 			opcode <= mem_read_data;
-			casez (mem_read_data)
+			state <= s_DECODE;
+		end
+
+		s_DECODE: begin
+			//$display("Decode PC %h, opcode %h", PC, opcode);
+			state <= s_FETCH;
+			casez (opcode)
 
 			// == Immediate ==
 			`i_LDI,
@@ -95,7 +101,7 @@ always @(posedge clk) begin
 			`i_DAI,
 			`i_ADI,
 			`i_CAI: begin
-				mem_addr <= PC;
+				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
 				next_state <= s_EXEC_IMM;
@@ -141,19 +147,18 @@ always @(posedge clk) begin
 				AC <= {AC[0], AC[7:1]};
 			end
 			`i_RRL: begin
-				AC <= {AC[0], AC[7:1]};
-				CY_L <= AC[0];
+				{CY_L, AC} <= {AC[0], CY_L, AC[7:1]};
 			end
 			
 			`i_DLY: begin
-				mem_addr <= PC;
+				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
 				next_state <= s_EXEC_DELAY;
 			end
 
 			`i_HALT: begin
-				$display("HALT at %d.\n", PC);
+				$display("HALT at %h, AC %h, E %h\n", PC, AC, E);
 				`ifdef SIMULATION
 					$finish;
 				`endif
@@ -183,9 +188,10 @@ always @(posedge clk) begin
 
 			// == Memory reference ==
 			`i_ST: begin
-				mem_addr <= PC;
+				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
+				//$display("PC=%h: ST AC %h", PC, AC);
 				next_state <= s_STORE_TO_EA;
 			end
 			`i_LD,
@@ -195,7 +201,7 @@ always @(posedge clk) begin
 			`i_DAD,
 			`i_ADD,
 			`i_CAD: begin
-				mem_addr <= PC;
+				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
 				next_state <= s_LOAD_FROM_EA;
@@ -203,20 +209,20 @@ always @(posedge clk) begin
 
 			`i_ILD,
 			`i_DLD: begin
-				mem_addr <= PC;
+				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
-				next_state <= s_EXEC_JUMP;
+				next_state <= s_LOAD_INC_DEC;
 			end
 
 			`i_JMP,
 			`i_JP,
 			`i_JZ,
 			`i_JNZ: begin
-				mem_addr <= PC;
+				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
-				next_state <= s_LOAD_INC_DEC;
+				next_state <= s_EXEC_JUMP;
 			end
 
 			`i_XPAL: begin
@@ -308,15 +314,22 @@ always @(posedge clk) begin
 		end
 
 		s_LOAD_INC_DEC: begin
-			mem_addr <= $signed(REG_WIRE[opcode[1:0] * 16 + 15 -: 16]) + $signed(mem_read_data);
+			mem_addr <= EA;
 			state <= s_MEM_WAIT;
 			next_state <= s_EXEC_INC_DEC;
 		end
 
 		s_EXEC_INC_DEC: begin
-			AC <= mem_read_data + (opcode == `i_ILD ? 1 : -1);
-			state <= s_STORE_TO_EA;
-			next_state <= s_EXEC_INC_DEC;
+			AC <= mem_read_data + (opcode[4] == 0 ? 1 : -1);
+			state <= s_STORE_INC_DEC;
+		end
+
+		s_STORE_INC_DEC: begin
+			//$display("s_STORE_INC_DEC AC %h", AC);
+			mem_write_data <= AC;
+			mem_write_en <= 1;
+			state <= s_MEM_WAIT;
+			next_state <= s_FETCH;
 		end
 
 		s_STORE_TO_EA: begin
@@ -328,14 +341,14 @@ always @(posedge clk) begin
 		end
 
 		s_LOAD_FROM_EA: begin
-			$display("unsigned=%d, signed = %d, opcode %h, REG_WIRE %d, %d", mem_read_data, $signed(mem_read_data), opcode, REG_WIRE[opcode[1:0] * 16 + 15 -: 16], -mem_read_data[6:0]);
+			//$display("unsigned=%d, signed = %d, opcode %h, REG_WIRE %d, %d", mem_read_data, $signed(mem_read_data), opcode, REG_WIRE[opcode[1:0] * 16 + 15 -: 16], -mem_read_data[6:0]);
 			mem_addr <= EA;
 			state <= s_MEM_WAIT;
 			next_state <= s_EXEC_MEM;
 		end
 
 		s_EXEC_MEM: begin
-			$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
+			//$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
 			state <= s_FETCH;
 			// == Immediate ==
 			opdata <= mem_read_data;
@@ -367,7 +380,7 @@ always @(posedge clk) begin
 		end
 
 		s_EXEC_JUMP: begin
-			$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
+			//$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
 			state <= s_FETCH;
 			// == Immediate ==
 			opdata <= mem_read_data;
@@ -376,6 +389,7 @@ always @(posedge clk) begin
 				PC <= EA;
 			end
 			`i_JP: begin
+				//$display("JP AC %d, cond %d", AC, $signed(AC) >= 0);
 				if ($signed(AC) >= 0)
 					PC <= EA;
 			end
@@ -404,7 +418,7 @@ always @(posedge clk) begin
 		end
 
 		s_UNKNOWN: begin
-			$display("PC %d: Unknown opcode %h - halt.\n", PC, opcode);
+			$display("PC %h: Unknown opcode %h - halt.\n", PC, opcode);
 			`ifdef SIMULATION
 				$finish;
 			`endif

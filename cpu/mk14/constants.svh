@@ -20,12 +20,12 @@
 
 // == Pointer register move ==
 `define i_XPAL 8'b001100??
-`define i_XPAH 8'b101101??
-`define i_XPPC 8'b101111??
+`define i_XPAH 8'b001101??
+`define i_XPPC 8'b001111??
 
 // == Memory increment/decrement ==
-`define i_ILD  8'ha8
-`define i_DLD  8'hb8
+`define i_ILD  8'b101010??
+`define i_DLD  8'b101110??
 
 // == Immediate ==
 `define i_LDI 8'hc4
