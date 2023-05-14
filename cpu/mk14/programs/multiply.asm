@@ -28,16 +28,9 @@ start:
 		LDI		$00
 		XPAL	2
 
-;		CCL
-;		LDI		200
-;		XAE
-;		LDI		100
-;		ADE
-;		HALT
-
-		LDI		$FF
+		LDI		127
 		ST		A(2)
-		LDI		$FF
+		LDI		116
 		ST		B(2)
 
 		LDI		$99
