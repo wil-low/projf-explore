@@ -1,0 +1,422 @@
+// MK14 one core module
+
+`default_nettype none
+`timescale 1ns / 1ps
+
+`include "constants.svh"
+
+module core #(
+	parameter CLOCK_FREQ_MHZ = 50	// clock frequency == ticks in 1 microsecond
+)
+(
+	input wire logic rst_n,
+	input wire logic clk,
+	input wire logic en,
+
+	output logic [15:0] mem_addr,
+	input logic [7:0] mem_read_data,
+	output logic mem_write_en,
+	output logic [7:0] mem_write_data
+);
+//============ Registers ============
+logic [7:0] AC;		// Accumulator
+logic [7:0] E;		// Extension Register
+
+// Status Register
+// {CY_L, OV, SB, SA, IE, F2, F1, F0}
+logic F0, F1, F2;	// User assigned flags
+logic IE;			// Interrupt Enable
+logic SA, SB;		// Read-only sense inputs. If IE=1, SA is interrupt input
+logic OV;			// Overflow, set or reset by arithmetic operations
+logic CY_L;			// Carry/Link, set or reset by arithmetic operations or rotate with Link
+
+logic [15:0] PC;	// Program Counter
+logic [15:0] P1, P2, P3;	// Pointer registers. P3 doubles as interrupt vector
+
+logic [16 * 4 - 1:0] REG_WIRE;
+assign REG_WIRE = {P3, P2, P1, PC};
+
+logic [15:0] PTR;
+assign PTR = REG_WIRE[opcode[1:0] * 16 + 15 -: 16];
+
+logic [15:0] EA;	// Effective Address
+assign EA = $signed(PTR) + $signed(mem_read_data);
+
+//============ Internal registers ============
+logic [7:0] opcode;	// store current opcode (1st byte)
+logic [7:0] opdata;	// store additional data (2nd byte)
+
+logic [15:0] delay_cycles;
+
+//============ State machine ============
+enum {
+	s_IDLE, s_FETCH, s_MEM_WAIT, s_DECODE, s_EXEC_IMM, s_LOAD_INC_DEC, s_EXEC_INC_DEC,
+	s_EXEC_JUMP, s_CALC_DELAY, s_EXEC_DELAY,
+	s_LOAD_FROM_EA, s_STORE_TO_EA, s_EXEC_MEM, s_UNKNOWN
+} state, next_state;
+
+always @(posedge clk) begin
+
+	if (!rst_n) begin
+		{CY_L, OV, SB, SA, IE, F2, F1, F0} <= 0;
+		{AC, E, PC, P1, P2, P3} <= 0;
+		state <= s_FETCH;
+	end
+	else if (en) begin
+		mem_write_en <= 0;
+
+		case (state)
+
+		s_IDLE: begin
+
+		end
+
+		s_FETCH: begin
+			mem_addr <= PC;
+			PC <= PC + 1;
+			state <= s_MEM_WAIT;
+			next_state <= s_DECODE;
+		end
+
+		s_MEM_WAIT: begin
+			state <= next_state;
+		end
+
+		s_DECODE: begin
+			state <= s_FETCH;
+			opcode <= mem_read_data;
+			casez (mem_read_data)
+
+			// == Immediate ==
+			`i_LDI,
+			`i_ANI,
+			`i_ORI,
+			`i_XRI,
+			`i_DAI,
+			`i_ADI,
+			`i_CAI: begin
+				mem_addr <= PC;
+				PC <= PC + 1;
+				state <= s_MEM_WAIT;
+				next_state <= s_EXEC_IMM;
+			end
+
+			// == Extension Register ==
+			`i_LDE: begin
+				AC <= E;
+			end
+			`i_XAE: begin
+				AC <= E;
+				E <= AC;
+			end
+			`i_ANE: begin
+				AC <= AC & E;
+			end
+			`i_ORE: begin
+				AC <= AC | E;
+			end
+			`i_XRE: begin
+				AC <= AC ^ E;
+			end
+			`i_DAE: begin
+				state <= s_UNKNOWN;
+			end
+			`i_ADE: begin
+				{OV, CY_L, AC} <= AC + E + CY_L;
+			end
+			`i_CAE: begin
+				{OV, CY_L, AC} <= AC + ~E + CY_L;
+			end
+
+			`i_SIO: begin
+				state <= s_UNKNOWN;
+			end
+			`i_SR: begin
+				AC <= AC >> 1;
+			end
+			`i_SRL: begin
+				AC <= {CY_L, AC[7:1]};
+			end
+			`i_RR: begin
+				AC <= {AC[0], AC[7:1]};
+			end
+			`i_RRL: begin
+				AC <= {AC[0], AC[7:1]};
+				CY_L <= AC[0];
+			end
+			
+			`i_DLY: begin
+				mem_addr <= PC;
+				PC <= PC + 1;
+				state <= s_MEM_WAIT;
+				next_state <= s_EXEC_DELAY;
+			end
+
+			`i_HALT: begin
+				$display("HALT at %d.\n", PC);
+				`ifdef SIMULATION
+					$finish;
+				`endif
+			end
+			`i_CCL: begin
+				CY_L <= 0;
+			end
+			`i_SCL: begin
+				CY_L <= 1;
+			end
+			`i_DINT: begin
+				IE <= 0;
+			end
+			`i_IEN: begin
+				IE <= 1;
+			end
+			`i_CSA: begin
+				AC <= {CY_L, OV, SB, SA, IE, F2, F1, F0};
+			end
+			`i_CAE: begin
+				{CY_L, OV, SB, SA, IE, F2, F1, F0} <= AC;
+			end
+			`i_NOP: begin
+			end
+
+			// casez cases below
+
+			// == Memory reference ==
+			`i_ST: begin
+				mem_addr <= PC;
+				PC <= PC + 1;
+				state <= s_MEM_WAIT;
+				next_state <= s_STORE_TO_EA;
+			end
+			`i_LD,
+			`i_AND,
+			`i_OR,
+			`i_XOR,
+			`i_DAD,
+			`i_ADD,
+			`i_CAD: begin
+				mem_addr <= PC;
+				PC <= PC + 1;
+				state <= s_MEM_WAIT;
+				next_state <= s_LOAD_FROM_EA;
+			end
+
+			`i_ILD,
+			`i_DLD: begin
+				mem_addr <= PC;
+				PC <= PC + 1;
+				state <= s_MEM_WAIT;
+				next_state <= s_EXEC_JUMP;
+			end
+
+			`i_JMP,
+			`i_JP,
+			`i_JZ,
+			`i_JNZ: begin
+				mem_addr <= PC;
+				PC <= PC + 1;
+				state <= s_MEM_WAIT;
+				next_state <= s_LOAD_INC_DEC;
+			end
+
+			`i_XPAL: begin
+				case (opcode[1:0])
+				1: begin
+					AC <= P1[7:0];
+					P1[7:0] <= AC;
+				end
+				2: begin
+					AC <= P2[7:0];
+					P2[7:0] <= AC;
+				end
+				3: begin
+					AC <= P3[7:0];
+					P3[7:0] <= AC;
+				end
+				default: ;
+				endcase
+			end
+			`i_XPAH: begin
+				case (opcode[1:0])
+				1: begin
+					AC <= P1[15:8];
+					P1[15:8] <= AC;
+				end
+				2: begin
+					AC <= P2[15:8];
+					P2[15:8] <= AC;
+				end
+				3: begin
+					AC <= P3[15:8];
+					P3[15:8] <= AC;
+				end
+				default: ;
+				endcase
+			end
+			`i_XPPC: begin
+				case (opcode[1:0])
+				1: begin
+					PC <= P1;
+					P1 <= PC;
+				end
+				2: begin
+					PC <= P2;
+					P2 <= PC;
+				end
+				3: begin
+					PC <= P3;
+					P3 <= PC;
+				end
+				default: ;
+				endcase
+			end
+
+			default:
+				state <= s_UNKNOWN;
+			endcase
+		end
+
+		s_EXEC_IMM: begin
+			state <= s_FETCH;
+			// == Immediate ==
+			opdata <= mem_read_data;
+			case (opcode)
+			`i_LDI: begin
+				AC <= mem_read_data;
+			end
+			`i_ANI: begin
+				AC <= AC & mem_read_data;
+			end
+			`i_ORI: begin
+				AC <= AC | mem_read_data;
+			end
+			`i_XRI: begin
+				AC <= AC ^ mem_read_data;
+			end
+			`i_DAI: begin
+				state <= s_UNKNOWN;
+			end
+			`i_ADI: begin
+				{OV, CY_L, AC} <= AC + mem_read_data + CY_L;
+			end
+			`i_CAI: begin
+				{OV, CY_L, AC} <= AC + ~mem_read_data + CY_L;
+			end
+			default:
+				state <= s_UNKNOWN;
+			endcase
+		end
+
+		s_LOAD_INC_DEC: begin
+			mem_addr <= $signed(REG_WIRE[opcode[1:0] * 16 + 15 -: 16]) + $signed(mem_read_data);
+			state <= s_MEM_WAIT;
+			next_state <= s_EXEC_INC_DEC;
+		end
+
+		s_EXEC_INC_DEC: begin
+			AC <= mem_read_data + (opcode == `i_ILD ? 1 : -1);
+			state <= s_STORE_TO_EA;
+			next_state <= s_EXEC_INC_DEC;
+		end
+
+		s_STORE_TO_EA: begin
+			mem_addr <= EA;
+			mem_write_data <= AC;
+			mem_write_en <= 1;
+			state <= s_MEM_WAIT;
+			next_state <= s_FETCH;
+		end
+
+		s_LOAD_FROM_EA: begin
+			$display("unsigned=%d, signed = %d, opcode %h, REG_WIRE %d, %d", mem_read_data, $signed(mem_read_data), opcode, REG_WIRE[opcode[1:0] * 16 + 15 -: 16], -mem_read_data[6:0]);
+			mem_addr <= EA;
+			state <= s_MEM_WAIT;
+			next_state <= s_EXEC_MEM;
+		end
+
+		s_EXEC_MEM: begin
+			$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
+			state <= s_FETCH;
+			// == Immediate ==
+			opdata <= mem_read_data;
+			casez (opcode)
+			`i_LD: begin
+				AC <= mem_read_data;
+			end
+			`i_AND: begin
+				AC <= AC & mem_read_data;
+			end
+			`i_OR: begin
+				AC <= AC | mem_read_data;
+			end
+			`i_XOR: begin
+				AC <= AC ^ mem_read_data;
+			end
+			`i_DAD: begin
+				state <= s_UNKNOWN;
+			end
+			`i_ADD: begin
+				{OV, CY_L, AC} <= AC + mem_read_data + CY_L;
+			end
+			`i_CAD: begin
+				{OV, CY_L, AC} <= AC + ~mem_read_data + CY_L;
+			end
+			default:
+				state <= s_UNKNOWN;
+			endcase
+		end
+
+		s_EXEC_JUMP: begin
+			$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
+			state <= s_FETCH;
+			// == Immediate ==
+			opdata <= mem_read_data;
+			casez (opcode)
+			`i_JMP: begin
+				PC <= EA;
+			end
+			`i_JP: begin
+				if ($signed(AC) >= 0)
+					PC <= EA;
+			end
+			`i_JZ: begin
+				if (AC == 0)
+					PC <= EA;
+			end
+			`i_JNZ: begin
+				if (AC)
+					PC <= EA;
+			end
+			default:
+				state <= s_UNKNOWN;
+			endcase
+		end
+		
+		s_CALC_DELAY: begin
+			delay_cycles <= 13 + AC * 2 + mem_read_data << 9;
+			state <= s_EXEC_DELAY;
+		end
+
+		s_EXEC_DELAY: begin
+			delay_cycles <= delay_cycles - 1;
+			if (delay_cycles == 0)
+				state <= s_FETCH;
+		end
+
+		s_UNKNOWN: begin
+			$display("PC %d: Unknown opcode %h - halt.\n", PC, opcode);
+			`ifdef SIMULATION
+				$finish;
+			`endif
+		end
+
+		default:
+			state <= s_IDLE;
+
+		endcase
+		
+	end
+
+end
+
+endmodule
