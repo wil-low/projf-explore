@@ -20,13 +20,13 @@ module core #(
 	output logic [7:0] trace
 );
 
-localparam ONE_MSEC = 1;//CLOCK_FREQ_MHZ * 3000;
+localparam ONE_MSEC = CLOCK_FREQ_MHZ * 1000;
 
 //============ Registers ============
 logic [7:0] AC;		// Accumulator
 logic [7:0] E;		// Extension Register
 
-assign trace = E;
+assign trace = E;//PC[7:0];//E;
 
 // Status Register
 // {CY_L, OV, SB, SA, IE, F2, F1, F0}
@@ -58,7 +58,7 @@ enum {
 	s_IDLE, s_FETCH, s_MEM_WAIT, s_SET_OPCODE, s_DECODE, s_EXEC_IMM,
 	s_LOAD_INC_DEC, s_EXEC_INC_DEC, s_STORE_INC_DEC,
 	s_EXEC_JUMP, s_CALC_DELAY, s_EXEC_DELAY,
-	s_LOAD_FROM_EA, s_STORE_TO_EA, s_EXEC_MEM, s_UNKNOWN
+	s_LOAD_FROM_EA, s_STORE_TO_EA, s_EXEC_MEM, s_HALT, s_UNKNOWN
 } state, next_state;
 
 always @(posedge clk) begin
@@ -163,10 +163,7 @@ always @(posedge clk) begin
 			end
 
 			`i_HALT: begin
-				$display("HALT at %h, AC %h, E %h\n", PC, AC, E);
-				`ifdef SIMULATION
-					$finish;
-				`endif
+				state <= s_HALT;
 			end
 			`i_CCL: begin
 				CY_L <= 0;
@@ -427,6 +424,13 @@ always @(posedge clk) begin
 				else
 					delay_cycles <= delay_cycles - 1;
 			end
+		end
+
+		s_HALT: begin
+			$display("HALT at %h, AC %h, E %h\n", PC, AC, E);
+			`ifdef SIMULATION
+				$finish;
+			`endif
 		end
 
 		s_UNKNOWN: begin

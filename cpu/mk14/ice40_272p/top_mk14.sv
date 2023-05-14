@@ -42,7 +42,7 @@ assign LED = ~trace;
 
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(12),
-	.INIT_F("../programs/multiply.mem")
+	.INIT_F("../programs/test.mem")
 )
 mk14_soc_inst (
 	.rst_n,

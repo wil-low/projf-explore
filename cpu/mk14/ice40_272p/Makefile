@@ -18,7 +18,7 @@ ADD_SRC += ../mk14_soc.sv
 
 mk14: mk14.rpt mk14.bin mk14.link
 
-%.json: top_%.sv $(ADD_SRC)
+%.json: top_%.sv $(ADD_SRC) generate_mem
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -dsp -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
@@ -40,7 +40,7 @@ mk14: mk14.rpt mk14.bin mk14.link
 
 all: mk14
 
-mk14.sim: top_mk14_tb.vcd
+mk14.sim: top_mk14_tb.vcd generate_mem
 
 %.vcd: %.sv $(ADD_SRC)
 
@@ -54,10 +54,7 @@ mk14.sim: top_mk14_tb.vcd
 	killall gtkwave || true
 	gtkwave $@ $(basename $@).gtkw &
 
-generate_mem: ../test.mem
-
-../test.mem: ../programs/test.torth ../constants.svh
-	perl ../emulation/mk14_compile.pl ../programs/test.torth ../constants.svh > ../test.mem
+generate_mem: ../programs/test.mem
 
 clean:
 	rm -f *.json *.asc *.rpt *.bin *yosys.log *.out *.vcd
