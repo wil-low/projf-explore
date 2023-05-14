@@ -17,6 +17,8 @@ Temp	.EQ		-1
 RH		.EQ		2
 RL		.EQ		3
 
+Mult	.EQ		$0F50
+
 		.OR		0
 start:
 		HALT
@@ -47,6 +49,8 @@ start:
 		LD		RL(2)
 
 		HALT
+
+		.RF		Mult-$
 
 		; Multiply routine begins here
 Mult:	LDI		8
