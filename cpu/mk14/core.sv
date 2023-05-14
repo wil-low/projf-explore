@@ -19,6 +19,9 @@ module core #(
 	output logic [7:0] mem_write_data,
 	output logic [7:0] trace
 );
+
+localparam ONE_MSEC = 1;//CLOCK_FREQ_MHZ * 3000;
+
 //============ Registers ============
 logic [7:0] AC;		// Accumulator
 logic [7:0] E;		// Extension Register
@@ -48,7 +51,7 @@ assign EA = $signed(PTR) + $signed(mem_read_data);
 //============ Internal registers ============
 logic [7:0] opcode;	// store current opcode (1st byte)
 
-logic [15:0] delay_cycles;
+logic [29:0] delay_cycles;
 
 //============ State machine ============
 enum {
@@ -157,7 +160,6 @@ always @(posedge clk) begin
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
 				next_state <= s_CALC_DELAY;
-				$display("DLY");
 			end
 
 			`i_HALT: begin
@@ -407,24 +409,24 @@ always @(posedge clk) begin
 		end
 		
 		s_CALC_DELAY: begin
-			delay_cycles <= 13 + mem_read_data * 2;
-			//$display("PC %h: delay cycles AC %d, mem_read_data %d\n", PC, AC, mem_read_data);
+			delay_cycles <= mem_read_data * 2 * ONE_MSEC;
+			$display("PC %h: DLY cycles %d, AC %d\n", PC, mem_read_data * 2, AC);
 			state <= s_EXEC_DELAY;
 		end
 
 		s_EXEC_DELAY: begin
-			if (delay_cycles == 0) begin
-				if (AC == 8'hff) begin
-					state <= s_FETCH;
-				end
-				else begin
-					AC <= AC - 1;
-					//$display("PC %h: s_EXEC_DELAY AC %d, %d", PC, AC, 13 + mem_read_data * 2);
-					delay_cycles <= 13 + mem_read_data * 2;
-				end
+			if (AC == 8'hff) begin
+				state <= s_FETCH;
 			end
-			else
-				delay_cycles <= delay_cycles - 1;
+			else begin
+				if (delay_cycles == 0) begin
+					AC <= AC - 1;
+					//$display("PC %h: s_EXEC_DELAY AC %d, %d", PC, AC, mem_read_data * 2);
+					delay_cycles <= mem_read_data * 2 * ONE_MSEC;
+				end
+				else
+					delay_cycles <= delay_cycles - 1;
+			end
 		end
 
 		s_UNKNOWN: begin
