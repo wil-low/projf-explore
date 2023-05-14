@@ -4,7 +4,7 @@
 module top_mk14_tb();
 
 localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
-localparam INIT_F = "../programs/multiply.mem";
+localparam INIT_F = "../programs/test.mem";
 
 logic rst_n;
 logic clk;
@@ -12,6 +12,7 @@ logic clk;
 // generate clock
 always #(CLK_PERIOD / 2) clk <= ~clk;
 
+logic [7:0] trace;
 logic [8 * 8 - 1:0] display;
 
 mk14_soc #(
@@ -21,6 +22,7 @@ mk14_soc #(
 mk14_soc_inst (
 	.rst_n,
 	.clk,
+	.trace,
 	.display
 );
 

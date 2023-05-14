@@ -3,11 +3,14 @@
 use strict;
 use warnings;
 
-my ($lst, $mem) = @ARGV;
+my ($lst) = @ARGV;
 
-die "Usage:\n    perl lst2mem.pl file.lst file.mem\n" if !defined($mem);
+die "Usage:\n    perl lst2mem.pl file.lst\n" if !defined($lst);
 
 open (INF, "<$lst") or die "$!: $lst";
+
+my $mem = $lst;
+$mem =~ s/\.\w+$/.mem/;
 open (OUTF, ">$mem") or die "$!: $lst";
 
 my $code_started = 0;
@@ -20,7 +23,7 @@ while (my $line = <INF>) {
 		$code_started = 1;
 	}
 	if ($code_started) {
-		if ($line =~ /^([0-9A-F]{4}).+?\s\.RF\s/) {
+		if ($line =~ /^([0-9A-F]{4}).+?\s\.[rR][fF]\s/) {
 			$rf_start = $1;
 			warn $rf_start;
 		}

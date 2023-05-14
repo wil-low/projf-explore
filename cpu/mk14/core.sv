@@ -16,11 +16,14 @@ module core #(
 	output logic [15:0] mem_addr,
 	input logic [7:0] mem_read_data,
 	output logic mem_write_en,
-	output logic [7:0] mem_write_data
+	output logic [7:0] mem_write_data,
+	output logic [7:0] trace
 );
 //============ Registers ============
 logic [7:0] AC;		// Accumulator
 logic [7:0] E;		// Extension Register
+
+assign trace = E;
 
 // Status Register
 // {CY_L, OV, SB, SA, IE, F2, F1, F0}
@@ -44,7 +47,6 @@ assign EA = $signed(PTR) + $signed(mem_read_data);
 
 //============ Internal registers ============
 logic [7:0] opcode;	// store current opcode (1st byte)
-logic [7:0] opdata;	// store additional data (2nd byte)
 
 logic [15:0] delay_cycles;
 
@@ -154,7 +156,8 @@ always @(posedge clk) begin
 				mem_addr <= PC + 1;
 				PC <= PC + 1;
 				state <= s_MEM_WAIT;
-				next_state <= s_EXEC_DELAY;
+				next_state <= s_CALC_DELAY;
+				$display("DLY");
 			end
 
 			`i_HALT: begin
@@ -285,7 +288,6 @@ always @(posedge clk) begin
 		s_EXEC_IMM: begin
 			state <= s_FETCH;
 			// == Immediate ==
-			opdata <= mem_read_data;
 			case (opcode)
 			`i_LDI: begin
 				AC <= mem_read_data;
@@ -351,7 +353,6 @@ always @(posedge clk) begin
 			//$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
 			state <= s_FETCH;
 			// == Immediate ==
-			opdata <= mem_read_data;
 			casez (opcode)
 			`i_LD: begin
 				AC <= mem_read_data;
@@ -383,7 +384,6 @@ always @(posedge clk) begin
 			//$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
 			state <= s_FETCH;
 			// == Immediate ==
-			opdata <= mem_read_data;
 			casez (opcode)
 			`i_JMP: begin
 				PC <= EA;
@@ -407,14 +407,24 @@ always @(posedge clk) begin
 		end
 		
 		s_CALC_DELAY: begin
-			delay_cycles <= 13 + AC * 2 + mem_read_data << 9;
+			delay_cycles <= 13 + mem_read_data * 2;
+			//$display("PC %h: delay cycles AC %d, mem_read_data %d\n", PC, AC, mem_read_data);
 			state <= s_EXEC_DELAY;
 		end
 
 		s_EXEC_DELAY: begin
-			delay_cycles <= delay_cycles - 1;
-			if (delay_cycles == 0)
-				state <= s_FETCH;
+			if (delay_cycles == 0) begin
+				if (AC == 8'hff) begin
+					state <= s_FETCH;
+				end
+				else begin
+					AC <= AC - 1;
+					//$display("PC %h: s_EXEC_DELAY AC %d, %d", PC, AC, 13 + mem_read_data * 2);
+					delay_cycles <= 13 + mem_read_data * 2;
+				end
+			end
+			else
+				delay_cycles <= delay_cycles - 1;
 		end
 
 		s_UNKNOWN: begin

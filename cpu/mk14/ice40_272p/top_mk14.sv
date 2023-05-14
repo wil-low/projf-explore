@@ -29,23 +29,25 @@ end
 
 logic [8 * 8 - 1:0] display;
 
-assign LED[0] = |display[0 * 8 + 7 -: 8];
-assign LED[1] = |display[1 * 8 + 7 -: 8];
-assign LED[2] = |display[2 * 8 + 7 -: 8];
-assign LED[3] = |display[3 * 8 + 7 -: 8];
-assign LED[4] = |display[4 * 8 + 7 -: 8];
-assign LED[5] = |display[5 * 8 + 7 -: 8];
-assign LED[6] = |display[6 * 8 + 7 -: 8];
-assign LED[7] = |display[7 * 8 + 7 -: 8];
+//assign LED[0] = |display[0 * 8 + 7 -: 8];
+//assign LED[1] = |display[1 * 8 + 7 -: 8];
+//assign LED[2] = |display[2 * 8 + 7 -: 8];
+//assign LED[3] = |display[3 * 8 + 7 -: 8];
+//assign LED[4] = |display[4 * 8 + 7 -: 8];
+//assign LED[5] = |display[5 * 8 + 7 -: 8];
+//assign LED[6] = |display[6 * 8 + 7 -: 8];
+//assign LED[7] = |display[7 * 8 + 7 -: 8];
+
+assign LED = ~trace;
 
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(12),
-	.INIT_F("../test.mem")
+	.INIT_F("../programs/multiply.mem")
 )
 mk14_soc_inst (
 	.rst_n,
 	.clk(CLK),
-	.trace(trace),
+	.trace,
 	.display
 );
 

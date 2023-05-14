@@ -43,7 +43,8 @@ core #(
 	.mem_addr(core_addr),
 	.mem_read_data(data_out),
 	.mem_write_en(core_write_en),
-	.mem_write_data(data_in)
+	.mem_write_data(data_in),
+	.trace
 );
 
 enum {s_RESET
