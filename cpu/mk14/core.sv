@@ -411,7 +411,7 @@ always @(posedge clk) begin
 		
 		s_CALC_DELAY: begin
 			delay_cycles <= mem_read_data * 2 * ONE_MSEC;
-			$display("PC %h: DLY cycles %d, AC %d\n", PC, mem_read_data * 2, AC);
+			$display("PC %h: DLY cycles %d, AC %d, E %d\n", PC, mem_read_data * 2, AC, E);
 			state <= s_EXEC_DELAY;
 		end
 

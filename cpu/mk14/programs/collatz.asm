@@ -8,7 +8,7 @@
 		;		 -1						Cur(L)
 		;(P2)->	  0			Num(H)		Num(H)		Num(H)
 		;		  1			Num(L)		Num(L)		Num(L)
-		;		  2			Delay		Delay		Delay
+		;		  2			DelayShort		DelayShort		DelayShort
 
 		.CR scmp
 		.LF collatz.lst
@@ -21,7 +21,11 @@ CurL		.EQ		-1
 TempH		.EQ		-4
 TempL		.EQ		-3
 
-Collatz	.EQ		$0F90
+DelayA		.EQ		12
+DelayShort	.EQ		4
+DelayLong	.EQ		40
+
+Collatz		.EQ		$0F80
 
 start:
 		HALT
@@ -36,7 +40,7 @@ start:
 		LDI		$E8
 		ST		NumL(2)
 
-		LDI		1
+		LDI		DelayA
 		ST		Delay(2)
 
 		JS		3,Collatz
@@ -66,6 +70,10 @@ next_cur:
 		ST		TempH(2)
 		LD		CurL(2)
 		ST		TempL(2)
+
+		XAE
+		LD		Delay(2)
+		DLY		DelayLong
 
 check_oddity:
 							; oddity check
@@ -106,6 +114,7 @@ check_oddity:
 		JMP		display
 even:
 							; divide by 2
+		CCL
 		LD		TempH(2)
 		SRL
 		ST		TempH(2)
@@ -117,8 +126,7 @@ display:
 		LD		TempL(2)
 		XAE
 		LD		Delay(2)
-		DLY		$FF
-		
+		DLY		DelayShort
 							; check for Temp = 1
 		LD		TempH(2)
 		JNZ		check_oddity
@@ -126,6 +134,11 @@ display:
 		LDI		1
 		CAD		TempL(2)	; A == 1 ?
 		JNZ		check_oddity
+
+		XAE
+		LD		Delay(2)
+		DLY		DelayLong
+
 		JMP next_cur
 
 		RET		3
