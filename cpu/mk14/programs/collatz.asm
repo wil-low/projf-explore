@@ -25,7 +25,7 @@ DelayA		.EQ		12
 DelayShort	.EQ		4
 DelayLong	.EQ		40
 
-Collatz		.EQ		$0F80
+Collatz		.EQ		$0F70
 
 start:
 		HALT
@@ -45,7 +45,7 @@ start:
 
 		JS		3,Collatz
 
-		LD		$81
+		LDI		$81
 		XAE
 		HALT
 
@@ -138,7 +138,15 @@ display:
 		XAE
 		LD		Delay(2)
 		DLY		DelayLong
-
-		JMP next_cur
+							; check Cur == Num
+		SCL
+		LD		CurH(2)
+		CAD		NumH(2)
+		JNZ		next_cur
+		
+		SCL
+		LD		CurL(2)
+		CAD		NumL(2)
+		JNZ		next_cur
 
 		RET		3
