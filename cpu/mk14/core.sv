@@ -20,7 +20,11 @@ module core #(
 	output logic [7:0] trace
 );
 
+`ifdef SIMULATION
+localparam ONE_MSEC = 1;
+`else
 localparam ONE_MSEC = CLOCK_FREQ_MHZ * 1000;
+`endif
 
 //============ Registers ============
 logic [7:0] AC;		// Accumulator

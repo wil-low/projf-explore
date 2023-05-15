@@ -1,10 +1,8 @@
-all: test.mem SCIOS_Version_2.mem multiply.mem
+all: test.mem SCIOS_Version_2.mem multiply.mem collatz.mem
 
-%.lst: %.asm
+%.mem: %.asm
 	~/program/sbasm3/sbasm $<
-
-%.mem: %.lst
-	perl lst2mem.pl $<
+	perl lst2mem.pl $(basename $@).lst
 
 clean:
 	rm -f *.lst *.mem
