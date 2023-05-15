@@ -4,9 +4,6 @@
 module top_mk14
 (
 	input wire logic CLK,
-	input wire logic BTN1,
-	input wire logic BTN2,
-	input wire logic BTN3,
 	output logic [7:0] LED,
 	output logic LED1,
 	output logic LED2,
@@ -41,7 +38,7 @@ logic [8 * 8 - 1:0] display;
 assign LED = ~trace;
 
 mk14_soc #(
-	.CLOCK_FREQ_MHZ(12),
+	.CLOCK_FREQ_MHZ(25),
 	.INIT_F("../programs/collatz.mem")
 )
 mk14_soc_inst (

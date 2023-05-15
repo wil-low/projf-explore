@@ -14,7 +14,7 @@ module core #(
 	input wire logic en,
 
 	output logic [15:0] mem_addr,
-	input logic [7:0] mem_read_data,
+	input wire logic [7:0] mem_read_data,
 	output logic mem_write_en,
 	output logic [7:0] mem_write_data,
 	output logic [7:0] trace
@@ -46,16 +46,16 @@ logic [15:0] P1, P2, P3;	// Pointer registers. P3 doubles as interrupt vector
 logic [16 * 4 - 1:0] REG_WIRE;
 assign REG_WIRE = {P3, P2, P1, PC};
 
+//============ Internal registers ============
+logic [7:0] opcode;	// store current opcode (1st byte)
+
+logic [29:0] delay_cycles;
+
 logic [15:0] PTR;
 assign PTR = REG_WIRE[opcode[1:0] * 16 + 15 -: 16];
 
 logic [15:0] EA;	// Effective Address
 assign EA = $signed(PTR) + $signed(mem_read_data);
-
-//============ Internal registers ============
-logic [7:0] opcode;	// store current opcode (1st byte)
-
-logic [29:0] delay_cycles;
 
 //============ State machine ============
 enum {
@@ -184,7 +184,7 @@ always @(posedge clk) begin
 			`i_CSA: begin
 				AC <= {CY_L, OV, SB, SA, IE, F2, F1, F0};
 			end
-			`i_CAE: begin
+			`i_CAS: begin
 				{CY_L, OV, SB, SA, IE, F2, F1, F0} <= AC;
 			end
 			`i_NOP: begin
