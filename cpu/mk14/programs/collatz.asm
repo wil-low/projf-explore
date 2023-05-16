@@ -116,7 +116,7 @@ even:
 							; divide by 2
 		CCL
 		LD		TempH(2)
-		SRL
+		RRL
 		ST		TempH(2)
 		LD		TempL(2)
 		RRL
