@@ -20,6 +20,7 @@ module tm1638
 	inout  wire io_tm1638_data,
 
 	// results
+	output logic o_probe,
 	output logic o_idle
 );
 
@@ -40,16 +41,17 @@ logic dio_out;
 logic dio_write_en;
 
 assign o_idle = (state == s_IDLE) && !i_write_en && !i_read_en;
-
+assign o_probe = o_idle;
 sb_inout io (io_tm1638_data, dio_write_en, dio_out, dio_in);
 
 always @(posedge i_clk) begin
-
+	//o_probe <= 0;
 	case (state)
 
 	s_IDLE: begin
 		o_tm1638_clk <= 0;
 		if (i_write_en) begin
+			//o_probe <= 1;
 			dio_write_en <= 1;
 			inner_clock <= INNER_CLOCK_8TH * 8 - 1;
 			dio_out <= i_raw_data[0];
@@ -66,8 +68,8 @@ always @(posedge i_clk) begin
 			read_counter <= 3;
 			state <= s_READ;
 		end
-		else
-			$display("%t o_btn_state3 %b", $time, o_btn_state);
+		//else
+		//	$display("%t o_btn_state3 %b", $time, o_btn_state);
 	end
 
 	s_WRITE: begin

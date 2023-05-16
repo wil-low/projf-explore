@@ -47,6 +47,8 @@ if [ -d "${DIR}/ice40_272p" ]; then
 		echo "##   Checking ${f}";
 		verilator --lint-only --timing -Wall -I${DIR} -I${DIR}/ice40_272p \
 			-I${LIB}/memory	-I${LIB}/memory/ice40 \
+			-I${LIB}/essential -I${LIB}/essential/ice40 \
+			-I${LIB}/tm1638 \
 			-I${LIB}/null/ice40 $f;
 	done
 fi

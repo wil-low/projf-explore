@@ -31,6 +31,7 @@ module tm1638_led_key
 	inout  wire io_tm1638_data,
 
 	// results
+	output logic o_probe,
 	output logic o_idle
 );
 
@@ -59,6 +60,7 @@ tm1638_inst
 	.o_btn_state(o_btn_state),
 	.o_tm1638_clk(o_tm1638_clk),
 	.io_tm1638_data(io_tm1638_data),
+	.o_probe(o_probe),
 	.o_idle(tm1638_idle)
 );
 
@@ -77,6 +79,7 @@ always @(posedge i_clk) begin
 	case (state)
 
 	s_IDLE: begin
+		o_tm1638_stb <= 1;
 		next_state <= s_DELAY;
 		if (i_cmd_en) begin
 			o_tm1638_stb <= 0;

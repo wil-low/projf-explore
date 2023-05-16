@@ -13,7 +13,11 @@ module mk14_soc #(
 	input wire logic rst_n,
 	input wire logic clk,
 	output logic [7:0] trace,
-	output logic [8 * 8 - 1:0] display
+	output logic probe,
+
+	output logic o_ledkey_clk,
+	output logic o_ledkey_stb,
+	inout  wire  io_ledkey_dio
 );
 
 logic [7:0] data_in;
@@ -24,6 +28,7 @@ logic [15:0] core_addr;
 logic [15:0] display_addr;
 logic core_write_en;
 logic display_write_en;
+logic display_idle;
 
 bram_sdp #(.WIDTH(8), .DEPTH(4096), .INIT_F(INIT_F))
 program_inst (
@@ -32,6 +37,30 @@ program_inst (
 	.addr_write(core_en ? core_addr : display_addr),
 	.addr_read(core_en ? core_addr : display_addr),
 	.data_in, .data_out
+);
+
+tm1638_led_key_memmap
+#(
+	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHZ),
+	.SEG7_COUNT(8),
+	.LED_COUNT(0),
+	.SEG7_BASE_ADDR('h100),
+	.LED_BASE_ADDR(0)
+)
+display_inst
+(
+	.i_clk(clk),
+	.i_en(~core_en),	
+	.o_read_addr(display_addr),
+	.i_read_data(data_out),
+
+	// shield pins
+	.o_tm1638_clk(o_ledkey_clk),
+	.o_tm1638_stb(o_ledkey_stb),
+	.io_tm1638_data(io_ledkey_dio),
+
+	.probe(probe),
+	.o_idle(display_idle)
 );
 
 core #(
@@ -47,18 +76,8 @@ core #(
 	.trace
 );
 
-enum {s_RESET
-} state, next_state;
-
-logic [2:0] display_counter = 0;
-
-always @(posedge clk) begin
-	if (!core_en) begin
-		display_addr <= 16'h0d00 + display_counter;
-		display[8 * display_counter + 7 -: 8] <= data_out;
-		display_counter <= display_counter + 1;
-	end
-end
+enum {s_RESET, s_RUNNING
+} state;
 
 always @(posedge clk) begin
 	if (!rst_n) begin
@@ -68,8 +87,13 @@ always @(posedge clk) begin
 		case (state)
 		s_RESET: begin
 			core_en <= 1;
+			state <= s_RUNNING;
 		end
 		
+		s_RUNNING: begin
+			//core_en <= ~display_idle;
+		end
+
 		default:
 			state <= s_RESET;
 

@@ -2,6 +2,13 @@
 set_frequency  CLK      12
 set_io CLK 35
 
+#> PMOD 1
+set_io --warn-no-port LK_CLK 9
+set_io --warn-no-port LK_STB 10
+set_io --warn-no-port LK_DIO 2
+set_io --warn-no-port PROBE 3
+
+
 #> PMOD 2 PMOD_BLEDIR
 set_io --warn-no-port LED1 46
 set_io --warn-no-port LED2 44

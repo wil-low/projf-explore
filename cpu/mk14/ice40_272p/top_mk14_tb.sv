@@ -15,6 +15,10 @@ always #(CLK_PERIOD / 2) clk <= ~clk;
 logic [7:0] trace;
 logic [8 * 8 - 1:0] display;
 
+logic lk_clk;
+logic lk_stb;
+logic lk_dio;
+
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(1),
 	.INIT_F(INIT_F)
@@ -23,7 +27,9 @@ mk14_soc_inst (
 	.rst_n,
 	.clk,
 	.trace,
-	.display
+	.o_ledkey_clk(lk_clk),
+	.o_ledkey_stb(lk_stb),
+	.io_ledkey_dio(lk_dio)
 );
 
 initial begin
