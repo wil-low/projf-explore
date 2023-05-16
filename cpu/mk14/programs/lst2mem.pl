@@ -25,12 +25,12 @@ while (my $line = <INF>) {
 	if ($code_started) {
 		if ($line =~ /^([0-9A-F]{4}).+?\s\.[rR][fF]\s/) {
 			$rf_start = $1;
-			warn $rf_start;
+			#warn $rf_start;
 		}
 		if ($rf_start and $line =~ /^([0-9A-F]{4})/) {
 			if ($1 ne $rf_start) {
 				$rf_end = $1;
-				warn $rf_end;
+				#warn $rf_end;
 				my $start = hex($rf_start);
 				my $len = hex($rf_end) - hex($rf_start);
 				my $i = 0;

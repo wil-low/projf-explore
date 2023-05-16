@@ -20,7 +20,7 @@ logic rst_n = &reset_counter;
 
 logic [7:0] trace;
 
-//assign LED = ~trace;
+assign {LED1, LED2, LED3, LED4} = ~0;
 
 always @(posedge CLK) begin
 	if (!rst_n)
