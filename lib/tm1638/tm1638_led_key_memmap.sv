@@ -22,7 +22,7 @@ module tm1638_led_key_memmap
 	output logic o_tm1638_stb,
 	inout  wire io_tm1638_data,
 
-	output logic probe = 0,
+	output logic probe,
 	output logic o_idle
 );
 
@@ -35,7 +35,9 @@ logic cmd_en = 0;
 logic [7 : 0] cmd;
 
 logic ledkey_idle;
-assign o_idle = ledkey_idle;
+assign o_idle = (state == s_IDLE) && ledkey_idle;
+
+assign probe = i_en;
 
 tm1638_led_key
 #(

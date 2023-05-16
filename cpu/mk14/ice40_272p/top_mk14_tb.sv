@@ -4,7 +4,7 @@
 module top_mk14_tb();
 
 localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
-localparam INIT_F = "../programs/collatz.mem";
+localparam INIT_F = "../programs/display.mem";
 
 logic rst_n;
 logic clk;

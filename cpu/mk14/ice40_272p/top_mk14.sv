@@ -37,7 +37,7 @@ assign LED = ~trace;
 
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(12),
-	.INIT_F("../programs/collatz.mem")
+	.INIT_F("../programs/display.mem")
 )
 mk14_soc_inst (
 	.rst_n,

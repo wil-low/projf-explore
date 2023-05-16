@@ -23,12 +23,16 @@ module mk14_soc #(
 logic [7:0] data_in;
 logic [7:0] data_out;
 
-logic core_en = 0;
+logic core_en = 1;
+logic core_write_wait;
 logic [15:0] core_addr;
 logic [15:0] display_addr;
 logic core_write_en;
 logic display_write_en;
 logic display_idle;
+
+localparam SEG7_COUNT = 8;
+localparam SEG7_BASE_ADDR = 'h100;
 
 bram_sdp #(.WIDTH(8), .DEPTH(4096), .INIT_F(INIT_F))
 program_inst (
@@ -42,9 +46,9 @@ program_inst (
 tm1638_led_key_memmap
 #(
 	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHZ),
-	.SEG7_COUNT(8),
+	.SEG7_COUNT(SEG7_COUNT),
 	.LED_COUNT(0),
-	.SEG7_BASE_ADDR('h100),
+	.SEG7_BASE_ADDR(SEG7_BASE_ADDR),
 	.LED_BASE_ADDR(0)
 )
 display_inst
@@ -73,7 +77,8 @@ core #(
 	.mem_read_data(data_out),
 	.mem_write_en(core_write_en),
 	.mem_write_data(data_in),
-	.trace
+	.trace,
+	.write_wait(core_write_wait)
 );
 
 enum {s_RESET, s_RUNNING
@@ -86,12 +91,15 @@ always @(posedge clk) begin
 	else begin
 		case (state)
 		s_RESET: begin
-			core_en <= 1;
+			core_en <= 0;
 			state <= s_RUNNING;
 		end
 		
 		s_RUNNING: begin
-			//core_en <= ~display_idle;
+			/*if (core_write_wait && core_addr >= SEG7_BASE_ADDR && core_addr < SEG7_BASE_ADDR + SEG7_COUNT)
+				core_en <= 0;  // enable display
+			else if (display_idle)
+				core_en <= 1;*/
 		end
 
 		default:
