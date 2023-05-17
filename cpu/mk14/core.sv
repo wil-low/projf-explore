@@ -27,21 +27,26 @@ localparam ONE_MSEC = CLOCK_FREQ_MHZ * 1000;
 `endif
 
 //============ Registers ============
-logic [7:0] AC;		// Accumulator
-logic [7:0] E;		// Extension Register
+logic [7:0] AC = 0;		// Accumulator
+logic [7:0] E= 0;		// Extension Register
 
 assign trace = E;//PC[7:0];//E;
 
 // Status Register
 // {CY_L, OV, SB, SA, IE, F2, F1, F0}
-logic F0, F1, F2;	// User assigned flags
-logic IE;			// Interrupt Enable
-logic SA, SB;		// Read-only sense inputs. If IE=1, SA is interrupt input
-logic OV;			// Overflow, set or reset by arithmetic operations
-logic CY_L;			// Carry/Link, set or reset by arithmetic operations or rotate with Link
+logic F0 = 0;		// User assigned flags
+logic F1 = 0;
+logic F2 = 0;
+logic IE = 0;		// Interrupt Enable
+logic SA = 0;		// Read-only sense inputs. If IE=1, SA is interrupt input
+logic SB = 0;
+logic OV = 0;		// Overflow, set or reset by arithmetic operations
+logic CY_L = 0;		// Carry/Link, set or reset by arithmetic operations or rotate with Link
 
-logic [15:0] PC;	// Program Counter
-logic [15:0] P1, P2, P3;	// Pointer registers. P3 doubles as interrupt vector
+logic [15:0] PC = 0;// Program Counter
+logic [15:0] P1 = 0;// Pointer registers. P3 doubles as interrupt vector
+logic [15:0] P2 = 0;
+logic [15:0] P3 = 0;
 
 logic [16 * 4 - 1:0] REG_WIRE;
 assign REG_WIRE = {P3, P2, P1, PC};
@@ -70,7 +75,7 @@ always @(posedge clk) begin
 	if (!rst_n) begin
 		{CY_L, OV, SB, SA, IE, F2, F1, F0} <= 0;
 		{AC, E, PC, P1, P2, P3} <= 0;
-		state <= s_FETCH;
+		state <= s_IDLE;
 	end
 	else if (en) begin
 		mem_write_en <= 0;
@@ -78,7 +83,7 @@ always @(posedge clk) begin
 		case (state)
 
 		s_IDLE: begin
-
+			state <= s_FETCH;
 		end
 
 		s_FETCH: begin

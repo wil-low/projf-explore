@@ -29,5 +29,12 @@ set_property PACKAGE_PIN U20 [get_ports {LED[5]}]
 set_property PACKAGE_PIN T20 [get_ports {LED[6]}]
 set_property PACKAGE_PIN P20 [get_ports {LED[7]}]
 
-
+set_property IOSTANDARD LVCMOS33 [get_ports LK_CLK]
+set_property IOSTANDARD LVCMOS33 [get_ports LK_STB]
+set_property IOSTANDARD LVCMOS33 [get_ports LK_DIO]
+set_property IOSTANDARD LVCMOS33 [get_ports PROBE]
+set_property PACKAGE_PIN U15 [get_ports LK_CLK]
+set_property PACKAGE_PIN W15 [get_ports LK_STB]
+set_property PACKAGE_PIN U17 [get_ports LK_DIO]
+set_property PACKAGE_PIN V18 [get_ports PROBE]
 

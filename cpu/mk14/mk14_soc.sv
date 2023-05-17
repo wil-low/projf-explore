@@ -92,8 +92,10 @@ core #(
 	.trace
 );
 
-enum {s_RESET, s_RUNNING
-} state;
+typedef enum {s_RESET, s_RUNNING
+} STATE;
+
+STATE state = s_RESET;
 
 always @(posedge clk) begin
 	display_en <= 0;

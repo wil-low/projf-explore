@@ -45,8 +45,6 @@ logic [4:0] data_counter;
 logic [8 * 17 - 1 : 0] data;
 /* verilator lint_on LITENDIAN */
 
-assign o_idle = (state == s_IDLE) && tm1638_idle && !i_cmd_en && !i_seg7_en && !i_led_en && !i_batch_en && !i_btn_en && !i_all_led_en;
-
 tm1638
 #(
 	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHz)
@@ -67,6 +65,8 @@ tm1638_inst
 enum {
 	s_IDLE, s_INIT_STEP, s_SEND_DATA, s_SEND_CMD, s_SET_ALL_LED, s_SET_ALL_LED_STEP, s_READ_BTN, s_READ_BTN_DONE, s_DELAY
 } state, next_state;
+
+assign o_idle = (state == s_IDLE) && tm1638_idle && !i_cmd_en && !i_seg7_en && !i_led_en && !i_batch_en && !i_btn_en && !i_all_led_en;
 
 logic [3:0] state_counter;
 

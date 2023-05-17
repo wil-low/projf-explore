@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Wed May 17 19:46:03 2023
+# Generated on: Wed May 17 21:09:52 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -77,6 +77,7 @@ if {$make_assignments} {
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 	set_global_assignment -name SEARCH_PATH ../../../../lib/memory
 	set_global_assignment -name SEARCH_PATH ../../ice40_272p
+	set_global_assignment -name SOURCE_FILE ../../programs/display.mem
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_sqp.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/essential/sb_inout.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/tm1638/tm1638_led_key_memmap.sv
@@ -101,8 +102,8 @@ if {$make_assignments} {
 	set_location_assignment PIN_C8 -to LED[6]
 	set_location_assignment PIN_E8 -to LED[7]
 	set_location_assignment PIN_B1 -to LK_CLK
-	set_location_assignment PIN_B3 -to LK_DIO
-	set_location_assignment PIN_B4 -to LK_STB
+	set_location_assignment PIN_B4 -to LK_DIO
+	set_location_assignment PIN_B3 -to LK_STB
 	set_location_assignment PIN_B5 -to PROBE
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_CLK
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_DIO

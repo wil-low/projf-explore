@@ -35,10 +35,6 @@ logic cmd_en = 0;
 logic [7 : 0] cmd;
 
 logic ledkey_idle;
-assign o_idle = (state == s_IDLE) && !i_en && ledkey_idle;
-
-//assign probe = (state == s_RESET) || (state == s_RESET1) || (state == s_RESET2) || (state == s_IDLE);
-assign probe = i_en;
 
 tm1638_led_key
 #(
@@ -75,6 +71,11 @@ tm1638_led_key_inst
 enum {
 	s_RESET, s_RESET1, s_RESET2, s_IDLE, s_FETCH, s_WAIT_MEM, s_FILL_BATCH, s_SEND_DATA, s_WAIT
 } state;
+
+assign o_idle = (state == s_IDLE) && ledkey_idle;
+
+//assign probe = (state == s_RESET) || (state == s_RESET1) || (state == s_RESET2) || (state == s_IDLE);
+assign probe = i_en;
 
 logic [3:0] data_counter;
 
