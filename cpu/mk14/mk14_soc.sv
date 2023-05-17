@@ -112,7 +112,7 @@ always @(posedge clk) begin
 			display_refresh_counter <= display_refresh_counter - 1;
 			if (display_refresh_counter == 0) begin
 				display_refresh_counter <= DISPLAY_TIMEOUT_CYCLES;
-				//if (display_idle)
+				if (display_idle)
 					display_en <= 1;
 			end
 		end

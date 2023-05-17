@@ -30,7 +30,7 @@ module bram_sqp #(
 
 	initial begin
 		if (INIT_F != 0) begin
-			$display("Loading memory init file '%s' into bram_sdp.", INIT_F);
+			$display("Loading memory init file '%s' into bram_sqp.", INIT_F);
 			$readmemh(INIT_F, memory);
 		end
 	end

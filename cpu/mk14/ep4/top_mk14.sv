@@ -9,7 +9,13 @@ module top_mk14
 	output logic LED1,
 	output logic LED2,
 	output logic LED3,
-	output logic LED4
+	output logic LED4,
+
+	output logic PROBE,
+
+	output logic LK_CLK,
+	output logic LK_STB,
+	inout  wire  LK_DIO
 );
 
 logic [7:0] trace;
@@ -28,13 +34,16 @@ assign LED = ~trace;
 
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(50),
-	.INIT_F("../programs/collatz.mem")
+	.INIT_F("../../programs/display.mem")
 )
 mk14_soc_inst (
 	.rst_n,
 	.clk(CLK),
 	.trace,
-	.display
+	.probe(PROBE),
+	.o_ledkey_clk(LK_CLK),
+	.o_ledkey_stb(LK_STB),
+	.io_ledkey_dio(LK_DIO)
 );
 
 endmodule

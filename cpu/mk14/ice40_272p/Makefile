@@ -12,7 +12,7 @@ ICELINK_DIR = /tmp/iCELink
 
 # included modules
 PATH_LIB = ../../../lib
-ADD_SRC += ${PATH_LIB}/memory/bram_sdp.sv
+ADD_SRC += ${PATH_LIB}/memory/bram_sqp.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key_memmap.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638.sv
@@ -62,6 +62,9 @@ generate_mem: ../programs/test.mem
 
 clean:
 	rm -f *.json *.asc *.rpt *.bin *yosys.log *.out *.vcd
+
+verilate: top_mk14.sv $(ADD_SRC)
+	verilator --cc --build -I.. $< $(ADD_SRC)
 
 .PRECIOUS: %.asc %.json
 
