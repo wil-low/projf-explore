@@ -20,6 +20,8 @@ module top_mk14
 	inout  wire  LK_DIO
 );
 
+localparam CLOCK_FREQ_MHZ = 12;
+
 //// Reset emulation for ice40
 logic [22:0] reset_counter = 0;
 logic rst_n = &reset_counter;
@@ -36,7 +38,8 @@ end
 assign LED = ~trace;
 
 mk14_soc #(
-	.CLOCK_FREQ_MHZ(12),
+	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
+	.DISPLAY_TIMEOUT_CYCLES(CLOCK_FREQ_MHZ * 1000 * 500),
 	.INIT_F("../programs/display.mem")
 )
 mk14_soc_inst (

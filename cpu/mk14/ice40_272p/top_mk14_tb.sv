@@ -21,6 +21,7 @@ logic lk_dio;
 
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(1),
+	.DISPLAY_TIMEOUT_CYCLES(5),
 	.INIT_F(INIT_F)
 )
 mk14_soc_inst (

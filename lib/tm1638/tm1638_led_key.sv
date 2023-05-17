@@ -21,9 +21,9 @@ module tm1638_led_key
 	input wire [7:0] i_data,			// byte to send
 	output logic [7:0] o_btn_state,		// button0-7 state (1 = pressed) 
 
-	input logic [4:0] i_batch_data_size,
-	input logic [8 * 17 - 1 : 0] i_batch_data,
-	input logic [27:0] i_wait_counter,
+	input wire [4:0] i_batch_data_size,
+	input wire [8 * 17 - 1 : 0] i_batch_data,
+	input wire [27:0] i_wait_counter,
 	
 	// shield pins
 	output logic o_tm1638_clk,

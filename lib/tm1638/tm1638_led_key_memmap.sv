@@ -35,8 +35,9 @@ logic cmd_en = 0;
 logic [7 : 0] cmd;
 
 logic ledkey_idle;
-assign o_idle = (state == s_IDLE) && ledkey_idle;
+assign o_idle = (state == s_IDLE) && !i_en && ledkey_idle;
 
+//assign probe = (state == s_RESET) || (state == s_RESET1) || (state == s_RESET2) || (state == s_IDLE);
 assign probe = i_en;
 
 tm1638_led_key
@@ -72,7 +73,7 @@ tm1638_led_key_inst
 );
 
 enum {
-	s_RESET, s_RESET1, s_RESET2, s_IDLE, s_FETCH, s_WAIT_MEM, s_FILL_BATCH, s_SEND_DATA
+	s_RESET, s_RESET1, s_RESET2, s_IDLE, s_FETCH, s_WAIT_MEM, s_FILL_BATCH, s_SEND_DATA, s_WAIT
 } state;
 
 logic [3:0] data_counter;
@@ -80,19 +81,16 @@ logic [3:0] data_counter;
 always @(posedge i_clk) begin
 	batch_en <= 0;
 	cmd_en <= 0;
-	probe <= 0;
-	if (i_en && ledkey_idle) begin
-		//probe <= 1;
+	if (ledkey_idle) begin
 		case (state)
 
 		s_RESET: begin
-			cmd <= 8'h40;  // set auto increment mode0;
+			cmd <= 8'h40;  // set auto increment mode
 			cmd_en <= 1;
 			state <= s_RESET1;
 		end
 
 		s_RESET1: begin
-			//batch_data <= {8'hc0, 128'h0};
 			batch_data <= {8'hc0, {16{8'h00}}};
 			batch_en <= 1;
 			state <= s_RESET2;
@@ -105,8 +103,10 @@ always @(posedge i_clk) begin
 		end
 
 		s_IDLE: begin
-			data_counter <= 0;
-			state <= s_FETCH;
+			if (i_en) begin
+				data_counter <= 0;
+				state <= s_FETCH;
+			end
 		end
 
 		s_FETCH: begin
