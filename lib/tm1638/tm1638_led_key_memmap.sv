@@ -74,68 +74,65 @@ enum {
 
 assign o_idle = (state == s_IDLE) && ledkey_idle;
 
-//assign probe = (state == s_RESET) || (state == s_RESET1) || (state == s_RESET2) || (state == s_IDLE);
-assign probe = i_en;
+assign probe = ledkey_idle;
 
 logic [3:0] data_counter;
 
 always @(posedge i_clk) begin
 	batch_en <= 0;
 	cmd_en <= 0;
-	if (ledkey_idle) begin
-		case (state)
+	case (state)
 
-		s_RESET: begin
-			cmd <= 8'h40;  // set auto increment mode
-			cmd_en <= 1;
-			state <= s_RESET1;
-		end
-
-		s_RESET1: begin
-			batch_data <= {8'hc0, {16{8'h00}}};
-			batch_en <= 1;
-			state <= s_RESET2;
-		end
-
-		s_RESET2: begin
-			cmd <= 8'h88;  // activate
-			cmd_en <= 1;
-			state <= s_IDLE;
-		end
-
-		s_IDLE: begin
-			if (i_en) begin
-				data_counter <= 0;
-				state <= s_FETCH;
-			end
-		end
-
-		s_FETCH: begin
-			o_read_addr <= SEG7_BASE_ADDR + data_counter;
-			state <= s_WAIT_MEM;
-		end
-
-		s_WAIT_MEM: begin
-			state <= s_FILL_BATCH;
-		end
-
-		s_FILL_BATCH: begin
-			data_counter <= data_counter + 1;
-			batch_data[8 * (16 - data_counter * 2 - 1) + 7 -: 8] <= i_read_data;
-			state <= (data_counter == SEG7_COUNT) ? s_SEND_DATA : s_FETCH;
-		end
-
-		s_SEND_DATA: begin
-			batch_en <= 1;
-			state <= s_IDLE;
-		end
-
-		default: begin
-			state <= s_RESET;
-		end
-
-		endcase
+	s_RESET: if (ledkey_idle) begin
+		cmd <= 8'h40;  // set auto increment mode
+		cmd_en <= 1;
+		state <= s_RESET1;
 	end
+
+	s_RESET1: if (ledkey_idle) begin
+		batch_data <= {8'hc0, {16{8'h00}}};
+		batch_en <= 1;
+		state <= s_RESET2;
+	end
+
+	s_RESET2: if (ledkey_idle) begin
+		cmd <= 8'h88;  // activate
+		cmd_en <= 1;
+		state <= s_IDLE;
+	end
+
+	s_IDLE: if (ledkey_idle) begin
+		if (i_en) begin
+			data_counter <= 0;
+			state <= s_FETCH;
+		end
+	end
+
+	s_FETCH: begin
+		o_read_addr <= SEG7_BASE_ADDR + data_counter;
+		state <= s_WAIT_MEM;
+	end
+
+	s_WAIT_MEM: begin
+		state <= s_FILL_BATCH;
+	end
+
+	s_FILL_BATCH: begin
+		data_counter <= data_counter + 1;
+		batch_data[8 * (16 - data_counter * 2 - 1) + 7 -: 8] <= i_read_data;
+		state <= (data_counter == SEG7_COUNT) ? s_SEND_DATA : s_FETCH;
+	end
+
+	s_SEND_DATA: begin
+		batch_en <= 1;
+		state <= s_IDLE;
+	end
+
+	default: begin
+		state <= s_RESET;
+	end
+
+	endcase
 end
 
 endmodule
