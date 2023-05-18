@@ -32,8 +32,11 @@ logic [8 * 8 - 1:0] display;
 
 assign LED = ~trace;
 
+localparam CLOCK_FREQ_MHZ = 50;
+
 mk14_soc #(
-	.CLOCK_FREQ_MHZ(50),
+	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
+	.DISPLAY_TIMEOUT_CYCLES(CLOCK_FREQ_MHZ * 1000 * 100),
 	.INIT_F("../../programs/display.mem")
 )
 mk14_soc_inst (

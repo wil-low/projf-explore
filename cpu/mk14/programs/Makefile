@@ -1,4 +1,4 @@
-all: test.mem SCIOS_Version_2.mem multiply.mem collatz.mem display.mem
+all: test.mem SCIOS_Version_2.mem multiply.mem collatz.mem display.mem #clock.mem
 
 %.mem: %.asm
 	~/program/sbasm3/sbasm $<

@@ -38,7 +38,7 @@ logic display_idle;
 localparam SEG7_COUNT = 8;
 localparam SEG7_BASE_ADDR = 'h100;
 
-bram_sqp #(.WIDTH(8), .DEPTH(4096), .INIT_F(INIT_F))
+bram_sqp #(.WIDTH(8), .DEPTH(4 * 1024), .INIT_F(INIT_F))
 memory_inst (
 	.clk(clk),
 
