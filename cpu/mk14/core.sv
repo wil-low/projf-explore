@@ -59,9 +59,6 @@ logic [29:0] delay_cycles;
 logic [15:0] PTR;
 assign PTR = REG_WIRE[opcode[1:0] * 16 + 15 -: 16];
 
-logic [15:0] EA;	// Effective Address
-assign EA = $signed(PTR) + $signed(mem_read_data);
-
 //============ State machine ============
 enum {
 	s_IDLE, s_FETCH, s_MEM_WAIT, s_SET_OPCODE, s_DECODE, s_EXEC_IMM,
@@ -324,7 +321,7 @@ always @(posedge clk) begin
 		end
 
 		s_LOAD_INC_DEC: begin
-			mem_addr <= EA;
+			mem_addr <= $signed(PTR) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
 			state <= s_MEM_WAIT;
 			next_state <= s_EXEC_INC_DEC;
 		end
@@ -343,7 +340,22 @@ always @(posedge clk) begin
 		end
 
 		s_STORE_TO_EA: begin
-			mem_addr <= EA;
+			if (opcode[2]) begin  // auto-index
+				case (opcode[1:0])
+				1: P1 <= $signed(P1) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+				2: P2 <= $signed(P2) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+				3: P3 <= $signed(P3) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+				default: ;
+				endcase
+
+				if ($signed(mem_read_data) >= 0)
+					mem_addr <= PTR;
+				else
+					mem_addr <= $signed(PTR) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+			end
+			else begin
+				mem_addr <= $signed(PTR) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+			end
 			mem_write_data <= AC;
 			mem_write_en <= 1;
 			state <= s_MEM_WAIT;
@@ -351,14 +363,29 @@ always @(posedge clk) begin
 		end
 
 		s_LOAD_FROM_EA: begin
-			//$display("unsigned=%d, signed = %d, opcode %h, REG_WIRE %d, %d", mem_read_data, $signed(mem_read_data), opcode, REG_WIRE[opcode[1:0] * 16 + 15 -: 16], -mem_read_data[6:0]);
-			mem_addr <= EA;
+			$display("PC %h, s_LOAD_FROM_EA: PTR %h, unsigned=%d, signed = %d, opcode %h, EA %h, E %h", PC, $signed(PTR), mem_read_data, $signed(mem_read_data), opcode, $signed(PTR) + (mem_read_data == 'h80 ? E : $signed(mem_read_data)), E);
+			if (opcode[2]) begin  // auto-index
+				case (opcode[1:0])
+				1: P1 <= $signed(P1) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+				2: P2 <= $signed(P2) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+				3: P3 <= $signed(P3) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+				default: ;
+				endcase
+
+				if ($signed(mem_read_data) >= 0)
+					mem_addr <= PTR;
+				else
+					mem_addr <= $signed(PTR) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+			end
+			else begin
+				mem_addr <= $signed(PTR) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
+			end
 			state <= s_MEM_WAIT;
 			next_state <= s_EXEC_MEM;
 		end
 
 		s_EXEC_MEM: begin
-			//$display("mem_addr=%d, opcode=%h", mem_addr, opcode);
+			$display("mem_addr=%h, opcode=%h", mem_addr, opcode);
 			state <= s_FETCH;
 			// == Immediate ==
 			casez (opcode)
@@ -394,20 +421,20 @@ always @(posedge clk) begin
 			// == Immediate ==
 			casez (opcode)
 			`i_JMP: begin
-				PC <= EA;
+				PC <= $signed(PTR) + $signed(mem_read_data);
 			end
 			`i_JP: begin
 				//$display("JP AC %d, cond %d", AC, $signed(AC) >= 0);
 				if ($signed(AC) >= 0)
-					PC <= EA;
+					PC <= $signed(PTR) + $signed(mem_read_data);
 			end
 			`i_JZ: begin
 				if (AC == 0)
-					PC <= EA;
+					PC <= $signed(PTR) + $signed(mem_read_data);
 			end
 			`i_JNZ: begin
 				if (AC)
-					PC <= EA;
+					PC <= $signed(PTR) + $signed(mem_read_data);
 			end
 			default:
 				state <= s_UNKNOWN;
