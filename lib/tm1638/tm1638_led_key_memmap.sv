@@ -119,7 +119,7 @@ always @(posedge i_clk) begin
 
 	s_FILL_BATCH: begin
 		data_counter <= data_counter + 1;
-		batch_data[8 * (16 - data_counter * 2 - 1) + 7 -: 8] <= i_read_data;
+		batch_data[8 * (data_counter * 2 + 1) + 7 -: 8] <= i_read_data;
 		state <= (data_counter == SEG7_COUNT) ? s_SEND_DATA : s_FETCH;
 	end
 

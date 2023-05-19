@@ -12,12 +12,14 @@ ICELINK_DIR = /tmp/iCELink
 
 # included modules
 PATH_LIB = ../../../lib
+ADD_SRC += ${PATH_LIB}/memory/bram_sdp.sv
 ADD_SRC += ${PATH_LIB}/memory/bram_sqp.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key_memmap.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638.sv
 ADD_SRC += ${PATH_LIB}/essential/sb_inout.sv
 ADD_SRC += ../core.sv
+ADD_SRC += ../mmu.sv
 ADD_SRC += ../mk14_soc.sv
 
 mk14: mk14.rpt mk14.bin mk14.link

@@ -327,12 +327,13 @@ always @(posedge clk) begin
 		end
 
 		s_EXEC_INC_DEC: begin
+			$display("PC %h: mem_read_data %h, AC: %h, inc=%b", PC, mem_read_data, $signed(mem_read_data) + (opcode[4] == 0 ? 1 : -1), ~opcode[4]);
 			AC <= mem_read_data + (opcode[4] == 0 ? 1 : -1);
 			state <= s_STORE_INC_DEC;
 		end
 
 		s_STORE_INC_DEC: begin
-			//$display("s_STORE_INC_DEC AC %h", AC);
+			$display("PC %h: s_STORE_INC_DEC, AC = %h", PC, AC);
 			mem_write_data <= AC;
 			mem_write_en <= 1;
 			state <= s_MEM_WAIT;

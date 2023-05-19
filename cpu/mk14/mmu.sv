@@ -54,8 +54,8 @@ std_ram (
 	.clk_read(clk),
 
 	.we(core_write_en && access_std_ram),
-	.addr_write(core_addr & 'hf00),
-	.addr_read(core_addr & 'hf00),
+	.addr_write(core_addr & 'hff),
+	.addr_read(core_addr & 'hff),
 	.data_in(core_write_data),
 	.data_out(std_ram_read_data)
 );
@@ -66,13 +66,13 @@ ext_ram (
 	.clk_read(clk),
 
 	.we(core_write_en && access_ext_ram),
-	.addr_write(core_addr & 'hf00),
-	.addr_read(core_addr & 'hf00),
+	.addr_write(core_addr & 'hff),
+	.addr_read(core_addr & 'hff),
 	.data_in(core_write_data),
 	.data_out(ext_ram_read_data)
 );
 
-bram_sdp #(.WIDTH(8), .DEPTH(256), .INIT_F(ROM_INIT_F))
+bram_sdp #(.WIDTH(8), .DEPTH(512), .INIT_F(ROM_INIT_F))
 rom (
 	.clk_write(clk),
 	.clk_read(clk),
@@ -90,7 +90,7 @@ disp_kbd (
 
 	.we0(core_write_en && access_disp_kbd && (core_addr & 'h0f) <= 'h07),
 	.addr_write0(core_addr & 'h07),
-	.addr_read0(core_addr & 'h07),
+	.addr_read0((core_addr & 'h07) + 8),
 	.data_in0(core_write_data),
 	.data_out0(keyb_read_data),
 
