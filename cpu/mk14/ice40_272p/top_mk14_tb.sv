@@ -4,7 +4,12 @@
 module top_mk14_tb();
 
 localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
-localparam INIT_F = "../programs/display.mem";
+
+//localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
+localparam ROM_INIT_F		= "../programs/display.mem";
+localparam STD_RAM_INIT_F	= "../programs/test.mem";
+localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
+localparam DISP_KBD_INIT_F	= "../disp_kbd.mem";
 
 logic rst_n;
 logic clk;
@@ -22,7 +27,10 @@ logic lk_dio;
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(1),
 	.DISPLAY_TIMEOUT_CYCLES(5),
-	.INIT_F(INIT_F)
+	.ROM_INIT_F(ROM_INIT_F),
+	.STD_RAM_INIT_F(STD_RAM_INIT_F),
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
+	.DISP_KBD_INIT_F(DISP_KBD_INIT_F)
 )
 mk14_soc_inst (
 	.rst_n,

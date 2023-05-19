@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Wed May 17 21:09:52 2023
+# Generated on: Fri May 19 21:49:02 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -75,9 +75,8 @@ if {$make_assignments} {
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-	set_global_assignment -name SEARCH_PATH ../../../../lib/memory
-	set_global_assignment -name SEARCH_PATH ../../ice40_272p
-	set_global_assignment -name SOURCE_FILE ../../programs/display.mem
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_sdp.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../mmu.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_sqp.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/essential/sb_inout.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/tm1638/tm1638_led_key_memmap.sv

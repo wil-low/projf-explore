@@ -30,7 +30,7 @@ localparam ONE_MSEC = CLOCK_FREQ_MHZ * 1000;
 logic [7:0] AC = 0;		// Accumulator
 logic [7:0] E= 0;		// Extension Register
 
-assign trace = E;//PC[7:0];//E;
+assign trace = PC[7:0];//E;
 
 // Status Register
 // {CY_L, OV, SB, SA, IE, F2, F1, F0}

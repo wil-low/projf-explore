@@ -19,25 +19,23 @@ module top_mk14
 );
 
 logic [7:0] trace;
-logic [8 * 8 - 1:0] display;
-
-//assign LED[0] = |display[0 * 8 + 7 -: 8];
-//assign LED[1] = |display[1 * 8 + 7 -: 8];
-//assign LED[2] = |display[2 * 8 + 7 -: 8];
-//assign LED[3] = |display[3 * 8 + 7 -: 8];
-//assign LED[4] = |display[4 * 8 + 7 -: 8];
-//assign LED[5] = |display[5 * 8 + 7 -: 8];
-//assign LED[6] = |display[6 * 8 + 7 -: 8];
-//assign LED[7] = |display[7 * 8 + 7 -: 8];
-
 assign LED = ~trace;
 
 localparam CLOCK_FREQ_MHZ = 50;
 
+//localparam ROM_INIT_F		= "../../SCIOS_Version_2.mem";
+localparam ROM_INIT_F		= "../../programs/display.mem";
+localparam STD_RAM_INIT_F	= "../../programs/test.mem";
+localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
+localparam DISP_KBD_INIT_F	= "../../disp_kbd.mem";
+
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
 	.DISPLAY_TIMEOUT_CYCLES(CLOCK_FREQ_MHZ * 1000 * 100),
-	.INIT_F("../../programs/display.mem")
+	.ROM_INIT_F(ROM_INIT_F),
+	.STD_RAM_INIT_F(STD_RAM_INIT_F),
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
+	.DISP_KBD_INIT_F(DISP_KBD_INIT_F)
 )
 mk14_soc_inst (
 	.rst_n,

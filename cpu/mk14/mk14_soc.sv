@@ -8,7 +8,10 @@
 module mk14_soc #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
 	parameter DISPLAY_TIMEOUT_CYCLES = 5,
-	parameter INIT_F = ""
+	parameter ROM_INIT_F = "",
+	parameter STD_RAM_INIT_F = "",
+	parameter EXT_RAM_INIT_F = "",
+	parameter DISP_KBD_INIT_F = ""
 )
 (
 	input wire logic rst_n,
@@ -38,21 +41,22 @@ logic display_idle;
 localparam SEG7_COUNT = 8;
 localparam SEG7_BASE_ADDR = 'hD00;
 
-bram_sqp #(.WIDTH(8), .DEPTH(4 * 1024), .INIT_F(INIT_F))
-memory_inst (
+mmu #(
+	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
+	.ROM_INIT_F(ROM_INIT_F),
+	.STD_RAM_INIT_F(STD_RAM_INIT_F),
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
+	.DISP_KBD_INIT_F(DISP_KBD_INIT_F)
+)
+mmu_inst (
 	.clk(clk),
+	.core_addr,
+	.core_write_en,
+	.core_write_data(data_in),
+	.core_read_data(data_out),
 
-	.we0(core_write_en),
-	.addr_write0(core_addr),
-	.addr_read0(core_addr),
-	.data_in0(data_in),
-	.data_out0(data_out),
-
-	.we1(0),
-	.addr_write1(display_addr),
-	.addr_read1(display_addr),
-	.data_in1(),
-	.data_out1(display_data_out)
+	.display_addr,
+	.display_data_out
 );
 
 tm1638_led_key_memmap
