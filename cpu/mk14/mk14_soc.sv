@@ -38,6 +38,11 @@ logic [15:0] display_addr;
 logic [7:0] display_data_out;
 logic display_idle;
 
+logic kbd_write_en;
+logic [15:0] kbd_addr;
+logic [2:0] kbd_bit;
+logic kbd_pressed;
+
 localparam SEG7_COUNT = 8;
 localparam SEG7_BASE_ADDR = 'hD00;
 
@@ -56,7 +61,12 @@ mmu_inst (
 	.core_read_data(data_out),
 
 	.display_addr,
-	.display_data_out
+	.display_data_out,
+
+	.kbd_write_en,
+	.kbd_addr,
+	.kbd_bit,
+	.kbd_pressed
 );
 
 tm1638_led_key_memmap

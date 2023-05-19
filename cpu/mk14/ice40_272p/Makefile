@@ -13,7 +13,6 @@ ICELINK_DIR = /tmp/iCELink
 # included modules
 PATH_LIB = ../../../lib
 ADD_SRC += ${PATH_LIB}/memory/bram_sdp.sv
-ADD_SRC += ${PATH_LIB}/memory/bram_sqp.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key_memmap.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638_led_key.sv
 ADD_SRC += ${PATH_LIB}/tm1638/tm1638.sv

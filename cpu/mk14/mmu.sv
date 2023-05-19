@@ -18,7 +18,12 @@ module mmu #(
 	output logic [7:0] core_read_data,
 
 	input wire [15:0] display_addr,
-	output logic [7:0] display_data_out
+	output logic [7:0] display_data_out,
+
+	input wire kbd_write_en,
+	input wire [15:0] kbd_addr,
+	input logic [2:0] kbd_bit,
+	input wire kbd_pressed
 );
 
 logic [15:0] write_data;
@@ -40,12 +45,12 @@ assign access_disp_kbd = (page == 'h900 || page == 'hd00);
 logic [7:0] std_ram_read_data;
 logic [7:0] ext_ram_read_data;
 logic [7:0] rom_read_data;
-logic [7:0] keyb_read_data;
+logic [7:0] kbd_read_data;
 
 assign core_read_data = access_std_ram  ? std_ram_read_data : (
 						access_ext_ram  ? ext_ram_read_data : (
 						access_rom      ?     rom_read_data : (
-						access_disp_kbd ?    keyb_read_data : 'h00
+						access_disp_kbd ?    kbd_read_data : 'h00
 )));
 
 bram_sdp #(.WIDTH(8), .DEPTH(256), .INIT_F(STD_RAM_INIT_F))
@@ -84,21 +89,26 @@ rom (
 	.data_out(rom_read_data)
 );
 
-bram_sqp #(.WIDTH(8), .DEPTH(16), .INIT_F(DISP_KBD_INIT_F))
-disp_kbd (
-	.clk(clk),
+logic [8 * 8 - 1:0] disp = 0;
+logic [8 * 8 - 1:0] kbd = {8{8'hff}};
 
-	.we0(core_write_en && access_disp_kbd && (core_addr & 'h0f) <= 'h07),
-	.addr_write0(core_addr & 'h07),
-	.addr_read0((core_addr & 'h07) + 8),
-	.data_in0(core_write_data),
-	.data_out0(keyb_read_data),
+assign display_data_out = disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
 
-	.we1(0),
-	.addr_write1(),
-	.addr_read1(display_addr & 'h07),
-	.data_in1(),
-	.data_out1(display_data_out)
-);
+always @(posedge clk) begin
+	if (access_disp_kbd) begin
+		if (core_write_en)
+			if ((core_addr & 'h0f) <= 'h07)
+				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
+		else
+			if ((core_addr & 'h0f) <= 'h07)
+				kbd_read_data <= kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8];
+	end
+	if (kbd_write_en) begin
+		if (kbd_pressed)
+			kbd[8 * (kbd_addr + 1) - 1 -: 8] <= kbd[8 * (kbd_addr + 1) - 1 -: 8] & ((1 << kbd_bit) ^ 8'hff);
+		else
+			kbd[8 * (kbd_addr + 1) - 1 -: 8] <= kbd[8 * (kbd_addr + 1) - 1 -: 8] | (1 << kbd_bit);
+	end
+end
 
 endmodule
