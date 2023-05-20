@@ -352,7 +352,7 @@ KYBD:	LDI		0			; zero character
 		XPAH	1
 OFF:	LDI		-1			; set row/digit address
 		ST		ROW(2)		; save row counter
-		LDI		10			; set row counter
+		LDI		8			; set row counter
 		ST		CNT(2)
 		LDI		0
 		ST		PUSHED(2)	; zero keyboard input
