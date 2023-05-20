@@ -140,7 +140,20 @@ always @(posedge clk) begin
 				AC <= AC ^ E;
 			end
 			`i_DAE: begin
-				state <= s_UNKNOWN;
+				if (AC[3:0] + E[3:0] + CY_L > 9) begin
+					AC[3:0] <= AC[3:0] + E[3:0] + CY_L + 6;
+					if (AC[7:4] + E[7:4] + 1 > 9)
+						{CY_L, AC[7:4]} <= AC[7:4] + E[7:4] + 6 + 1;
+					else
+						{CY_L, AC[7:4]} <= AC[7:4] + E[7:4] + 1;
+				end
+				else begin
+					AC[3:0] <= AC[3:0] + E[3:0] + CY_L;
+					if (AC[7:4] + E[7:4] > 9)
+						{CY_L, AC[7:4]} <= AC[7:4] + E[7:4] + 6;
+					else
+						{CY_L, AC[7:4]} <= AC[7:4] + E[7:4];
+				end
 			end
 			`i_ADE: begin
 				{OV, CY_L, AC} <= AC + E + CY_L;
@@ -315,7 +328,20 @@ always @(posedge clk) begin
 				AC <= AC ^ mem_read_data;
 			end
 			`i_DAI: begin
-				state <= s_UNKNOWN;
+				if (AC[3:0] + mem_read_data[3:0] + CY_L > 9) begin
+					AC[3:0] <= AC[3:0] + mem_read_data[3:0] + CY_L + 6;
+					if (AC[7:4] + mem_read_data[7:4] + 1 > 9)
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4] + 6 + 1;
+					else
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4] + 1;
+				end
+				else begin
+					AC[3:0] <= AC[3:0] + mem_read_data[3:0] + CY_L;
+					if (AC[7:4] + mem_read_data[7:4] > 9)
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4] + 6;
+					else
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4];
+				end
 			end
 			`i_ADI: begin
 				{OV, CY_L, AC} <= AC + mem_read_data + CY_L;
@@ -411,7 +437,20 @@ always @(posedge clk) begin
 				AC <= AC ^ mem_read_data;
 			end
 			`i_DAD: begin
-				state <= s_UNKNOWN;
+				if (AC[3:0] + mem_read_data[3:0] + CY_L > 9) begin
+					AC[3:0] <= AC[3:0] + mem_read_data[3:0] + CY_L + 6;
+					if (AC[7:4] + mem_read_data[7:4] + 1 > 9)
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4] + 6 + 1;
+					else
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4] + 1;
+				end
+				else begin
+					AC[3:0] <= AC[3:0] + mem_read_data[3:0] + CY_L;
+					if (AC[7:4] + mem_read_data[7:4] > 9)
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4] + 6;
+					else
+						{CY_L, AC[7:4]} <= AC[7:4] + mem_read_data[7:4];
+				end
 			end
 			`i_ADD: begin
 				{OV, CY_L, AC} <= AC + mem_read_data + CY_L;
