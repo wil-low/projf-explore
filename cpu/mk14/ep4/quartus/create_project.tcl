@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Fri May 19 21:49:02 2023
+# Generated on: Sat May 20 13:32:57 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -75,6 +75,7 @@ if {$make_assignments} {
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/infrared/infrared_rx.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_sdp.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../mmu.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/bram_sqp.sv
@@ -89,7 +90,7 @@ if {$make_assignments} {
 	set_location_assignment PIN_F9 -to LED2
 	set_location_assignment PIN_E10 -to LED1
 	set_location_assignment PIN_C9 -to LED3
-	set_location_assignment PIN_D9 -to LED4
+	set_location_assignment PIN_P2 -to LED4
 	set_location_assignment PIN_E1 -to CLK
 	set_location_assignment PIN_N13 -to rst_n
 	set_location_assignment PIN_A10 -to LED[0]
@@ -100,14 +101,15 @@ if {$make_assignments} {
 	set_location_assignment PIN_E7 -to LED[5]
 	set_location_assignment PIN_C8 -to LED[6]
 	set_location_assignment PIN_E8 -to LED[7]
-	set_location_assignment PIN_B1 -to LK_CLK
-	set_location_assignment PIN_B4 -to LK_DIO
-	set_location_assignment PIN_B3 -to LK_STB
+	set_location_assignment PIN_R1 -to LK_CLK
+	set_location_assignment PIN_K9 -to LK_DIO
+	set_location_assignment PIN_P1 -to LK_STB
 	set_location_assignment PIN_B5 -to PROBE
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_CLK
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_DIO
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_STB
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to PROBE
+	set_location_assignment PIN_N2 -to IR
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments

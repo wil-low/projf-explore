@@ -6,20 +6,20 @@
 
 module infrared_rx
 #(
-	parameter CLOCK_FREQ_Mhz = 12,
+	parameter CLOCK_FREQ_MHZ = 12,
 	parameter RX_RATE = 4000
 )
 (
-	input i_Clock,
-	input i_Data,
+	input wire i_Clock,
+	input wire i_Data,
 	//
-	output reg [4 * 8 - 1:0] o_Data,
-	output o_Idle,
-	output reg o_DataReady,
-	output [7:0] o_Trace
+	output logic [4 * 8 - 1:0] o_Data,
+	output logic o_Idle,
+	output logic o_DataReady,
+	output logic [7:0] o_Trace
 );
 /* verilator lint_off WIDTH */
-localparam COUNTER_LIMIT = CLOCK_FREQ_Mhz * 1_000_000 / RX_RATE;
+localparam COUNTER_LIMIT = CLOCK_FREQ_MHZ * 1_000_000 / RX_RATE;
 
 logic [$clog2(COUNTER_LIMIT):0] counter = COUNTER_LIMIT;
 logic [5:0] bit_counter;
