@@ -7,10 +7,11 @@ localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
 
 localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../programs/test.mem";
-//localparam ROM_INIT_F		= "../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../programs/clock.mem";
+localparam STD_RAM_INIT_F		= "../programs/segtris_p1.mem";
+//localparam STD_RAM_INIT_F	= "../programs/clock.mem";
 //localparam STD_RAM_INIT_F	= "../programs/test.mem";
-localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
+//localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
+localparam EXT_RAM_INIT_F	= "../programs/segtris_p2.mem";
 
 logic rst_n;
 logic clk;
@@ -63,46 +64,46 @@ initial begin
 	#1920;  // F
 	btn_dn = 1;
 	btn_up = 0;
-	btn_addr = 7;
+	btn_addr = 1;
 	btn_bit = 4;
-	#1250;
+	#2250;
 	btn_dn = 0;
 	btn_up = 1;
-	#50 $display("Press F");
+	#50 $display("Press B");
 
-	#7000;  // 2
-	btn_dn = 1;
-	btn_up = 0;
-	btn_addr = 2;
-	btn_bit = 7;
-	#1250;
-	btn_dn = 0;
-	btn_up = 1;
-	#50 $display("Press 2");
-
-	#7000;  // 0
+	#10000;  // 2
 	btn_dn = 1;
 	btn_up = 0;
 	btn_addr = 0;
 	btn_bit = 7;
-	#1250;
+	#2250;
 	btn_dn = 0;
 	btn_up = 1;
 	#50 $display("Press 0");
 
-	#7000;  // GO
+	#10000;  // 0
+	btn_dn = 1;
+	btn_up = 0;
+	btn_addr = 0;
+	btn_bit = 7;
+	#2250;
+	btn_dn = 0;
+	btn_up = 1;
+	#50 $display("Press 0");
+
+	#10000;  // GO
 	btn_dn = 1;
 	btn_up = 0;
 	btn_addr = 2;
 	btn_bit = 5;
-	#1250;
+	#2250;
 	btn_dn = 0;
 	btn_up = 1;
 	#50 $display("Press GO");
 
 	//$display("rst_n %b", rst_n);
 
-	#20000 $finish;
+	#800000 $finish;
 end
 
 /*

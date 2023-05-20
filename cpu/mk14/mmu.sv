@@ -99,7 +99,7 @@ always @(posedge clk) begin
 		if (core_write_en) begin
 			if ((core_addr & 'h0f) <= 'h07) begin
 				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
-				$display("Disp: %h", disp);
+				//$display("Disp: %h", disp);
 			end
 		end
 		else begin

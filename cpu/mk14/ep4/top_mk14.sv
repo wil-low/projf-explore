@@ -26,9 +26,12 @@ assign LED = trace;
 localparam CLOCK_FREQ_MHZ = 50;
 
 localparam ROM_INIT_F		= "../../programs/SCIOS_Version_2.mem";
-localparam STD_RAM_INIT_F	= "../../programs/display.mem";
+//localparam ROM_INIT_F		= "../../programs/test.mem";
+localparam STD_RAM_INIT_F	= "../../programs/segtris_p1.mem";
+//localparam STD_RAM_INIT_F	= "../../programs/clock.mem";
 //localparam STD_RAM_INIT_F	= "../../programs/test.mem";
-localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
+//localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
+localparam EXT_RAM_INIT_F	= "../../programs/segtris_p2.mem";
 
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),

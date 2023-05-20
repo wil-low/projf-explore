@@ -19,24 +19,28 @@
 ;
 ; *****************************************************************************
 
-MoreRAM         .equ    0B00h           ; 0A00 = I/O Chip,0B00 = Extend RAM
+		.CR scmp
+		.LF segtris.lst
+
+MoreRAM         .eq    0B00h           ; 0A00 = I/O Chip,0B00 = Extend RAM
          
-SegArray        .equ    0               ; SegArray contains the current
+SegArray        .eq    0               ; SegArray contains the current
                                         ; game status, from F00 (right) to
                                         ; F07/8 left. Can't really be moved.
 
-Speed           .equ    09h
-DelayCount      .equ    0Ah             ; Number of display loops to next shift
-Posn            .equ    0Bh             ; Position of piece in display
-Shape           .equ    0Ch             ; Shape of piece
-Collapse        .equ    0Dh             ; Set to '1' if collapse required ?
-Pattern         .equ    0Eh             ; Pattern pointer for random numbers
-Kb1             .equ    0Fh             ; Left and right keys
-Kb3             .equ    10h
-Temp            .equ    11h             ; workspace
-Score           .equ    12h             ; Score
+Speed           .eq    09h
+DelayCount      .eq    0Ah             ; Number of display loops to next shift
+Posn            .eq    0Bh             ; Position of piece in display
+Shape           .eq    0Ch             ; Shape of piece
+Collapse        .eq    0Dh             ; Set to '1' if collapse required ?
+Pattern         .eq    0Eh             ; Pattern pointer for random numbers
+Kb1             .eq    0Fh             ; Left and right keys
+Kb3             .eq    10h
+Temp            .eq    11h             ; workspace
+Score           .eq    12h             ; Score
 
-        .org    0F14h
+        .or    0F00h
+        .rf    0F14h-$
 
 ; *****************************************************************************
 ;
@@ -49,7 +53,7 @@ Score           .equ    12h             ; Score
 
 StartSpeed:     .db     0F0h
 
-STMask  .equ    15                      ; shape table mask
+STMask  .eq    15                      ; shape table mask
 
 ShapeTable:                             ; shapes
         .db     01h,02h,04h,08h,10h,20h ; single bar (6 off)
@@ -89,11 +93,7 @@ _Disp1: ld      80h(1)                  ; refresh display
         lde                             ; go back if >= 0
         jp      _Disp1                  ; to draw the whole display
 
-        ldi     (Keyboard-1) & 255      ; call the keyboard scanning routine
-        xpal    3
-        ldi     (Keyboard-1) / 256
-        xpah    3
-        xppc    3
+        js      3,Keyboard      		; call the keyboard scanning routine
 
         dld     DelayCount(1)           ; have we done a full screen
         jnz     Display2                ; go back around again
@@ -158,11 +158,7 @@ _TryNext:
 
         ld      Collapse(1)             ; do we need to collapse it ?
         jz      NewPiece
-        ldi     (CollapseCode-1) & 255  ; Call the collapse routine
-        xpal    3
-        ldi     (CollapseCode-1) / 256
-        xpah    3
-        xppc    3
+        js      3,CollapseCode	        ; Call the collapse routine
         jmp     NewPiece
 ; *****************************************************************************
 ;
@@ -208,13 +204,10 @@ GameOver:
 TheScore:
         .db     0FFh                    ; score slot
 
-        ldi     (Start-1) & 255         ; if then press MEM GO the program
-        xpal    3                       ; will be re-run
-        ldi     (Start-1) / 256
-        xpah    3
-        xppc    3
+        js      3,Start			        ; if then press MEM GO the program
+        				                ; will be re-run
 
-        .org    MoreRAM                 ; Rest of Code in extended memory
+        .or    MoreRAM                 ; Rest of Code in extended memory
 
 ; *****************************************************************************
 ;
@@ -227,7 +220,7 @@ Start:  ldi     0Fh                     ; make P1 = 0F00h
         ldi     0
         xpal    1
 
-        ld      (StartSpeed & 255)(1)   ; set the speed
+        ld      StartSpeed(1)   ; set the speed
         st      Speed(1)
         ldi     0FFh                    ; this is the 'end' marker.
         st      SegArray+8(1)
@@ -250,11 +243,7 @@ Start:  ldi     0Fh                     ; make P1 = 0F00h
         ldi     0                       ; its here.
         st      Posn(1)
 
-        ldi     (Display-1) & 255       ; jump into the main game code
-        xpal    3
-        ldi     (Display-1) / 256
-        xpah    3
-        xppc    3
+        js      3,Display		        ; jump into the main game code
 
 ; *****************************************************************************
 ;
@@ -319,7 +308,8 @@ _RotateLeft:
         ani     40h                     ; does bit 6 shift back ?
         jz      _NoSet1
         ldi     1
-_NoSet1:ore
+_NoSet1:
+		ore
         jmp     ReplaceShape
 ;
 ;       Shape Right
@@ -333,7 +323,8 @@ _RotateRight:
         ani     1
         jz      _NoSet2
         ldi     20h
-_NoSet2:ore
+_NoSet2:
+		ore
         jmp     ReplaceShape
 ;
 ;       Update Shape

@@ -34,14 +34,26 @@ CLOCK:
 ; This basic loop has been cycle trimmed for 12.5msec on 4MHz SC/MP
 ; This makes for a dim if precise display!
 ;
-NEW:	LDI	/DISPD	; 2 points just before display
+NEW:
+	LDI	/DISP	; 2 points just before display
+	XPAH	2			; Three invisible digits are
+	LDI	#DISP	;  written to display
+	XPAL	2
+
+	LDI		0
+	ST	2(2)
+	ST	5(2)
+
+	LDI	/DISPD	; 2 points just before display
 	XPAH	2			; Three invisible digits are
 	LDI	#DISPD	;  written to display
 	XPAL	2
+
 	LDI	/TIM4
 	XPAH	1
 	LDI	#TIM4
 	XPAL	1
+
 	SCL				; Ensure first digit increments
 	LDI	5			; Display field loop counter
 	ST	ROW
@@ -88,7 +100,7 @@ ALARM:	LDI	$07
 	NOP
 CONTIN:	CAS				; Raise F0, F1 and F2 if alarm
 	LDI	37			;  time
-	DLY	19
+	DLY	23
 	JMP	NEW
 
 	.END
