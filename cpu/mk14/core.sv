@@ -17,7 +17,8 @@ module core #(
 	input wire logic [7:0] mem_read_data,
 	output logic mem_write_en,
 	output logic [7:0] mem_write_data,
-	output logic [7:0] trace
+	output logic [7:0] trace,
+	output logic halt_pulse
 );
 
 `ifdef SIMULATION
@@ -64,10 +65,11 @@ enum {
 	s_IDLE, s_FETCH, s_MEM_WAIT, s_SET_OPCODE, s_DECODE, s_EXEC_IMM,
 	s_LOAD_INC_DEC, s_EXEC_INC_DEC, s_STORE_INC_DEC,
 	s_EXEC_JUMP, s_CALC_DELAY, s_EXEC_DELAY,
-	s_LOAD_FROM_EA, s_STORE_TO_EA, s_EXEC_MEM, s_HALT, s_UNKNOWN
+	s_LOAD_FROM_EA, s_STORE_TO_EA, s_EXEC_MEM, s_UNKNOWN
 } state, next_state;
 
 always @(posedge clk) begin
+	halt_pulse <= 0;
 
 	if (!rst_n) begin
 		{CY_L, OV, SB, SA, IE, F2, F1, F0} <= 0;
@@ -123,6 +125,8 @@ always @(posedge clk) begin
 				AC <= E;
 			end
 			`i_XAE: begin
+				if (PC >= 'h1b0 && PC <= 'h1bf)
+					$display("PC=%h:                                       XAE AC %h, E %h", PC, AC, E);
 				AC <= E;
 				E <= AC;
 			end
@@ -169,7 +173,8 @@ always @(posedge clk) begin
 			end
 
 			`i_HALT: begin
-				state <= s_HALT;
+				halt_pulse <= 1;
+				$display("HALT at %h, AC %h, E %h, P1 %h, P2 %h, P3 %h\n", PC, AC, E, P1, P2, P3);
 			end
 			`i_CCL: begin
 				CY_L <= 0;
@@ -244,6 +249,7 @@ always @(posedge clk) begin
 					P2[7:0] <= AC;
 				end
 				3: begin
+					$display("PC=%h: XPAL %h => P3, was %h, now %h", PC, AC, P3, {P3[15:8], AC});
 					AC <= P3[7:0];
 					P3[7:0] <= AC;
 				end
@@ -261,6 +267,7 @@ always @(posedge clk) begin
 					P2[15:8] <= AC;
 				end
 				3: begin
+					$display("PC=%h: XPAH %h => P3, was %h, now %h", PC, AC, P3, {P3[15:8], AC});
 					AC <= P3[15:8];
 					P3[15:8] <= AC;
 				end
@@ -278,6 +285,7 @@ always @(posedge clk) begin
 					P2 <= PC;
 				end
 				3: begin
+					$display("PC=%h: XPPC P3 %h", PC, P3);
 					PC <= P3;
 					P3 <= PC;
 				end
@@ -444,7 +452,7 @@ always @(posedge clk) begin
 		
 		s_CALC_DELAY: begin
 			delay_cycles <= mem_read_data * 2 * ONE_MSEC;
-			$display("PC %h: %t DLY cycles %d, AC %d, E %d\n", PC, $time, mem_read_data * 2, AC, E);
+			//$display("PC %h: %t DLY cycles %d, AC %d, E %d\n", PC, $time, mem_read_data * 2, AC, E);
 			state <= s_EXEC_DELAY;
 		end
 
@@ -463,15 +471,8 @@ always @(posedge clk) begin
 			end
 		end
 
-		s_HALT: begin
-			$display("HALT at %h, AC %h, E %h\n", PC, AC, E);
-			`ifdef SIMULATION
-				$finish;
-			`endif
-		end
-
 		s_UNKNOWN: begin
-			$display("PC %h: Unknown opcode %h - halt.\n", PC, opcode);
+			$display("PC %h: Unknown opcode %h - halt. AC %h, E %h, P1 %h, P2 %h, P3 %h\n", PC, opcode, AC, E, P1, P2, P3);
 			`ifdef SIMULATION
 				$finish;
 			`endif

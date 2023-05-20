@@ -19,7 +19,7 @@ my $rf_end = '';
 
 while (my $line = <INF>) {
 	$line =~ s/[\n\r]//sg;
-	if ($line =~ /^[0-9A-F]{4}\-[0-9A-F]/) {
+	if ($line =~ /(^[0-9A-F]{4}\-[0-9A-F]|\s\.[oO][rR]\s)/) {
 		$code_started = 1;
 	}
 	if ($code_started) {

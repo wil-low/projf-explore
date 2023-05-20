@@ -22,13 +22,21 @@ module mk14_soc #(
 	output logic o_ledkey_stb,
 	inout  wire  io_ledkey_dio,
 
-	input wire btn1
+	input wire ir
 `ifdef SIMULATION
 	,
 	input wire btn_dn,
-	input wire btn_up
+	input wire btn_up,
+	input wire [2:0] btn_addr,
+	input wire [2:0] btn_bit
 `endif
 );
+
+`ifdef SIMULATION
+localparam BTN_RELEASE_TIMEOUT_CYCLES = 5;
+`else
+localparam BTN_RELEASE_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 50;
+`endif
 
 logic [$clog2(DISPLAY_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter;
 
@@ -45,24 +53,131 @@ logic [7:0] display_data_out;
 logic display_idle;
 
 logic kbd_write_en;
-logic [15:0] kbd_addr;
+logic [2:0] kbd_addr;
 logic [2:0] kbd_bit;
-logic kbd_pressed;
-
-localparam SEG7_COUNT = 8;
-localparam SEG7_BASE_ADDR = 'hD00;
+logic kbd_pressed = 0;
+logic [$clog2(BTN_RELEASE_TIMEOUT_CYCLES) - 1: 0] btn_up_counter;
 
 `ifndef SIMULATION
+logic ir_idle;
+logic ir_data_ready;
+logic ir_prev_data_ready = 1;
+logic [4 * 8 - 1:0] ir_data;
+logic [7:0] ir_error_code;
 
-logic btn_up, btn_dn;
-debounce debounce_inst (
-	.clk(clk),
-	.in(btn1),
-	.out(),
-	.ondn(btn_dn),
-	.onup(btn_up)
+infrared_rx #(
+	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ)
+)
+ir_inst (
+	clk, ir, ir_data, ir_idle, ir_data_ready, ir_error_code
 );
 
+always @(posedge clk) begin
+	kbd_write_en <= 0;
+	ir_prev_data_ready <= ir_data_ready;
+	//if (ir_data_ready)
+	//	trace <= ir_data;
+	if (kbd_pressed) begin
+		//trace <= 1;
+		btn_up_counter <= btn_up_counter - 1;
+		if (btn_up_counter == 0) begin
+			kbd_write_en <= 1;
+			kbd_pressed <= 0;
+		end
+	end
+	else begin
+		if ((ir_data_ready == 1) && (ir_prev_data_ready == 0)) begin
+			//trace <= ~ir_data[15:8];
+			kbd_write_en <= 1;
+			kbd_pressed <= 1;
+			btn_up_counter <= BTN_RELEASE_TIMEOUT_CYCLES;
+			case (ir_data[15:8])
+			8'b1011_1010: begin  // OK => MEM
+				kbd_addr <= 3;
+				kbd_bit <= 5;
+			end
+			8'b0111_0000: begin  // Audio => TERM
+				kbd_addr <= 7;
+				kbd_bit <= 5;
+			end
+			8'b0011_0010: begin  // Menu => GO
+				kbd_addr <= 2;
+				kbd_bit <= 5;
+			end
+			8'b0000_0010: begin  // Exit => ABORT
+				kbd_addr <= 4;
+				kbd_bit <= 5;
+			end
+			8'b0101_1000: begin  // 0
+				kbd_addr <= 0;
+				kbd_bit <= 7;
+			end
+			8'b1100_1000: begin  // 1
+				kbd_addr <= 1;
+				kbd_bit <= 7;
+			end
+			8'b1101_1000: begin  // 2
+				kbd_addr <= 2;
+				kbd_bit <= 7;
+			end
+			8'b1110_0000: begin  // 3
+				kbd_addr <= 3;
+				kbd_bit <= 7;
+			end
+			8'b1110_1000: begin  // 4
+				kbd_addr <= 4;
+				kbd_bit <= 7;
+			end
+			8'b1111_1000: begin  // 5
+				kbd_addr <= 5;
+				kbd_bit <= 7;
+			end
+			8'b1100_0000: begin  // 6
+				kbd_addr <= 6;
+				kbd_bit <= 7;
+			end
+			8'b0110_1000: begin  // 7
+				kbd_addr <= 7;
+				kbd_bit <= 7;
+			end
+			8'b0111_1000: begin  // 8
+				kbd_addr <= 0;
+				kbd_bit <= 6;
+			end
+			8'b0100_0000: begin  // 9
+				kbd_addr <= 1;
+				kbd_bit <= 6;
+			end
+			8'b0001_0010: begin  // A
+				kbd_addr <= 0;
+				kbd_bit <= 4;
+			end
+			8'b0000_1010: begin  // B
+				kbd_addr <= 1;
+				kbd_bit <= 4;
+			end
+			8'b0010_1010: begin  // C
+				kbd_addr <= 2;
+				kbd_bit <= 4;
+			end
+			8'b0001_1010: begin  // D
+				kbd_addr <= 3;
+				kbd_bit <= 4;
+			end
+			8'b0010_0010: begin  // E
+				kbd_addr <= 6;
+				kbd_bit <= 4;
+			end
+			8'b0011_1010: begin  // F
+				kbd_addr <= 7;
+				kbd_bit <= 4;
+			end
+			default: 
+				kbd_write_en <= 0;
+			endcase
+		end
+	end
+end
 `endif
 
 mmu #(
@@ -80,12 +195,21 @@ mmu_inst (
 
 	.display_addr,
 	.display_data_out,
-
+`ifdef SIMULATION
 	.kbd_write_en(btn_dn ^ btn_up),
-	.kbd_addr(3),
-	.kbd_bit(5),
+	.kbd_addr(btn_addr),
+	.kbd_bit(btn_bit),
 	.kbd_pressed(btn_dn)
+`else
+	.kbd_write_en,
+	.kbd_addr,
+	.kbd_bit,
+	.kbd_pressed
+`endif
 );
+
+localparam SEG7_COUNT = 8;
+localparam SEG7_BASE_ADDR = 'hD00;
 
 tm1638_led_key_memmap
 #(
@@ -121,7 +245,7 @@ core #(
 	.mem_read_data(data_out),
 	.mem_write_en(core_write_en),
 	.mem_write_data(data_in),
-	.trace()
+	.trace
 );
 
 typedef enum {s_RESET, s_RUNNING
@@ -131,10 +255,6 @@ STATE state = s_RESET;
 
 always @(posedge clk) begin
 	display_en <= 0;
-	if (btn_dn)
-		trace <= 8'h81;
-	if (btn_up)
-		trace <= 8'h18;
 	if (!rst_n) begin
 		state <= s_RESET;
 	end

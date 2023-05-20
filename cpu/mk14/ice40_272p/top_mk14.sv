@@ -16,14 +16,14 @@ module top_mk14
 	output logic LK_STB,
 	inout  wire  LK_DIO,
 
-	input wire BTN1
+	input wire IR
 );
 
 localparam CLOCK_FREQ_MHZ = 12;
 
 localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../programs/test.mem";
+localparam STD_RAM_INIT_F	= "../programs/clock.mem";
 localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
 
 //// Reset emulation for ice40
@@ -32,7 +32,9 @@ logic rst_n = &reset_counter;
 
 logic [7:0] trace;
 
-assign {LED1, LED2, LED3, LED4} = ~0;
+assign {LED1, LED2, LED3} = ~0;
+
+assign LED4 = ~IR;
 
 always @(posedge CLK) begin
 	if (!rst_n)
@@ -56,7 +58,7 @@ mk14_soc_inst (
 	.o_ledkey_clk(LK_CLK),
 	.o_ledkey_stb(LK_STB),
 	.io_ledkey_dio(LK_DIO),
-	.btn1(~BTN1)
+	.ir(IR)
 );
 
 endmodule

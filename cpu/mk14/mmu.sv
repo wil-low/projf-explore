@@ -20,7 +20,7 @@ module mmu #(
 	output logic [7:0] display_data_out,
 
 	input wire kbd_write_en,
-	input wire [15:0] kbd_addr,
+	input wire [2:0] kbd_addr,
 	input logic [2:0] kbd_bit,
 	input wire kbd_pressed
 );
@@ -97,13 +97,15 @@ always @(posedge clk) begin
 	if (access_disp_kbd) begin
 		//$display("access_disp_kbd: we %b, addr %h, idx = %d, kbd %h", core_write_en, core_addr, (core_addr & 'h0f), kbd);
 		if (core_write_en) begin
-			if ((core_addr & 'h0f) <= 'h07)
+			if ((core_addr & 'h0f) <= 'h07) begin
 				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
+				$display("Disp: %h", disp);
+			end
 		end
 		else begin
-			//$display("idx = %d, kbd %h", (core_addr & 'h0f), kbd);
+			if (kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] != 8'hff)
+				$display("kbd_out %h", kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8]);
 			if ((core_addr & 'h0f) <= 'h07) begin
-				//$display("idx = %d", (core_addr & 'h0f) + 1);
 				kbd_read_data <= kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8];
 			end
 		end
