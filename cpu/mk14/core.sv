@@ -27,6 +27,8 @@ localparam ONE_MSEC = 1;
 localparam ONE_MSEC = CLOCK_FREQ_MHZ * 1000;
 `endif
 
+localparam DELAY_MULTIPLIER = CLOCK_FREQ_MHZ;
+
 //============ Registers ============
 logic [7:0] AC = 0;		// Accumulator
 logic [7:0] E= 0;		// Extension Register
@@ -490,24 +492,17 @@ always @(posedge clk) begin
 		end
 		
 		s_CALC_DELAY: begin
-			delay_cycles <= mem_read_data * 2 * ONE_MSEC;
+			delay_cycles <= (13 + AC * 2 + mem_read_data * 2 + mem_read_data * 512) * DELAY_MULTIPLIER;
+			AC <= 8'hff;
 			//$display("PC %h: %t DLY cycles %d, AC %d, E %d\n", PC, $time, mem_read_data * 2, AC, E);
 			state <= s_EXEC_DELAY;
 		end
 
 		s_EXEC_DELAY: begin
-			if (AC == 8'hff) begin
+			if (delay_cycles == 0)
 				state <= s_FETCH;
-			end
-			else begin
-				if (delay_cycles == 0) begin
-					AC <= AC - 1;
-					//$display("PC %h: s_EXEC_DELAY AC %d, %d", PC, AC, mem_read_data * 2);
-					delay_cycles <= mem_read_data * 2 * ONE_MSEC;
-				end
-				else
-					delay_cycles <= delay_cycles - 1;
-			end
+			else
+				delay_cycles <= delay_cycles - 1;
 		end
 
 		s_UNKNOWN: begin
