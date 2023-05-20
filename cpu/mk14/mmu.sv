@@ -7,8 +7,7 @@ module mmu #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
-	parameter EXT_RAM_INIT_F = "",
-	parameter DISP_KBD_INIT_F = ""
+	parameter EXT_RAM_INIT_F = ""
 )
 (
 	input wire clk,
@@ -96,14 +95,21 @@ assign display_data_out = disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
 
 always @(posedge clk) begin
 	if (access_disp_kbd) begin
-		if (core_write_en)
+		//$display("access_disp_kbd: we %b, addr %h, idx = %d, kbd %h", core_write_en, core_addr, (core_addr & 'h0f), kbd);
+		if (core_write_en) begin
 			if ((core_addr & 'h0f) <= 'h07)
 				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
-		else
-			if ((core_addr & 'h0f) <= 'h07)
+		end
+		else begin
+			//$display("idx = %d, kbd %h", (core_addr & 'h0f), kbd);
+			if ((core_addr & 'h0f) <= 'h07) begin
+				//$display("idx = %d", (core_addr & 'h0f) + 1);
 				kbd_read_data <= kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8];
+			end
+		end
 	end
 	if (kbd_write_en) begin
+		//$display("%t, kbd_write_en, addr %d, bit %d, pressed %b", $time, kbd_addr, kbd_bit, kbd_pressed);
 		if (kbd_pressed)
 			kbd[8 * (kbd_addr + 1) - 1 -: 8] <= kbd[8 * (kbd_addr + 1) - 1 -: 8] & ((1 << kbd_bit) ^ 8'hff);
 		else

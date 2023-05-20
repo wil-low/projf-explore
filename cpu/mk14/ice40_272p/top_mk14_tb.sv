@@ -6,10 +6,9 @@ module top_mk14_tb();
 localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
 
 localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
-//localparam ROM_INIT_F		= "../programs/test.mem";
+//localparam ROM_INIT_F		= "../programs/display.mem";
 localparam STD_RAM_INIT_F	= "../programs/test.mem";
 localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
-localparam DISP_KBD_INIT_F	= "../disp_kbd.mem";
 
 logic rst_n;
 logic clk;
@@ -24,13 +23,15 @@ logic lk_clk;
 logic lk_stb;
 logic lk_dio;
 
+logic btn_dn = 0;
+logic btn_up = 0;
+
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(1),
 	.DISPLAY_TIMEOUT_CYCLES(5),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
-	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
-	.DISP_KBD_INIT_F(DISP_KBD_INIT_F)
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
 )
 mk14_soc_inst (
 	.rst_n,
@@ -38,7 +39,9 @@ mk14_soc_inst (
 	.trace,
 	.o_ledkey_clk(lk_clk),
 	.o_ledkey_stb(lk_stb),
-	.io_ledkey_dio(lk_dio)
+	.io_ledkey_dio(lk_dio),
+	.btn_dn,
+	.btn_up
 );
 
 initial begin
@@ -50,10 +53,21 @@ initial begin
 
 	#2 rst_n = 1;
 
-	#2;
+	#1920;
+	btn_dn = 1;
+	btn_up = 0;
+
+	#250;
+	btn_dn = 0;
+	btn_up = 1;
+
+	#100;
+	btn_dn = 0;
+	btn_up = 0;
+
 	//$display("rst_n %b", rst_n);
 
-	#100000 $finish;
+	#20000 $finish;
 end
 
 logic _unused_ok = &{1'b1, 1'b0};

@@ -327,13 +327,13 @@ always @(posedge clk) begin
 		end
 
 		s_EXEC_INC_DEC: begin
-			$display("PC %h: mem_read_data %h, AC: %h, inc=%b", PC, mem_read_data, $signed(mem_read_data) + (opcode[4] == 0 ? 1 : -1), ~opcode[4]);
+			//$display("PC %h: mem_read_data %h, AC: %h, inc=%b", PC, mem_read_data, $signed(mem_read_data) + (opcode[4] == 0 ? 1 : -1), ~opcode[4]);
 			AC <= mem_read_data + (opcode[4] == 0 ? 1 : -1);
 			state <= s_STORE_INC_DEC;
 		end
 
 		s_STORE_INC_DEC: begin
-			$display("PC %h: s_STORE_INC_DEC, AC = %h", PC, AC);
+			//$display("PC %h: s_STORE_INC_DEC, AC = %h", PC, AC);
 			mem_write_data <= AC;
 			mem_write_en <= 1;
 			state <= s_MEM_WAIT;
@@ -364,7 +364,7 @@ always @(posedge clk) begin
 		end
 
 		s_LOAD_FROM_EA: begin
-			$display("PC %h, s_LOAD_FROM_EA: PTR %h, unsigned=%d, signed = %d, opcode %h, EA %h, E %h", PC, $signed(PTR), mem_read_data, $signed(mem_read_data), opcode, $signed(PTR) + (mem_read_data == 'h80 ? E : $signed(mem_read_data)), E);
+			//$display("PC %h, s_LOAD_FROM_EA: PTR %h, unsigned=%d, signed = %d, opcode %h, EA %h, E %h", PC, $signed(PTR), mem_read_data, $signed(mem_read_data), opcode, $signed(PTR) + (mem_read_data == 'h80 ? E : $signed(mem_read_data)), E);
 			if (opcode[2]) begin  // auto-index
 				case (opcode[1:0])
 				1: P1 <= $signed(P1) + $signed(mem_read_data == 'h80 ? E : mem_read_data);
@@ -386,7 +386,7 @@ always @(posedge clk) begin
 		end
 
 		s_EXEC_MEM: begin
-			$display("mem_addr=%h, opcode=%h", mem_addr, opcode);
+			//$display("mem_addr=%h, opcode=%h", mem_addr, opcode);
 			state <= s_FETCH;
 			// == Immediate ==
 			casez (opcode)
@@ -444,7 +444,7 @@ always @(posedge clk) begin
 		
 		s_CALC_DELAY: begin
 			delay_cycles <= mem_read_data * 2 * ONE_MSEC;
-			$display("PC %h: DLY cycles %d, AC %d, E %d\n", PC, mem_read_data * 2, AC, E);
+			$display("PC %h: %t DLY cycles %d, AC %d, E %d\n", PC, $time, mem_read_data * 2, AC, E);
 			state <= s_EXEC_DELAY;
 		end
 

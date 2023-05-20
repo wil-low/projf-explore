@@ -1,3 +1,0 @@
-// Display & keyboard memory file
-00 00 00 00 00 00 00 00  // display
-FF FF FF FF FF FF FF FF  // button map

@@ -23,7 +23,6 @@ localparam CLOCK_FREQ_MHZ = 25;
 localparam ROM_INIT_F		= "../programs/display.mem";
 localparam STD_RAM_INIT_F	= "../programs/test.mem";
 localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
-localparam DISP_KBD_INIT_F	= "../disp_kbd.mem";
 
 //// Reset emulation for ice40
 logic [22:0] reset_counter = 0;
@@ -45,8 +44,7 @@ mk14_soc #(
 	.DISPLAY_TIMEOUT_CYCLES(CLOCK_FREQ_MHZ * 1000 * 100),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
-	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
-	.DISP_KBD_INIT_F(DISP_KBD_INIT_F)
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
 )
 mk14_soc_inst (
 	.rst_n,

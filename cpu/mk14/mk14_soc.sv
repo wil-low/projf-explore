@@ -10,8 +10,7 @@ module mk14_soc #(
 	parameter DISPLAY_TIMEOUT_CYCLES = 5,
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
-	parameter EXT_RAM_INIT_F = "",
-	parameter DISP_KBD_INIT_F = ""
+	parameter EXT_RAM_INIT_F = ""
 )
 (
 	input wire logic rst_n,
@@ -21,7 +20,14 @@ module mk14_soc #(
 
 	output logic o_ledkey_clk,
 	output logic o_ledkey_stb,
-	inout  wire  io_ledkey_dio
+	inout  wire  io_ledkey_dio,
+
+	input wire btn1
+`ifdef SIMULATION
+	,
+	input wire btn_dn,
+	input wire btn_up
+`endif
 );
 
 logic [$clog2(DISPLAY_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter;
@@ -46,12 +52,24 @@ logic kbd_pressed;
 localparam SEG7_COUNT = 8;
 localparam SEG7_BASE_ADDR = 'hD00;
 
+`ifndef SIMULATION
+
+logic btn_up, btn_dn;
+debounce debounce_inst (
+	.clk(clk),
+	.in(btn1),
+	.out(),
+	.ondn(btn_dn),
+	.onup(btn_up)
+);
+
+`endif
+
 mmu #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
-	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
-	.DISP_KBD_INIT_F(DISP_KBD_INIT_F)
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
 )
 mmu_inst (
 	.clk(clk),
@@ -63,10 +81,10 @@ mmu_inst (
 	.display_addr,
 	.display_data_out,
 
-	.kbd_write_en,
-	.kbd_addr,
-	.kbd_bit,
-	.kbd_pressed
+	.kbd_write_en(btn_dn ^ btn_up),
+	.kbd_addr(3),
+	.kbd_bit(5),
+	.kbd_pressed(btn_dn)
 );
 
 tm1638_led_key_memmap
@@ -103,7 +121,7 @@ core #(
 	.mem_read_data(data_out),
 	.mem_write_en(core_write_en),
 	.mem_write_data(data_in),
-	.trace
+	.trace()
 );
 
 typedef enum {s_RESET, s_RUNNING
@@ -113,6 +131,10 @@ STATE state = s_RESET;
 
 always @(posedge clk) begin
 	display_en <= 0;
+	if (btn_dn)
+		trace <= 8'h81;
+	if (btn_up)
+		trace <= 8'h18;
 	if (!rst_n) begin
 		state <= s_RESET;
 	end

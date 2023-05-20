@@ -17,7 +17,7 @@ set_io --warn-no-port LED4 37
 #set_io --warn-no-port IR   36
 #set_io --warn-no-port BTN3 38
 #set_io --warn-no-port BTN2 43
-#set_io --warn-no-port BTN1 45
+set_io --warn-no-port BTN1 45
 
 #> PMOD 3 PMOD_LED
 set_io --warn-no-port LED[0] 32
