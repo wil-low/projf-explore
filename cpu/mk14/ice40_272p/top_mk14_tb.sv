@@ -105,6 +105,31 @@ initial begin
 	#20000 $finish;
 end
 
-logic _unused_ok = &{1'b1, 1'b0};
+/*
+logic carry_in = 1;
+logic [7:0] a = 'h55;
+logic [7:0] b = 'h44;
+
+logic [7:0] sum = 0;
+logic carry_out = 0;
+
+always @(posedge clk) begin
+	if (a[3:0] + b[3:0] + carry_in > 9) begin
+		sum[3:0] <= a[3:0] + b[3:0] + carry_in + 6;
+		if (a[7:4] + b[7:4] + 1 > 9)
+			{carry_out, sum[7:4]} <= a[7:4] + b[7:4] + 6 + 1;
+		else
+			{carry_out, sum[7:4]} <= a[7:4] + b[7:4] + 1;
+	end
+	else begin
+		sum[3:0] <= a[3:0] + b[3:0] + carry_in;
+		if (a[7:4] + b[7:4] > 9)
+			{carry_out, sum[7:4]} <= a[7:4] + b[7:4] + 6;
+		else
+			{carry_out, sum[7:4]} <= a[7:4] + b[7:4];
+	end
+	$display("BCD %h add %h (c %b) = %h (c %b)", a, b, carry_in, sum, carry_out);
+end
+*/
 
 endmodule
