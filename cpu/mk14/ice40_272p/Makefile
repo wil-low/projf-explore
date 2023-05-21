@@ -25,7 +25,7 @@ ADD_SRC += ../mk14_soc.sv
 mk14: mk14.rpt mk14.bin mk14.link
 
 %.json: top_%.sv $(ADD_SRC) generate_mem
-	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -dsp -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
+	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -dsp -noflatten -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
 	nextpnr-ice40 -ql $(basename $@)-nextpnr.log --${FPGA_TYPE} --package ${FPGA_PKG} --json $< --pcf ${PCF} --asc $@
