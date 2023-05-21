@@ -27,9 +27,13 @@ logic [7:0] trace = 0;
 
 assign o_Trace = trace;
 
-enum {S_IDLE, S_DATA, S_ERROR} sm_state;
+typedef enum {
+	s_IDLE, s_DATA, s_ERROR
+} STATE;
 
-assign o_Idle = /*sampling && counter == 0*/ sm_state == S_IDLE;
+STATE sm_state = s_IDLE;
+
+assign o_Idle = /*sampling && counter == 0*/ sm_state == s_IDLE;
 
 logic input_temp = 1;
 logic input_sync = 1;
@@ -54,7 +58,7 @@ always @(posedge i_Clock) begin
 				sampling <= 0;
 		end
 		else begin
-			sm_state <= S_IDLE;
+			sm_state <= s_IDLE;
 			o_DataReady <= 0;
 		end
 	end
@@ -63,21 +67,21 @@ always @(posedge i_Clock) begin
 
 	if (input_sync == 0 && prev_input_sync == 1) begin
 		case (sm_state)
-			S_IDLE: begin
+			s_IDLE: begin
 				if (sampling) begin
 					if (counter_1ms > 50) begin
 						// start of frame
 						bit_counter <= 0;
 						o_Data <= 0;
 						o_DataReady <= 0;
-						sm_state <= S_DATA;
+						sm_state <= s_DATA;
 					end
 				end
 				else
 					sampling <= 1;
 			end
 
-			S_DATA: begin
+			s_DATA: begin
 				bit_counter <= bit_counter + 1;
 				if (counter_1ms > 16)
 					sampling <= 0;
@@ -93,14 +97,14 @@ always @(posedge i_Clock) begin
 				end
 			end
 			
-			S_ERROR: begin
-				sm_state <= S_IDLE;
+			s_ERROR: begin
+				sm_state <= s_IDLE;
 				bit_counter <= ~0;
 				sampling <= 0;
 			end
 
 			default: begin
-				sm_state <= S_IDLE;
+				sm_state <= s_IDLE;
 			end
 
 		endcase
