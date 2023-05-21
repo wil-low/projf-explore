@@ -84,16 +84,16 @@ always @(posedge clk) begin
 	case (ir_state)
 
 	sir_IDLE: begin
-		trace <= {ir_idle, ir_data_ready};
+		//trace <= {ir_idle, ir_data_ready};
 		if (ir_data_ready) begin
-			trace <= trace | 2;
+			//trace <= trace | 2;
 			ir_saved_data <= ir_data[15:8];
 			ir_state <= sir_PRESSED;
 		end
 	end
 
 	sir_PRESSED: begin
-		trace <= trace | 4;
+		//trace <= trace | 4;
 		kbd_write_en <= 1;
 		kbd_pressed <= 1;
 
@@ -187,7 +187,7 @@ always @(posedge clk) begin
 	end
 
 	sir_HOLD: begin
-		trace <= trace | 8;
+		//trace <= trace | 8;
 		btn_up_counter <= btn_up_counter - 1;
 		if (btn_up_counter == 0) begin
 			kbd_write_en <= 1;
@@ -268,7 +268,7 @@ core #(
 	.mem_read_data(data_out),
 	.mem_write_en(core_write_en),
 	.mem_write_data(data_in),
-	.trace()
+	.trace
 );
 
 typedef enum {s_RESET, s_RUNNING
