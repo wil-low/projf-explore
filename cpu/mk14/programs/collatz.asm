@@ -12,6 +12,7 @@
 
 		.CR scmp
 		.LF collatz.lst
+		.TF collatz.hex,INT
 
 NumH		.EQ		 0
 NumL		.EQ		 1
@@ -21,18 +22,18 @@ CurL		.EQ		-1
 TempH		.EQ		-4
 TempL		.EQ		-3
 
-DelayA		.EQ		12
-DelayShort	.EQ		4
-DelayLong	.EQ		40
+DelayA		.EQ		$F0
+DelayShort	.EQ		$80
+DelayLong	.EQ		$F0
 
-Collatz		.EQ		$0F70
+		.OR		$0F00
+		.RF		$0F20-$
 
-start:
-		HALT
-							; P2 = $1000
-		LDI		$10
+Collatz:
+							; P2 = $0F10
+		LDI		$0F
 		XPAH	2
-		LDI		$00
+		LDI		$10
 		XPAL	2
 
 		LDI		$03			; N = 1000 = $03e8
@@ -43,15 +44,6 @@ start:
 		LDI		DelayA
 		ST		Delay(2)
 
-		JS		3,Collatz
-
-		LDI		$81
-		XAE
-		HALT
-
-		.RF		Collatz-$
-
-Collatz:
 		LDI		0
 		ST		CurH(2)
 		LDI		2
@@ -72,6 +64,10 @@ next_cur:
 		ST		TempL(2)
 
 		XAE
+		LD		Delay(2)
+		DLY		DelayLong
+		LD		Delay(2)
+		DLY		DelayLong
 		LD		Delay(2)
 		DLY		DelayLong
 
@@ -112,6 +108,8 @@ check_oddity:
 		ST		TempH(2)
 
 		JMP		display
+next_cur1:
+		JMP		next_cur
 even:
 							; divide by 2
 		CCL
@@ -138,15 +136,21 @@ display:
 		XAE
 		LD		Delay(2)
 		DLY		DelayLong
+		LD		Delay(2)
+		DLY		DelayLong
+		LD		Delay(2)
+		DLY		DelayLong
 							; check Cur == Num
 		SCL
 		LD		CurH(2)
 		CAD		NumH(2)
-		JNZ		next_cur
+		JNZ		next_cur1
 		
 		SCL
 		LD		CurL(2)
 		CAD		NumL(2)
-		JNZ		next_cur
+		JNZ		next_cur1
 
-		RET		3
+		LDI		$81
+		XAE
+		HALT
