@@ -14,6 +14,8 @@ module tm1638_led_key_memmap
 (
 	input wire i_clk,
 	input wire i_en,					// enable
+
+	output logic o_read_en,
 	output logic [15:0] o_read_addr, 
 	input wire [7:0] i_read_data, 
 	
@@ -81,6 +83,8 @@ logic [3:0] data_counter;
 always @(posedge i_clk) begin
 	batch_en <= 0;
 	cmd_en <= 0;
+	o_read_en <= 0;
+
 	case (state)
 
 	s_RESET: if (ledkey_idle) begin
@@ -109,6 +113,7 @@ always @(posedge i_clk) begin
 	end
 
 	s_FETCH: begin
+		o_read_en <= 1;
 		o_read_addr <= SEG7_BASE_ADDR + data_counter;
 		state <= s_WAIT_MEM;
 	end

@@ -16,6 +16,7 @@ module mmu #(
 	input wire [7:0] core_write_data,
 	output logic [7:0] core_read_data,
 
+	input wire display_read_en,
 	input wire [15:0] display_addr,
 	output logic [7:0] display_data_out,
 
@@ -24,6 +25,9 @@ module mmu #(
 	input logic [2:0] kbd_bit,
 	input wire kbd_pressed
 );
+
+// controls after how many reads a Seg7 digit is cleared (auto-dim)
+localparam DIM_BITS = 1;
 
 logic [15:0] write_data;
 logic [15:0] read_data;
@@ -88,17 +92,15 @@ rom (
 	.data_out(rom_read_data)
 );
 
-logic [8 * 8 - 1:0] disp = 0;
+logic [(8 + DIM_BITS) * 8 - 1:0] disp = 0;
 logic [8 * 8 - 1:0] kbd = {8{8'hff}};
-
-assign display_data_out = disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
 
 always @(posedge clk) begin
 	if (access_disp_kbd) begin
 		//$display("access_disp_kbd: we %b, addr %h, idx = %d, kbd %h", core_write_en, core_addr, (core_addr & 'h0f), kbd);
 		if (core_write_en) begin
 			if ((core_addr & 'h0f) <= 'h07) begin
-				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
+				disp[(8 + DIM_BITS) * ((core_addr & 'h0f) + 1) - 1 -: (8 + DIM_BITS)] <= {1'b1, core_write_data};
 				//$display("Disp: %h", disp);
 			end
 		end
@@ -110,12 +112,26 @@ always @(posedge clk) begin
 			end
 		end
 	end
+
 	if (kbd_write_en) begin
 		//$display("%t, kbd_write_en, addr %d, bit %d, pressed %b", $time, kbd_addr, kbd_bit, kbd_pressed);
 		if (kbd_pressed)
 			kbd[8 * (kbd_addr + 1) - 1 -: 8] <= kbd[8 * (kbd_addr + 1) - 1 -: 8] & ((1 << kbd_bit) ^ 8'hff);
 		else
 			kbd[8 * (kbd_addr + 1) - 1 -: 8] <= kbd[8 * (kbd_addr + 1) - 1 -: 8] | (1 << kbd_bit);
+	end
+
+	if (display_read_en) begin
+		if (DIM_BITS > 0) begin
+			if (disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: DIM_BITS]) begin
+				display_data_out <= disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: (8 + DIM_BITS)];
+				disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: DIM_BITS] <= disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: DIM_BITS] + 1;
+			end
+			else
+				display_data_out <= 0;
+		end
+		else
+			display_data_out <= disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
 	end
 end
 

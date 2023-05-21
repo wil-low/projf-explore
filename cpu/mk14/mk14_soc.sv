@@ -7,7 +7,7 @@
 
 module mk14_soc #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
-	parameter DISPLAY_TIMEOUT_CYCLES = 5,
+	parameter DISPLAY_REFRESH_MSEC = 50,
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
 	parameter EXT_RAM_INIT_F = ""
@@ -38,7 +38,9 @@ localparam BTN_RELEASE_TIMEOUT_CYCLES = 5;
 localparam BTN_RELEASE_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 50;
 `endif
 
-logic [$clog2(DISPLAY_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter;
+localparam DISPLAY_REFRESH_CYCLES = CLOCK_FREQ_MHZ * 1000 * DISPLAY_REFRESH_MSEC;
+
+logic [$clog2(DISPLAY_REFRESH_CYCLES) - 1: 0] display_refresh_counter;
 
 logic [7:0] data_in;
 logic [7:0] data_out;
@@ -48,6 +50,8 @@ logic [15:0] core_addr;
 logic core_write_en;
 
 logic display_en;
+
+logic display_read_en;
 logic [15:0] display_addr;
 logic [7:0] display_data_out;
 logic display_idle;
@@ -216,6 +220,7 @@ mmu_inst (
 	.core_write_data(data_in),
 	.core_read_data(data_out),
 
+	.display_read_en,
 	.display_addr,
 	.display_data_out,
 `ifdef SIMULATION
@@ -245,7 +250,9 @@ tm1638_led_key_memmap
 display_inst
 (
 	.i_clk(clk),
-	.i_en(display_en),	
+	.i_en(display_en),
+
+	.o_read_en(display_read_en),
 	.o_read_addr(display_addr),
 	.i_read_data(display_data_out),
 
@@ -285,14 +292,14 @@ always @(posedge clk) begin
 		case (state)
 		s_RESET: begin
 			core_en <= 1;
-			display_refresh_counter <= DISPLAY_TIMEOUT_CYCLES;
+			display_refresh_counter <= DISPLAY_REFRESH_CYCLES;
 			state <= s_RUNNING;
 		end
 		
 		s_RUNNING: begin
 			display_refresh_counter <= display_refresh_counter - 1;
 			if (display_refresh_counter == 0) begin
-				display_refresh_counter <= DISPLAY_TIMEOUT_CYCLES;
+				display_refresh_counter <= DISPLAY_REFRESH_CYCLES;
 				if (display_idle)
 					display_en <= 1;
 			end
