@@ -10,6 +10,7 @@
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/mk14_soc.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/mmu.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/essential/sb_inout.sv" type="file.verilog" enable="1"/>
+        <File path="/home/willow/prj/fpga-other/projf-explore/lib/infrared/infrared_rx.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/memory/bram_sdp.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/memory/bram_sqp.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/tm1638/tm1638.sv" type="file.verilog" enable="1"/>

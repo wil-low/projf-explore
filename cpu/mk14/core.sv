@@ -34,7 +34,7 @@ localparam DELAY_MULTIPLIER = CLOCK_FREQ_MHZ + CLOCK_FREQ_MHZ / 2 - CLOCK_FREQ_M
 logic [7:0] AC = 0;		// Accumulator
 logic [7:0] E= 0;		// Extension Register
 
-assign trace = PC[7:0];//E;
+assign trace = E;//PC[7:0];//E;
 
 // Status Register
 // {CY_L, OV, SB, SA, IE, F2, F1, F0}

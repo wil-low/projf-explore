@@ -22,8 +22,8 @@ module top_mk14
 localparam CLOCK_FREQ_MHZ = 12;
 
 localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
-//localparam ROM_INIT_F		= "../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../programs/clock.mem";
+localparam STD_RAM_INIT_F	= "../programs/collatz.mem";
+//localparam STD_RAM_INIT_F	= "../programs/clock.mem";
 localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
 
 //// Reset emulation for ice40
@@ -34,7 +34,7 @@ logic [7:0] trace;
 
 assign {LED1, LED2, LED3} = ~0;
 
-assign LED4 = ~IR;
+assign LED4 = ~0; //~IR;
 
 always @(posedge CLK) begin
 	if (!rst_n)

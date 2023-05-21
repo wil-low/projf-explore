@@ -27,7 +27,7 @@ localparam CLOCK_FREQ_MHZ = 50;
 
 localparam ROM_INIT_F		= "../../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../../programs/segtris_p1.mem";
+localparam STD_RAM_INIT_F	= "../../programs/ambush.mem";
 //localparam STD_RAM_INIT_F	= "../../programs/clock.mem";
 //localparam STD_RAM_INIT_F	= "../../programs/test.mem";
 //localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";

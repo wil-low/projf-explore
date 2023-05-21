@@ -22,7 +22,7 @@ module mmu #(
 
 	input wire kbd_write_en,
 	input wire [2:0] kbd_addr,
-	input logic [2:0] kbd_bit,
+	input wire [2:0] kbd_bit,
 	input wire kbd_pressed
 );
 

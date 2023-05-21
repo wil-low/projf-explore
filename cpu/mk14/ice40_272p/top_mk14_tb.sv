@@ -5,8 +5,8 @@ module top_mk14_tb();
 
 localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
 
-//localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
-localparam ROM_INIT_F		= "../programs/display.mem";
+localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
+//localparam ROM_INIT_F		= "../programs/display.mem";
 localparam STD_RAM_INIT_F		= "../programs/segtris_p1.mem";
 //localparam STD_RAM_INIT_F	= "../programs/clock.mem";
 //localparam STD_RAM_INIT_F	= "../programs/test.mem";
