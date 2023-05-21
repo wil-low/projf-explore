@@ -29,14 +29,14 @@ loop:
 		ST		2(2)
 		ST		5(2)
 
-		LDI		12
-		DLY		40
+		LDI		$40
+		DLY		$40
 
 		LDI		$0
 		ST		2(2)
 		ST		5(2)
 
-		LDI		12
-		DLY		40
+		LDI		$40
+		DLY		$40
 
 		JMP		loop

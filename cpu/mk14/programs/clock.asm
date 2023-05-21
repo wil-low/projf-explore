@@ -35,15 +35,6 @@ CLOCK:
 ; This makes for a dim if precise display!
 ;
 NEW:
-	LDI	/DISP	; 2 points just before display
-	XPAH	2			; Three invisible digits are
-	LDI	#DISP	;  written to display
-	XPAL	2
-
-	LDI		0
-	ST	2(2)
-	ST	5(2)
-
 	LDI	/DISPD	; 2 points just before display
 	XPAH	2			; Three invisible digits are
 	LDI	#DISPD	;  written to display
@@ -99,8 +90,8 @@ LOOP:	LD	@-1(1)			; Compare digit pair.
 ALARM:	LDI	$07
 	NOP
 CONTIN:	CAS				; Raise F0, F1 and F2 if alarm
-	LDI	37			;  time
-	DLY	23
+	LDI	$02			;  time
+	DLY	$11
 	JMP	NEW
 
 	.END

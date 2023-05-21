@@ -27,7 +27,8 @@ localparam ONE_MSEC = 1;
 localparam ONE_MSEC = CLOCK_FREQ_MHZ * 1000;
 `endif
 
-localparam DELAY_MULTIPLIER = CLOCK_FREQ_MHZ;
+// adjusted using Digital Clock example from Manual
+localparam DELAY_MULTIPLIER = CLOCK_FREQ_MHZ + CLOCK_FREQ_MHZ / 2 - CLOCK_FREQ_MHZ / 8;
 
 //============ Registers ============
 logic [7:0] AC = 0;		// Accumulator
