@@ -8,6 +8,8 @@ set_io --warn-no-port LK_STB 10
 set_io --warn-no-port LK_DIO 2
 set_io --warn-no-port PROBE 3
 
+set_io --warn-no-port RX 4
+
 
 #> PMOD 2 PMOD_BLEDIR
 set_io --warn-no-port LED1 46

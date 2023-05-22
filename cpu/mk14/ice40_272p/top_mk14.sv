@@ -16,31 +16,35 @@ module top_mk14
 	output logic LK_STB,
 	inout  wire  LK_DIO,
 
-	input wire IR
+	input wire IR,
+
+	input wire RX
 );
 
 localparam CLOCK_FREQ_MHZ = 12;
 
 localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
-localparam STD_RAM_INIT_F	= "../programs/collatz.mem";
+localparam STD_RAM_INIT_F	= "../ext_ram.mem";
+//localparam STD_RAM_INIT_F	= "../programs/collatz.mem";
 //localparam STD_RAM_INIT_F	= "../programs/clock.mem";
 localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
 
 //// Reset emulation for ice40
+/*
 logic [22:0] reset_counter = 0;
 logic rst_n = &reset_counter;
-
-logic [7:0] trace;
-
-assign {LED1, LED2, LED3} = ~0;
-
-assign LED4 = ~0; //~IR;
 
 always @(posedge CLK) begin
 	if (!rst_n)
 		reset_counter <= reset_counter + 1;
 end
+*/
+logic [7:0] trace;
+logic rx_wait;
 
+
+assign {LED2, LED3, LED4} = ~0;
+assign LED1 = ~rx_wait;
 assign LED = ~trace;
 
 mk14_soc #(
@@ -50,14 +54,16 @@ mk14_soc #(
 	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
 )
 mk14_soc_inst (
-	.rst_n,
+	.rst_n(1),
 	.clk(CLK),
 	.trace,
 	.probe(PROBE),
 	.o_ledkey_clk(LK_CLK),
 	.o_ledkey_stb(LK_STB),
 	.io_ledkey_dio(LK_DIO),
-	.ir(IR)
+	.ir(IR),
+	.rx(RX),
+	.rx_wait
 );
 
 endmodule
