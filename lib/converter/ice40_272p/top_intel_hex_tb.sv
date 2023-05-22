@@ -1,10 +1,10 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module intel_hex_tb();
+module top_intel_hex_tb();
 
 parameter CLK_PERIOD = 10;  // 10 ns == 100 MHz
-localparam INIT_F = "collatz.hex";
+localparam INIT_F = "../test.hex";
 
 logic clk;
 logic i_en = 0;		  		// data arrived
@@ -30,21 +30,22 @@ intel_hex_inst (
 	.o_error_code
 );
 
+integer fd, ch;
+
 initial begin
-	$dumpfile("top_stack_tb.vcd");
-	$dumpvars(0, top_stack_tb);
+	$dumpfile("top_intel_hex_tb.vcd");
+	$dumpvars(0, top_intel_hex_tb);
 	clk = 1;
 
-	integer fd;
 	fd = $fopen(INIT_F, "r");
 	if (fd)
 		$display("File %s opened", INIT_F);
 	else
 		$display("Cannot open file %s", INIT_F);
 	
-	integer ch;
-	while ((ch = $fgetc(fd)) != -1) begin
-		#20;
+	ch = $fgetc(fd);
+	while (ch != -1) begin
+		#10;
 		i_data = ch;
 		i_en <= 1;
 
@@ -52,11 +53,15 @@ initial begin
 		i_en <= 0;
 		if (o_error_code) begin
 			$display("error_code %d", o_error_code);
-			break;
+			$fclose(fd);
+			$finish;
 		end
+		ch = $fgetc(fd);
 	end
 
 	$fclose(fd);
+
+	$display("File '%s' processed without errors", INIT_F);
 
 	#10 $finish;
 end
