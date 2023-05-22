@@ -32,12 +32,12 @@ module uart_rx
 	parameter BAUD_RATE = 115200 //serial baud rate
 )
 (
-	input logic                  clk,              //clock input
-	input logic                  rst_n,            //asynchronous reset input, low active 
+	input wire                   clk,              //clock input
+	input wire                   rst_n,            //asynchronous reset input, low active 
 	output logic[7:0]            rx_data,          //received serial data
 	output logic                 rx_data_valid,    //received serial data is valid
-	input logic                  rx_data_ready,    //data receiver module ready
-	input logic                  rx_pin            //serial data input
+	input wire                   rx_data_ready,    //data receiver module ready
+	input wire                   rx_pin            //serial data input
 );
 //calculates the clock cycle for baud rate 
 localparam                       CYCLE = CLK_FRE * 1000000 / BAUD_RATE;
