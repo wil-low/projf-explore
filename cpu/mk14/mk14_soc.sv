@@ -51,7 +51,7 @@ logic [$clog2(RX_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter = RX_TIMEOUT_CY
 logic [7:0] core_data_in;
 logic [7:0] core_data_out;
 
-logic core_en = 1;
+logic core_en = 0;
 logic [15:0] core_addr;
 logic core_write_en;
 

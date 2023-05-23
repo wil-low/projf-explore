@@ -30,7 +30,7 @@ localparam STD_RAM_INIT_F	= "../ext_ram.mem";
 localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
 
 //// Reset emulation for ice40
-/*
+
 logic [22:0] reset_counter = 0;
 logic rst_n = &reset_counter;
 
@@ -38,7 +38,7 @@ always @(posedge CLK) begin
 	if (!rst_n)
 		reset_counter <= reset_counter + 1;
 end
-*/
+
 logic [7:0] trace;
 logic rx_wait;
 
@@ -54,7 +54,7 @@ mk14_soc #(
 	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
 )
 mk14_soc_inst (
-	.rst_n(1),
+	.rst_n,
 	.clk(CLK),
 	.trace,
 	.probe(PROBE),
