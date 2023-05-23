@@ -21,7 +21,7 @@
 
 		.CR scmp
 		.LF segtris.lst
-		.TF segtris.hex,INT
+		.TF segtris.hex,INT,$18
 
 MoreRAM         .eq    0B00h           ; 0A00 = I/O Chip,0B00 = Extend RAM
          
@@ -82,9 +82,9 @@ Display2:
         xpal    2
         ldi     8                       ; refresh the game display, this
         xae                             ; displays 9 digits.
-_Disp1: ld      80h(1)                  ; refresh display
-        ori     80h                     ; light DP for alignment
-        st      80h(2)                  ; Segarray MUST be at 0F00h here
+_Disp1: ld      -128(1)                  ; refresh display
+        ori     -128                     ; light DP for alignment
+        st      -128(2)                  ; Segarray MUST be at 0F00h here
         dly     02
         ldi     0FFh                    ; decrement E
         ccl
@@ -180,7 +180,7 @@ _BadPattern:
         ani     STMask                  ; make it in the range 0..x
         adi     ShapeTable & 255        ; offset into shape table
         xae
-        ld      80h(1)                  ; get the shape
+        ld      -128(1)                  ; get the shape
         st      Shape(1)
         st      SegArray+0(1)           ; put shape in display
         ldi     SegArray                ; reset position
@@ -199,7 +199,7 @@ GameOver:
         ldi     0                       ; so we'll enter at RESET 0001h
         xpah    3
         ld      Score(1)                ; save score so it can be read by
-        st      TheScore+1              ; pressing 'MEM'
+        st      TheScore              ; pressing 'MEM'
         xppc    3
 TheScore:
         .db     0FFh                    ; score slot
@@ -220,7 +220,7 @@ Start:  ldi     0Fh                     ; make P1 = 0F00h
         ldi     0
         xpal    1
 
-        ld      StartSpeed(1)   ; set the speed
+        ld      $14(1)   		; set the speed from StartSpeed
         st      Speed(1)
         ldi     0FFh                    ; this is the 'end' marker.
         st      SegArray+8(1)
@@ -255,7 +255,7 @@ Keyboard:
         ldi     Kb1                     ; E = KB1 (so 80(P1) == KB1)
         xae
         ld      1(1)                    ; stops flickering
-        ori     80h
+        ori     -128
         st      1(2)
         ld      1(2)                    ; Check row 1
 
@@ -269,10 +269,10 @@ _NoKey:                                 ; 040h if pressed 000h if not
         ;
         st      Temp(1)                 ; save this value
         ccl
-        ld      80h(1)                  ; get the KB value
-        add     80h(1)                  ; shift it left
+        ld      -128(1)                  ; get the KB value
+        add     -128(1)                  ; shift it left
         or      Temp(1)                 ; or the new one
-        st      80h(1)                  ; and update it
+        st      -128(1)                  ; and update it
 
         lde                             ; was last scan Kb1 ?
         xri     Kb1
@@ -280,7 +280,7 @@ _NoKey:                                 ; 040h if pressed 000h if not
         ldi     Kb3                     ; if it was we now scan Kb3
         xae
         ld      3(1)                    ; stops flickering
-        ori     80h
+        ori     -128
         st      3(2)
         ld      3(2)                    ; Check row 3
         jmp     KBTest
@@ -335,10 +335,10 @@ ReplaceShape:
         ld      Posn(1)                 ; E = Posn $80(1) is now the display
         xae                             ; buffer for the current shape
 
-        ld      80h(1)                  ; get the display value
+        ld      -128(1)                  ; get the display value
         xor     Shape(1)                ; remove the old shape
         xor     Temp(1)                 ; put in the new shape
-        st      80h(1)                  ; update the display value
+        st      -128(1)                  ; update the display value
 
         ld      Temp(1)                 ; update the new shape value
         st      Shape(1)
