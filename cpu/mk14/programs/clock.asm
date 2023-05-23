@@ -2,15 +2,15 @@
 
 		.CR scmp
 		.LF clock.lst
+		.TF clock.hex,INT
 
 CROM	.EQ	$010B			; Segment table in SCIOS
 DISP	.EQ	$0D00			; Display
 DISPD	.EQ	$0D0D			; Display
 
 ROW		.EQ $0F10
-	.OR	$0F00
+	.OR	$0F12
 
-	.RF	$0F12-$
 	.DB	0			; Alarm hours
 	.DB	0			; Alarm mins
 	.DB	0			; Alarm secs
@@ -24,7 +24,7 @@ TIM4:	.DB	$76			; 24 hours (bump up)
 	.DB	$40			; 60 seconds
 SPEED:	.DB	$20			; Display cycles/second (80)
 
-	.RF $0F20-$
+	.OR $0F20
 CLOCK:
 	LDI	/CROM		; 3 points to segment table
 	XPAH	3

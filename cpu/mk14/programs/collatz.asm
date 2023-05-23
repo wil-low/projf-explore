@@ -26,8 +26,7 @@ DelayA		.EQ		$F0
 DelayShort	.EQ		$80
 DelayLong	.EQ		$F0
 
-		.OR		$0F00
-		.RF		$0F20-$
+		.OR		$0F20
 
 Collatz:
 							; P2 = $0F10

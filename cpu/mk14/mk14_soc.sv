@@ -291,10 +291,11 @@ core #(
 	.trace
 );
 
-typedef enum {s_RX_WAIT, s_RESET, s_RUNNING
+typedef enum {
+	s_INIT, s_RX_WAIT, s_RESET, s_RUNNING
 } STATE;
 
-STATE state = s_RX_WAIT;
+STATE state = s_INIT;
 
 assign rx_wait = state == s_RX_WAIT;
 
@@ -328,7 +329,7 @@ always @(posedge clk) begin
 		end
 
 		default:
-			state <= s_RX_WAIT;
+			state <= s_INIT;
 
 		endcase
 	end

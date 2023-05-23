@@ -21,6 +21,7 @@
 
 		.CR scmp
 		.LF segtris.lst
+		.TF segtris.hex,INT
 
 MoreRAM         .eq    0B00h           ; 0A00 = I/O Chip,0B00 = Extend RAM
          
@@ -39,8 +40,7 @@ Kb3             .eq    10h
 Temp            .eq    11h             ; workspace
 Score           .eq    12h             ; Score
 
-        .or    0F00h
-        .rf    0F14h-$
+        .or    0F14h
 
 ; *****************************************************************************
 ;

@@ -43,7 +43,7 @@ clear
 # Lattice iCE40 iCESugar
 if [ -d "${DIR}/ice40_272p" ]; then
 	echo "## Linting top modules in ${DIR}/ice40_272p"
-	for f in ${DIR}/ice40_272p/top_*.sv; do
+	for f in ${DIR}/ice40_272p/top_mk14.sv; do
 		echo "##   Checking ${f}";
 		verilator --lint-only --timing -Wall -I${DIR} -I${DIR}/ice40_272p \
 			-I${LIB}/memory	-I${LIB}/memory/ice40 \
