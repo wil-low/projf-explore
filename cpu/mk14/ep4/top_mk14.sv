@@ -17,17 +17,21 @@ module top_mk14
 	output logic LK_STB,
 	inout  wire  LK_DIO,
 	
-	input wire IR
+	input wire IR,
+	input wire RX
 );
 
 logic [7:0] trace;
 assign LED = trace;
 
+logic rx_wait;
+assign LED1 = ~rx_wait;
+
 localparam CLOCK_FREQ_MHZ = 50;
 
 localparam ROM_INIT_F		= "../../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../../programs/ambush.mem";
+localparam STD_RAM_INIT_F	= "../../programs/collatz.mem";
 //localparam STD_RAM_INIT_F	= "../../programs/clock.mem";
 //localparam STD_RAM_INIT_F	= "../../programs/test.mem";
 //localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
@@ -47,7 +51,9 @@ mk14_soc_inst (
 	.o_ledkey_clk(LK_CLK),
 	.o_ledkey_stb(LK_STB),
 	.io_ledkey_dio(LK_DIO),
-	.ir(IR)
+	.ir(IR),
+	.rx(RX),
+	.rx_wait
 );
 
 endmodule

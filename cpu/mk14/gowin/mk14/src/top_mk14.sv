@@ -17,11 +17,15 @@ module top_mk14
 	output logic LK_STB,
 	inout  wire  LK_DIO,
 
-	input wire IR
+	input wire IR,
+	input wire RX
 );
 
 logic [7:0] trace;
 assign LED = ~trace;
+
+logic rx_wait;
+assign LED1 = ~rx_wait;
 
 localparam CLOCK_FREQ_MHZ = 27;
 
@@ -44,7 +48,9 @@ mk14_soc_inst (
 	.o_ledkey_clk(LK_CLK),
 	.o_ledkey_stb(LK_STB),
 	.io_ledkey_dio(LK_DIO),
-	.ir(IR)
+	.ir(IR),
+	.rx(RX),
+	.rx_wait
 );
 
 

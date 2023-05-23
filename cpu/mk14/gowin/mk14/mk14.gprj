@@ -9,6 +9,7 @@
         <File path="src/top_mk14.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/mk14_soc.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/mmu.sv" type="file.verilog" enable="1"/>
+        <File path="/home/willow/prj/fpga-other/projf-explore/lib/converter/intel_hex.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/essential/sb_inout.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/infrared/infrared_rx.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/memory/bram_sdp.sv" type="file.verilog" enable="1"/>
@@ -16,6 +17,7 @@
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/tm1638/tm1638.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/tm1638/tm1638_led_key.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/tm1638/tm1638_led_key_memmap.sv" type="file.verilog" enable="1"/>
+        <File path="/home/willow/prj/fpga-other/projf-explore/lib/uart-2/uart_rx.sv" type="file.verilog" enable="1"/>
         <File path="src/mk14.cst" type="file.cst" enable="1"/>
         <File path="src/mk14.sdc" type="file.sdc" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/tm1638/tm1638.svh" type="file.other" enable="1"/>
