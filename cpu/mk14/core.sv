@@ -13,6 +13,9 @@ module core #(
 	input wire logic clk,
 	input wire logic en,
 
+	input wire sin,
+	output logic sout,
+
 	output logic [15:0] mem_addr,
 	input wire logic [7:0] mem_read_data,
 	output logic mem_write_en,
@@ -166,7 +169,7 @@ always @(posedge clk) begin
 			end
 
 			`i_SIO: begin
-				state <= s_UNKNOWN;
+				{sout, E} <= {E[0], sin, E[7:1]};
 			end
 			`i_SR: begin
 				AC <= AC >> 1;

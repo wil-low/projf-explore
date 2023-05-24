@@ -23,6 +23,9 @@ module mk14_soc #(
 	inout  wire  io_ledkey_dio,
 
 	input wire ir,
+
+	input wire sin,
+	output logic sout,
 `ifdef SIMULATION
 	input wire btn_dn,
 	input wire btn_up,

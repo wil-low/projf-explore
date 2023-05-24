@@ -62,6 +62,8 @@ mk14_soc_inst (
 	.o_ledkey_stb(LK_STB),
 	.io_ledkey_dio(LK_DIO),
 	.ir(IR),
+	.sin(),
+	.sout(),
 	.rx(RX),
 	.rx_wait
 );
