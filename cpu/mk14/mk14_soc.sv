@@ -315,10 +315,12 @@ always @(posedge clk) begin
 		s_RX_WAIT,
 		s_SOFT_RESET: begin
 			core_en <= 0;
-			if (display_refresh_counter == 0)
-				state <= s_START;
-			else
-				display_refresh_counter <= display_refresh_counter - 1;
+			if (soft_reset) begin
+				if (display_refresh_counter == 0)
+					state <= s_START;
+				else
+					display_refresh_counter <= display_refresh_counter - 1;
+			end
 		end
 		
 		s_START: begin
@@ -329,7 +331,9 @@ always @(posedge clk) begin
 
 		s_RUNNING: begin
 			if (!soft_reset) begin
+				$display("soft_reset");
 				state <= s_SOFT_RESET;
+				display_refresh_counter <= DISPLAY_REFRESH_CYCLES;
 			end
 			else begin
 				display_refresh_counter <= display_refresh_counter - 1;
