@@ -27,7 +27,7 @@ module mk14_soc #(
 	input wire btn_dn,
 	input wire btn_up,
 	input wire [2:0] btn_addr,
-	input wire [2:0] btn_bit
+	input wire [2:0] btn_bit,
 `else
 	input wire rx,
 	output logic rx_wait
@@ -88,8 +88,11 @@ typedef enum {
 
 IR_STATE ir_state = sir_IDLE;
 
+logic soft_reset;
+
 always @(posedge clk) begin
 	kbd_write_en <= 0;
+	soft_reset <= 1;
 
 	case (ir_state)
 
@@ -107,6 +110,9 @@ always @(posedge clk) begin
 		kbd_pressed <= 1;
 
 		case (ir_saved_data)
+		8'b1100_0010: begin  // Mute => RESET
+			soft_reset <= 0;
+		end
 		8'b1011_1010: begin  // OK => MEM
 			kbd_addr <= 3;
 			kbd_bit <= 5;
@@ -281,7 +287,7 @@ display_inst
 core #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ)
 ) core_inst (
-	.rst_n(rst_n),
+	.rst_n(rst_n && soft_reset),
 	.clk,
 	.en(core_en),
 	.mem_addr(core_addr),
@@ -292,7 +298,7 @@ core #(
 );
 
 typedef enum {
-	s_INIT, s_RX_WAIT, s_RESET, s_RUNNING
+	s_INIT, s_RX_WAIT, s_SOFT_RESET, s_START, s_RUNNING
 } STATE;
 
 STATE state = s_INIT;
@@ -306,25 +312,32 @@ always @(posedge clk) begin
 	end
 	else begin
 		case (state)
-		s_RX_WAIT: begin
+		s_RX_WAIT,
+		s_SOFT_RESET: begin
+			core_en <= 0;
 			if (display_refresh_counter == 0)
-				state <= s_RESET;
+				state <= s_START;
 			else
 				display_refresh_counter <= display_refresh_counter - 1;
 		end
 		
-		s_RESET: begin
+		s_START: begin
 			core_en <= 1;
 			display_refresh_counter <= DISPLAY_REFRESH_CYCLES;
 			state <= s_RUNNING;
 		end
 
 		s_RUNNING: begin
-			display_refresh_counter <= display_refresh_counter - 1;
-			if (display_refresh_counter == 0) begin
-				display_refresh_counter <= DISPLAY_REFRESH_CYCLES;
-				if (display_idle)
-					display_en <= 1;
+			if (!soft_reset) begin
+				state <= s_SOFT_RESET;
+			end
+			else begin
+				display_refresh_counter <= display_refresh_counter - 1;
+				if (display_refresh_counter == 0) begin
+					display_refresh_counter <= DISPLAY_REFRESH_CYCLES;
+					if (display_idle)
+						display_en <= 1;
+				end
 			end
 		end
 
