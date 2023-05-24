@@ -67,6 +67,7 @@ always @(posedge clk) begin
 		case (ir_saved_data)
 		8'b1100_0010: begin  // Mute => RESET
 			soft_reset <= 0;
+			kbd_write_en <= 0;
 		end
 		8'b1011_1010: begin  // OK => MEM
 			kbd_addr <= 3;
