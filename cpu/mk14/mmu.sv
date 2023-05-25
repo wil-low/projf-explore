@@ -26,9 +26,6 @@ module mmu #(
 	input wire kbd_pressed
 );
 
-// controls after how many reads a Seg7 digit is cleared (auto-dim)
-localparam DIM_BITS = 1;
-
 logic [15:0] write_data;
 logic [15:0] read_data;
 
@@ -92,7 +89,10 @@ rom (
 	.data_out(rom_read_data)
 );
 
-logic [(8 + DIM_BITS) * 8 - 1:0] disp = 0;
+logic [8 * 8 - 1:0] disp = 0;
+// after 1 read a Seg7 digit is cleared (auto-dim)
+logic [7:0] seg_on = 0;
+
 logic [8 * 8 - 1:0] kbd = {8{8'hff}};
 
 always @(posedge clk) begin
@@ -100,7 +100,8 @@ always @(posedge clk) begin
 		//$display("access_disp_kbd: we %b, addr %h, idx = %d, kbd %h", core_write_en, core_addr, (core_addr & 'h0f), kbd);
 		if (core_write_en) begin
 			if ((core_addr & 'h0f) <= 'h07) begin
-				disp[(8 + DIM_BITS) * ((core_addr & 'h0f) + 1) - 1 -: (8 + DIM_BITS)] <= {1'b1, core_write_data};
+				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
+				seg_on[core_addr & 'h0f] <= 1;
 				//$display("Disp: %h", disp);
 			end
 		end
@@ -122,16 +123,12 @@ always @(posedge clk) begin
 	end
 
 	if (display_read_en) begin
-		if (DIM_BITS > 0) begin
-			if (disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: DIM_BITS]) begin
-				display_data_out <= disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: (8 + DIM_BITS)];
-				disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: DIM_BITS] <= disp[(8 + DIM_BITS) * ((display_addr & 'h0f) + 1) - 1 -: DIM_BITS] + 1;
-			end
-			else
-				display_data_out <= 0;
+		if (seg_on[display_addr & 'h0f]) begin
+			display_data_out <= disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
+			seg_on[display_addr & 'h0f] <= 0;
 		end
 		else
-			display_data_out <= disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
+			display_data_out <= 0;
 	end
 end
 
