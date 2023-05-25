@@ -3,8 +3,6 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-`include "constants.svh"
-
 module mk14_soc #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
 	parameter DISPLAY_REFRESH_MSEC = 50,
@@ -37,14 +35,14 @@ module mk14_soc #(
 );
 
 `ifdef SIMULATION
-localparam BTN_RELEASE_TIMEOUT_CYCLES = 5;
-localparam DISPLAY_REFRESH_CYCLES = 5;
-localparam RX_TIMEOUT_CYCLES = 5;
+	localparam BTN_RELEASE_TIMEOUT_CYCLES = 5;
+	localparam DISPLAY_REFRESH_CYCLES = 5;
+	localparam RX_TIMEOUT_CYCLES = 5;
 `else
-localparam BTN_RELEASE_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 50;
-localparam DISPLAY_REFRESH_CYCLES = CLOCK_FREQ_MHZ * 1000 * DISPLAY_REFRESH_MSEC;
-localparam RX_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 2000;
-localparam RX_EXTEND_CYCLES = CLOCK_FREQ_MHZ * 1000 * 100;
+	localparam BTN_RELEASE_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 50;
+	localparam DISPLAY_REFRESH_CYCLES = CLOCK_FREQ_MHZ * 1000 * DISPLAY_REFRESH_MSEC;
+	localparam RX_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 2000;
+	localparam RX_EXTEND_CYCLES = CLOCK_FREQ_MHZ * 1000 * 100;
 `endif
 
 
@@ -108,6 +106,7 @@ mmu_inst (
 	.display_read_en,
 	.display_addr,
 	.display_data_out,
+
 `ifdef SIMULATION
 	.kbd_write_en(btn_dn ^ btn_up),
 	.kbd_addr(btn_addr),
@@ -124,16 +123,14 @@ mmu_inst (
 localparam SEG7_COUNT = 8;
 localparam SEG7_BASE_ADDR = 'hD00;
 
-tm1638_led_key_memmap
-#(
+tm1638_led_key_memmap #(
 	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHZ),
 	.SEG7_COUNT(SEG7_COUNT),
 	.LED_COUNT(0),
 	.SEG7_BASE_ADDR(SEG7_BASE_ADDR),
 	.LED_BASE_ADDR(0)
 )
-display_inst
-(
+display_inst (
 	.i_clk(clk),
 	.i_en(display_en),
 
@@ -152,7 +149,8 @@ display_inst
 
 core #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ)
-) core_inst (
+)
+core_inst (
 	.rst_n(rst_n && soft_reset),
 	.clk,
 	.en(core_en),

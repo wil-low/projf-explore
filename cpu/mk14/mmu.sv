@@ -53,7 +53,9 @@ assign core_read_data = access_std_ram  ? std_ram_read_data : (
 						access_disp_kbd ?    kbd_read_data : 'h00
 )));
 
-bram_sdp #(.WIDTH(8), .DEPTH(256), .INIT_F(STD_RAM_INIT_F))
+bram_sdp #(
+	.WIDTH(8), .DEPTH(256), .INIT_F(STD_RAM_INIT_F)
+)
 std_ram (
 	.clk_write(clk),
 	.clk_read(clk),
@@ -65,7 +67,9 @@ std_ram (
 	.data_out(std_ram_read_data)
 );
 
-bram_sdp #(.WIDTH(8), .DEPTH(256), .INIT_F(EXT_RAM_INIT_F))
+bram_sdp #(
+	.WIDTH(8), .DEPTH(256), .INIT_F(EXT_RAM_INIT_F)
+)
 ext_ram (
 	.clk_write(clk),
 	.clk_read(clk),
@@ -77,7 +81,9 @@ ext_ram (
 	.data_out(ext_ram_read_data)
 );
 
-bram_sdp #(.WIDTH(8), .DEPTH(512), .INIT_F(ROM_INIT_F))
+bram_sdp #(
+	.WIDTH(8), .DEPTH(512), .INIT_F(ROM_INIT_F)
+)
 rom (
 	.clk_write(clk),
 	.clk_read(clk),
