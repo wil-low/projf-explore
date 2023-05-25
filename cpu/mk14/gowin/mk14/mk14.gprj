@@ -7,6 +7,7 @@
     <FileList>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/core.sv" type="file.verilog" enable="1"/>
         <File path="src/top_mk14.sv" type="file.verilog" enable="1"/>
+        <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/ir_keypad.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/mk14_soc.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/mmu.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/converter/intel_hex.sv" type="file.verilog" enable="1"/>

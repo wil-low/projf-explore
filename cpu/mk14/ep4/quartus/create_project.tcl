@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Tue May 23 10:32:20 2023
+# Generated on: Thu May 25 08:24:42 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -75,6 +75,7 @@ if {$make_assignments} {
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../ir_keypad.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/converter/intel_hex.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE "../../../../lib/uart-2/uart_rx.sv"
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/infrared/infrared_rx.sv
