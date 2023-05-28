@@ -46,12 +46,12 @@ module mk14_soc #(
 `endif
 
 
-logic [$clog2(RX_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter = RX_TIMEOUT_CYCLES;
+logic [$clog2(RX_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter;
 
 logic [7:0] core_data_in;
 logic [7:0] core_data_out;
 
-logic core_en = 0;
+logic core_en;
 logic [15:0] core_addr;
 logic core_write_en;
 
@@ -172,10 +172,16 @@ assign rx_wait = state == s_RX_WAIT;
 always @(posedge clk) begin
 	display_en <= 0;
 	if (!rst_n) begin
-		state <= s_RX_WAIT;
+		state <= s_INIT;
 	end
 	else begin
 		case (state)
+		s_INIT: begin
+			core_en <= 0;
+			display_refresh_counter <= RX_TIMEOUT_CYCLES;
+			state <= s_RX_WAIT;
+		end
+
 		s_RX_WAIT,
 		s_SOFT_RESET: begin
 			core_en <= 0;
