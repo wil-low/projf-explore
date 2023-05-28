@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Thu May 25 08:24:42 2023
+# Generated on: Sun May 28 06:15:53 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -90,29 +90,29 @@ if {$make_assignments} {
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../mk14_soc.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../core.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../top_mk14.sv
-	set_location_assignment PIN_F9 -to LED2
-	set_location_assignment PIN_E10 -to LED1
-	set_location_assignment PIN_C9 -to LED3
-	set_location_assignment PIN_P2 -to LED4
+	set_location_assignment PIN_B8 -to LED2
+	set_location_assignment PIN_B7 -to LED1
+	set_location_assignment PIN_B9 -to LED3
+	set_location_assignment PIN_B10 -to LED4
 	set_location_assignment PIN_E1 -to CLK
 	set_location_assignment PIN_N13 -to rst_n
-	set_location_assignment PIN_A10 -to LED[0]
-	set_location_assignment PIN_A11 -to LED[1]
-	set_location_assignment PIN_A12 -to LED[2]
-	set_location_assignment PIN_A13 -to LED[3]
-	set_location_assignment PIN_D6 -to LED[4]
-	set_location_assignment PIN_E7 -to LED[5]
-	set_location_assignment PIN_C8 -to LED[6]
+	set_location_assignment PIN_A12 -to LED[0]
+	set_location_assignment PIN_A13 -to LED[1]
+	set_location_assignment PIN_D6 -to LED[2]
+	set_location_assignment PIN_E7 -to LED[3]
+	set_location_assignment PIN_B13 -to LED[4]
+	set_location_assignment PIN_D5 -to LED[5]
+	set_location_assignment PIN_C6 -to LED[6]
 	set_location_assignment PIN_E8 -to LED[7]
-	set_location_assignment PIN_R1 -to LK_CLK
-	set_location_assignment PIN_K9 -to LK_DIO
-	set_location_assignment PIN_P1 -to LK_STB
+	set_location_assignment PIN_A2 -to LK_CLK
+	set_location_assignment PIN_A4 -to LK_DIO
+	set_location_assignment PIN_B3 -to LK_STB
 	set_location_assignment PIN_B5 -to PROBE
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_CLK
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_DIO
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_STB
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to PROBE
-	set_location_assignment PIN_N2 -to IR
+	set_location_assignment PIN_A9 -to IR
 	set_location_assignment PIN_M2 -to RX
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
