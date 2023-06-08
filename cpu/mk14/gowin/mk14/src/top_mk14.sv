@@ -25,13 +25,14 @@ logic [7:0] trace;
 assign LED = ~trace;
 
 logic rx_wait;
+assign {LED2, LED3, LED4} = ~0;
 assign LED1 = ~rx_wait;
 
 localparam CLOCK_FREQ_MHZ = 27;
 
 localparam ROM_INIT_F		= "../../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../../programs/clock.mem";
+localparam STD_RAM_INIT_F	= "../../ext_ram.mem";
 localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
 
 mk14_soc #(

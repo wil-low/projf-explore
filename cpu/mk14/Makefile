@@ -12,3 +12,12 @@ prog: mem
 
 flash: mem
 	cd ecp5 && make flash && cd ..
+
+gowin_prog: mem
+	cd gowin && openFPGALoader -b tangnano9k mk14/impl/pnr/mk14.fs
+
+gowin_flash: mem
+	cd gowin && openFPGALoader -b tangnano9k -f mk14/impl/pnr/mk14.fs
+
+
+# ./upload_ram_gowin.sh programs/clock.hex 
