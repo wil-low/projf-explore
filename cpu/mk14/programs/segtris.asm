@@ -146,7 +146,14 @@ _EndLoop:                               ; saves a bit of coding...
         jnz     _TryNext                ; we can remove it.
         ldi     0                       ; we can delete this one.
         st      0(2)
+
+		ldi		0Dh						; P3 = 0D09h
+		xpah	3
+		ldi		9
+		xpal	3
         ild     Score(1)                ; increment the score by 1
+		st		0(3)					; show score
+
         dld     Speed(1)                ; decrement the speed
         ldi     1                       ; set the collapse flag
         st      Collapse(1)
@@ -220,6 +227,11 @@ Start:  ldi     0Fh                     ; make P1 = 0F00h
         ldi     0
         xpal    1
 
+		ldi		0Dh						; P3 = 0D09h
+		xpah	3
+		ldi		9
+		xpal	3
+
         ld      $14(1)   		; set the speed from StartSpeed
         st      Speed(1)
         ldi     0FFh                    ; this is the 'end' marker.
@@ -234,6 +246,7 @@ Start:  ldi     0Fh                     ; make P1 = 0F00h
         st      SegArray+6(1)
         st      SegArray+7(1)
         st      Score(1)                ; zero the score
+		st		0(3)					; show score
         st      Kb1(1)
         st      Kb3(1)
 
