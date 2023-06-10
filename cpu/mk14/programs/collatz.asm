@@ -2,6 +2,7 @@
 		; (Relocatable)
 		; Stack usage
 		;		REL:		ENTRY:		USE:		RETURN:
+		;		 -5						Temp1
 		;		 -4						Temp(H)
 		;		 -3						Temp(L)
 		;		 -2						Cur(H)
@@ -19,6 +20,7 @@ NumL		.EQ		 1
 Delay		.EQ		 2
 CurH		.EQ		-2
 CurL		.EQ		-1
+Temp1		.EQ		-5
 TempH		.EQ		-4
 TempL		.EQ		-3
 
@@ -92,7 +94,7 @@ check_oddity:
 		ST		TempL(2)	; TempL * 2, E = TempL, CY_L set
 
 		LD		TempH(2)
-		XPAL	1
+		ST		Temp1(2)
 		LD		TempH(2)
 		ADD		TempH(2)	; with CY_L
 		ST		TempH(2)	; TempH * 2, P1 = TempH
@@ -102,7 +104,7 @@ check_oddity:
 		ADE
 		ST		TempL(2)	; TempL * 3, E = TempL, CY_L set
 
-		XPAL	1
+		LD		Temp1(2)
 		ADD		TempH(2)	; with CY_L
 		ST		TempH(2)	; TempH * 3, P1 = TempH
 							; increase Temp
