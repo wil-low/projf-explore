@@ -90,11 +90,15 @@ assign write_en = rx_wait ? ihex_data_valid : core_write_en;
 assign addr = rx_wait ? ihex_addr : core_addr;
 assign data_in = rx_wait ? ihex_data : core_data_in;
 
+localparam SEG7_BASE_ADDR	= 'hD00;
+localparam LED_BASE_ADDR	= 'hD09;
+
 mmu #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
-	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
+	.LED_BASE_ADDR(LED_BASE_ADDR)
 )
 mmu_inst (
 	.clk(clk),
@@ -120,15 +124,10 @@ mmu_inst (
 `endif
 );
 
-localparam SEG7_COUNT = 8;
-localparam SEG7_BASE_ADDR = 'hD00;
-
 tm1638_led_key_memmap #(
 	.CLOCK_FREQ_MHz(CLOCK_FREQ_MHZ),
-	.SEG7_COUNT(SEG7_COUNT),
-	.LED_COUNT(0),
 	.SEG7_BASE_ADDR(SEG7_BASE_ADDR),
-	.LED_BASE_ADDR(0)
+	.LED_BASE_ADDR(LED_BASE_ADDR)
 )
 display_inst (
 	.i_clk(clk),

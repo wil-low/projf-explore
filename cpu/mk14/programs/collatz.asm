@@ -22,6 +22,8 @@ CurL		.EQ		-1
 TempH		.EQ		-4
 TempL		.EQ		-3
 
+Show		.EQ		 9
+
 DelayA		.EQ		$F0
 DelayShort	.EQ		$80
 DelayLong	.EQ		$F0
@@ -29,6 +31,12 @@ DelayLong	.EQ		$F0
 		.OR		$0F20
 
 Collatz:
+							; P1 = $0D00
+		LDI		$0D
+		XPAH	1
+		LDI		$00
+		XPAL	1
+
 							; P2 = $0F10
 		LDI		$0F
 		XPAH	2
@@ -62,7 +70,7 @@ next_cur:
 		LD		CurL(2)
 		ST		TempL(2)
 
-		XAE
+		ST		Show(1)
 		LD		Delay(2)
 		DLY		DelayLong
 		LD		Delay(2)
@@ -121,7 +129,7 @@ even:
 
 display:
 		LD		TempL(2)
-		XAE
+		ST		Show(1)
 		LD		Delay(2)
 		DLY		DelayShort
 							; check for Temp = 1
@@ -132,7 +140,7 @@ display:
 		CAD		TempL(2)	; A == 1 ?
 		JNZ		check_oddity
 
-		XAE
+		ST		Show(1)
 		LD		Delay(2)
 		DLY		DelayLong
 		LD		Delay(2)
@@ -151,5 +159,5 @@ display:
 		JNZ		next_cur1
 
 		LDI		$81
-		XAE
+		ST		Show(1)
 		HALT

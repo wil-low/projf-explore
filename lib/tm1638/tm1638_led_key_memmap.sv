@@ -6,10 +6,8 @@
 module tm1638_led_key_memmap
 #(
 	parameter CLOCK_FREQ_MHz = 12,
-	parameter SEG7_COUNT     = 8,
-	parameter  LED_COUNT     = 8,
 	parameter SEG7_BASE_ADDR = 'h0100,
-	parameter  LED_BASE_ADDR = 'h0200
+	parameter LED_BASE_ADDR  = 0
 )
 (
 	input wire i_clk,
@@ -34,7 +32,7 @@ logic batch_en = 0;
 logic [8 * BATCH_DATA_SIZE - 1 : 0] batch_data;
 
 logic cmd_en = 0;
-logic [7 : 0] cmd;
+logic [7 : 0] data;
 
 logic ledkey_idle;
 
@@ -54,7 +52,7 @@ tm1638_led_key_inst
 
 	.i_idx(),							// seg7/led index (0-7)
 
-	.i_data(cmd),						// byte to send
+	.i_data(data),						// byte to send
 	.o_btn_state(),						// button0-7 state (1 = pressed) 
 
 	.i_batch_data_size(BATCH_DATA_SIZE),
@@ -71,12 +69,17 @@ tm1638_led_key_inst
 );
 
 enum {
-	s_RESET, s_RESET1, s_RESET2, s_IDLE, s_FETCH, s_WAIT_MEM, s_FILL_BATCH, s_SEND_DATA, s_WAIT
+	s_RESET, s_RESET1, s_RESET2, s_IDLE,
+	s_FETCH_LED, s_WAIT_MEM_LED, s_SAVE_LED,
+	s_FETCH, s_WAIT_MEM, s_FILL_BATCH, s_SEND_DATA,
+	s_WAIT
 } state;
 
 assign o_idle = (state == s_IDLE) && ledkey_idle;
 
 assign probe = ledkey_idle;
+
+logic [7:0] saved_led;
 
 logic [3:0] data_counter;
 
@@ -88,7 +91,7 @@ always @(posedge i_clk) begin
 	case (state)
 
 	s_RESET: if (ledkey_idle) begin
-		cmd <= 8'h40;  // set auto increment mode
+		data <= 8'h40;  // set auto increment mode
 		cmd_en <= 1;
 		state <= s_RESET1;
 	end
@@ -100,7 +103,7 @@ always @(posedge i_clk) begin
 	end
 
 	s_RESET2: if (ledkey_idle) begin
-		cmd <= 8'h88;  // activate
+		data <= 8'h88;  // activate
 		cmd_en <= 1;
 		state <= s_IDLE;
 	end
@@ -108,8 +111,23 @@ always @(posedge i_clk) begin
 	s_IDLE: if (ledkey_idle) begin
 		if (i_en) begin
 			data_counter <= 0;
-			state <= s_FETCH;
+			state <= s_FETCH_LED;
 		end
+	end
+
+	s_FETCH_LED: begin
+		o_read_en <= 1;
+		o_read_addr <= LED_BASE_ADDR;
+		state <= s_WAIT_MEM_LED;
+	end
+
+	s_WAIT_MEM_LED: begin
+		state <= s_SAVE_LED;
+	end
+
+	s_SAVE_LED: begin
+		saved_led <= i_read_data;
+		state <= s_FETCH;
 	end
 
 	s_FETCH: begin
@@ -125,7 +143,8 @@ always @(posedge i_clk) begin
 	s_FILL_BATCH: begin
 		data_counter <= data_counter + 1;
 		batch_data[8 * (data_counter * 2 + 1) + 7 -: 8] <= i_read_data;
-		state <= (data_counter == SEG7_COUNT) ? s_SEND_DATA : s_FETCH;
+		batch_data[8 * (data_counter * 2 + 0) + 7 -: 8] <= saved_led[data_counter];
+		state <= (data_counter == 8) ? s_SEND_DATA : s_FETCH;
 	end
 
 	s_SEND_DATA: begin

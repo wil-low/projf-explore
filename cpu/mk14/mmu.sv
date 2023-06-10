@@ -7,7 +7,8 @@ module mmu #(
 	parameter CLOCK_FREQ_MHZ = 50,	// clock frequency == ticks in 1 microsecond
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
-	parameter EXT_RAM_INIT_F = ""
+	parameter EXT_RAM_INIT_F = "",
+	parameter LED_BASE_ADDR = 0
 )
 (
 	input wire clk,
@@ -99,13 +100,17 @@ logic [8 * 8 - 1:0] disp = 0;
 // after 1 read a Seg7 digit is cleared (auto-dim)
 logic [7:0] seg_on = 0;
 
+logic [7:0] leds = 0;
+
 logic [8 * 8 - 1:0] kbd = {8{8'hff}};
 
 always @(posedge clk) begin
 	if (access_disp_kbd) begin
 		//$display("access_disp_kbd: we %b, addr %h, idx = %d, kbd %h", core_write_en, core_addr, (core_addr & 'h0f), kbd);
 		if (core_write_en) begin
-			if ((core_addr & 'h0f) <= 'h07) begin
+			if (core_addr == LED_BASE_ADDR)
+				leds <= core_write_data;
+			else if ((core_addr & 'h0f) <= 'h07) begin
 				disp[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] <= core_write_data;
 				seg_on[core_addr & 'h0f] <= 1;
 				//$display("Disp: %h", disp);
@@ -114,9 +119,8 @@ always @(posedge clk) begin
 		else begin
 			if (kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8] != 8'hff)
 				$display("kbd_out %h", kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8]);
-			if ((core_addr & 'h0f) <= 'h07) begin
+			if ((core_addr & 'h0f) <= 'h07)
 				kbd_read_data <= kbd[8 * ((core_addr & 'h0f) + 1) - 1 -: 8];
-			end
 		end
 	end
 
@@ -129,12 +133,16 @@ always @(posedge clk) begin
 	end
 
 	if (display_read_en) begin
-		if (seg_on[display_addr & 'h0f]) begin
-			display_data_out <= disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
-			seg_on[display_addr & 'h0f] <= 0;
+		if (display_addr == LED_BASE_ADDR)
+			display_data_out <= leds;
+		else begin
+			if (seg_on[display_addr & 'h0f]) begin
+				display_data_out <= disp[8 * ((display_addr & 'h0f) + 1) - 1 -: 8];
+				seg_on[display_addr & 'h0f] <= 0;
+			end
+			else
+				display_data_out <= 0;
 		end
-		else
-			display_data_out <= 0;
 	end
 end
 
