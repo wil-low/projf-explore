@@ -51,7 +51,7 @@ Score           .eq    12h             ; Score
 ;
 ; *****************************************************************************
 
-StartSpeed:     .db     0F0h
+StartSpeed:     .db     080h
 
 STMask  .eq    15                      ; shape table mask
 
@@ -60,7 +60,8 @@ ShapeTable:                             ; shapes
         .db     03h,06h,0Ch,18h,30h     ; double bar (5 off)
         .db     0Eh,38h                 ; triple bar (2 off)
         .db     1Ah                     ; spaced (1 off)
-        .db     01h,04h,20h             ; more single bars (3 off)
+        .db     2dh                     ; quadruple bar (2 off)
+        .db     01h,04h                 ; more single bars (3 off)
 
 ; *****************************************************************************
 ;
@@ -154,6 +155,7 @@ _EndLoop:                               ; saves a bit of coding...
         ild     Score(1)                ; increment the score by 1
 		st		0(3)					; show score
 
+        dld     Speed(1)                ; decrement the speed
         dld     Speed(1)                ; decrement the speed
         ldi     1                       ; set the collapse flag
         st      Collapse(1)
