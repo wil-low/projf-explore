@@ -259,6 +259,10 @@ always @(posedge clk) begin
 
 			`i_XPAL: begin
 				case (opcode[1:0])
+				0: begin
+					AC <= PC[7:0];
+					PC[7:0] <= AC;
+				end
 				1: begin
 					AC <= P1[7:0];
 					P1[7:0] <= AC;
@@ -277,6 +281,10 @@ always @(posedge clk) begin
 			end
 			`i_XPAH: begin
 				case (opcode[1:0])
+				0: begin
+					AC <= PC[15:8];
+					PC[15:8] <= AC;
+				end
 				1: begin
 					AC <= P1[15:8];
 					P1[15:8] <= AC;
