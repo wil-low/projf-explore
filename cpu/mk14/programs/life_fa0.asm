@@ -1,6 +1,6 @@
 	.CR	SCMP
-	.TF	LIFE.HEX,INT
-	.LF	LIFE.LST
+	.TF	life_fa0.hex,INT
+	.LF	life_fa0.lst
 ; *****************************************************************************
 ;
 ;       MK14 1 Dimensional Life by Paul M. Glover.
@@ -21,7 +21,7 @@
 ;		First release (v0p3)
 ; *****************************************************************************
 
-CELLST	.EQ	0x0880		; As original - change to 0B80 or similar if no IO/RAM or on emulator
+CELLST	.EQ	0x0B80		; As original - change to 0B80 or similar if no IO/RAM or on emulator
 GENSPED .EQ	0x7F		; Faster than 0xFF original which was "5 seconds per generation"
 	
 	.OR	0x0F12
@@ -179,9 +179,9 @@ N2	LD	Seg
 
 ;Support SH PI-Progammer Auto Start
 
-	.OR 0xFFFE
-	.DB 0x0F
-	.DB 0xA0
+;	.OR 0xFFFE
+;	.DB 0x0F
+;	.DB 0xA0
 
-	.EN
+;	.EN
 
