@@ -76,7 +76,7 @@ module top_hedgehog (
 			else sprx <= sprx - SPR_SPX;  // otherwise keep moving left
 		end
 		if (rst_pix) begin  // start off screen and level with grass
-			sprx <= H_RES;
+			sprx <= 0;
 			spry <= 141;
 		end
 	end

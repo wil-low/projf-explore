@@ -1,0 +1,68 @@
+//Copyright (C)2014-2023 Gowin Semiconductor Corporation.
+//All rights reserved. 
+//File Title: Physical Constraints file
+//GOWIN Version: 1.9.9 Beta
+//Part Number: GW1NR-LV9QN88PC6/I5
+//Device: GW1NR-9
+//Device Version: C
+//Created Time: Thu 05 11 22:05:22 2023
+
+IO_LOC "clk_27m" 52;
+
+IO_LOC "vga_clk"   35;
+IO_LOC "vga_hsync" 40;
+IO_LOC "vga_vsync" 34;
+IO_LOC "vga_de"    33;
+
+IO_LOC "vga_r[0]" 75;
+IO_LOC "vga_r[1]" 74;
+IO_LOC "vga_r[2]" 73;
+IO_LOC "vga_r[3]" 72;
+IO_LOC "vga_r[4]" 71;
+
+IO_LOC "vga_g[0]" 70;
+IO_LOC "vga_g[1]" 69;
+IO_LOC "vga_g[2]" 68;
+IO_LOC "vga_g[3]" 59;
+IO_LOC "vga_g[4]" 56;
+IO_LOC "vga_g[5]" 55;
+
+IO_LOC "vga_b[0]" 54;
+IO_LOC "vga_b[1]" 53;
+IO_LOC "vga_b[2]" 51;
+IO_LOC "vga_b[3]" 42;
+IO_LOC "vga_b[4]" 41;
+
+IO_LOC "btn_rst" 4;
+
+
+IO_PORT "clk_27m" PULL_MODE=UP;
+
+IO_PORT "clk_27m" IO_TYPE=LVCMOS33;
+
+IO_PORT "vga_clk"   IO_TYPE=LVCMOS33;
+IO_PORT "vga_hsync" IO_TYPE=LVCMOS33;
+IO_PORT "vga_vsync" IO_TYPE=LVCMOS33;
+IO_PORT "vga_de"    IO_TYPE=LVCMOS33;
+
+IO_PORT "vga_r[0]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_r[1]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_r[2]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_r[3]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_r[4]" IO_TYPE=LVCMOS33;
+
+IO_PORT "vga_g[0]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_g[1]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_g[2]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_g[3]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_g[4]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_g[5]" IO_TYPE=LVCMOS33;
+
+IO_PORT "vga_b[0]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_b[1]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_b[2]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_b[3]" IO_TYPE=LVCMOS33;
+IO_PORT "vga_b[4]" IO_TYPE=LVCMOS33;
+
+IO_PORT "btn_rst" IO_TYPE=LVCMOS18;
+

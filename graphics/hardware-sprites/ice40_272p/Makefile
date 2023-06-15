@@ -55,4 +55,7 @@ all: tinyf_inline tinyf_rom tinyf_scale hourglass hedgehog
 clean:
 	rm -f *.json *.asc *.rpt *.bin *yosys.log
 
+gowin_prog:
+	cd ../gowin && openFPGALoader -b tangnano9k hardware-sprites/impl/pnr/hardware-sprites.fs
+
 .PHONY: all clean

@@ -1,0 +1,6 @@
+**/impl/gwsynthesis/
+**/impl/pnr/
+**/impl/temp/
+*.gprj.user
+
+!project_process_config.json
