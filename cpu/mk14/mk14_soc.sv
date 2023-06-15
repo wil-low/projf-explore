@@ -153,6 +153,8 @@ core_inst (
 	.rst_n(rst_n && soft_reset),
 	.clk,
 	.en(core_en),
+	.sin,
+	.sout,
 	.mem_addr(core_addr),
 	.mem_read_data(core_data_out),
 	.mem_write_en(core_write_en),

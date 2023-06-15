@@ -20,14 +20,12 @@ module ir_keypad #(
 );
 
 `ifdef SIMULATION
-localparam BTN_RELEASE_TIMEOUT_CYCLES = 5;
+assign soft_reset = 1;
 `else
-localparam BTN_RELEASE_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 50;
-`endif
 
+localparam BTN_RELEASE_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 50;
 logic [$clog2(BTN_RELEASE_TIMEOUT_CYCLES) - 1: 0] btn_up_counter;
 
-`ifndef SIMULATION
 logic ir_idle;
 logic ir_data_ready;
 logic [4 * 8 - 1:0] ir_data;
