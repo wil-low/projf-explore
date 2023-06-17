@@ -22,6 +22,7 @@ ADD_SRC += ${PATH_LIB}/memory/rom_async.sv
 ADD_SRC += ../sprite_inline.sv
 ADD_SRC += ../sprite_rom.sv
 ADD_SRC += ../sprite.sv
+ADD_SRC += ../vdu.sv
 
 tinyf_inline: tinyf_inline.rpt tinyf_inline.bin tinyf_inline.link
 tinyf_rom: tinyf_rom.rpt tinyf_rom.bin tinyf_rom.link
@@ -29,6 +30,8 @@ tinyf_scale: tinyf_scale.rpt tinyf_scale.bin tinyf_scale.link
 tinyf_move: tinyf_move.rpt tinyf_move.bin tinyf_move.link
 hourglass: hourglass.rpt hourglass.bin hourglass.link
 hedgehog: hedgehog.rpt hedgehog.bin hedgehog.link
+
+vdu: vdu.rpt vdu.bin vdu.link
 
 %.json: top_%.sv $(ADD_SRC)
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
