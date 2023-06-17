@@ -53,6 +53,23 @@ vdu: vdu.rpt vdu.bin vdu.link
 	sudo sync
 	sudo umount $(ICELINK_DIR)
 
+vdu.sim: top_vdu_tb.vcd
+
+SIM_SRC = ../vdu.sv ${PATH_LIB}/memory/rom_async.sv
+
+%.vcd: %.sv $(SIM_SRC)
+
+	#-- Compile
+	iverilog -g2012 -Wall -DSIMULATION -I.. $< $(SIM_SRC) -o $(basename $@).out
+	
+	#-- Simulate
+	./$(basename $@).out
+
+	#-- Visualize the simulation with gtkwave
+	killall gtkwave || true
+	gtkwave $@ $(basename $@).gtkw &
+
+
 all: tinyf_inline tinyf_rom tinyf_scale hourglass hedgehog
 
 clean:

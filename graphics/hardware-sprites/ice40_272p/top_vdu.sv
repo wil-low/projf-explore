@@ -13,6 +13,14 @@ module top_vdu (
 	output	  logic [4:0] vga_b   // 5-bit VGA blue
 );
 
+// screen dimensions (must match display_inst)
+localparam H_RES = 480;
+localparam V_RES = 272;
+
+localparam SCALE = 0;
+localparam FONT_F = "../res/sprites/TI-83.mem";
+localparam DISP_MEM_F = "../res/sprites/disp_mem.mem";
+
 // generate pixel clock
 logic clk_pix;
 logic clk_pix_locked;
@@ -44,19 +52,18 @@ display_272p #(.CORDW(CORDW)) display_inst (
 	.line
 );
 
-// screen dimensions (must match display_inst)
-localparam H_RES = 480;
-localparam V_RES = 272;
-
-// sprite parameters
-localparam SPR_WIDTH  =  8;  // bitmap width in pixels
-localparam SPR_HEIGHT =  8;  // bitmap height in pixels
-localparam SPR_SCALE  =  3;  // 2^3 = 8x scale
-localparam SPR_DATAW  =  1;  // bits per pixel
-localparam SPR_FILE = "../res/sprites/TI-83.mem";  // bitmap file
-
-logic signed [CORDW-1:0] sprx = 0;  // horizontal position
-logic signed [CORDW-1:0] spry = 0;  // vertical position
+bram_sdp #(
+	.WIDTH(8), .DEPTH(512), .INIT_F(DISP_MEM_F)
+)
+disp_mem (
+	.clk_write(0),
+	.clk_read(clk_pix),
+	.we(0),
+	.addr_write(),
+	.addr_read(read_addr),
+	.data_in(),
+	.data_out(display_data)
+);
 
 // VDU
 logic read_en;
@@ -66,14 +73,15 @@ logic drawing;  // drawing at (sx,sy)
 
 vdu #(
 	.BASE_ADDR(0),
-	.SCALE(1),
-	.FONT_F("../res/sprites/TI-83.mem"),
-	.X_OFFSET(30),
-	.Y_OFFSET(30)
+	.SCALE(SCALE),
+	.FONT_F(FONT_F),
+	.X_OFFSET((H_RES - ((16 * 8) << SCALE)) / 2),
+	.Y_OFFSET(8)
 )
 vdu_inst (
 	.i_clk(clk_pix),
 	.i_en(1),
+	.i_frame(frame),
 	.i_line(line),
 	.i_sx(sx),
 	.i_sy(sy),
@@ -82,11 +90,6 @@ vdu_inst (
 	.i_display_data(display_data),
 	.o_drawing(drawing)
 );
-
-// instead of RAM
-always_comb begin
-	display_data = read_addr[5:0];
-end
 
 // paint colours: yellow sprite, blue background
 logic [4:0] paint_r, paint_b;
@@ -112,18 +115,6 @@ always_ff @(posedge clk_pix) begin
 		vga_r <= 0;
 		vga_g <= 0;
 		vga_b <= 0;
-	end
-	if (frame) begin
-		if (sprx < H_RES) begin
-			sprx <=  sprx + 1;//(SPR_WIDTH << SPR_SCALE);
-		end
-		else begin
-			sprx <= 0;
-			if (spry < V_RES)
-				spry <= spry + (SPR_HEIGHT << SPR_SCALE);
-			else
-				spry <= 0;
-		end
 	end
 end
 
