@@ -33,26 +33,34 @@ logic [15:0] read_data;
 logic [15:0] page;
 assign page = core_addr & 'hf00;
 
+logic access_rom;
 logic access_std_ram;
 logic access_ext_ram;
-logic access_rom;
 logic access_disp_kbd;
+logic access_rv0_ram;
+logic access_rv1_ram;
 
+assign access_rom = (page < 'h200);
 assign access_std_ram = (page == 'hf00);
 assign access_ext_ram = (page == 'hb00);
-assign access_rom = (page < 'h800);
 assign access_disp_kbd = (page == 'h900 || page == 'hd00);
+assign access_rv0_ram = (page >= 'h200 && page < 'h800);
+assign access_rv1_ram = (page >= 'h1200 && page < 'h1800);
 
+logic [7:0] rom_read_data;
 logic [7:0] std_ram_read_data;
 logic [7:0] ext_ram_read_data;
-logic [7:0] rom_read_data;
 logic [7:0] kbd_read_data;
+logic [7:0] rv0_ram_read_data;
+logic [7:0] rv1_ram_read_data;
 
 assign core_read_data = access_std_ram  ? std_ram_read_data : (
 						access_ext_ram  ? ext_ram_read_data : (
 						access_rom      ?     rom_read_data : (
+						access_rv0_ram  ? rv0_ram_read_data : (
+						access_rv1_ram  ? rv1_ram_read_data : (
 						access_disp_kbd ?    kbd_read_data : 'h00
-)));
+)))));
 
 bram_sdp #(
 	.WIDTH(8), .DEPTH(256), .INIT_F(STD_RAM_INIT_F)
@@ -80,6 +88,34 @@ ext_ram (
 	.addr_read(core_addr & 'hff),
 	.data_in(core_write_data),
 	.data_out(ext_ram_read_data)
+);
+
+bram_sdp #(
+	.WIDTH(8), .DEPTH(1536), .INIT_F(EXT_RAM_INIT_F)
+)
+realview_page0_ram (
+	.clk_write(clk),
+	.clk_read(clk),
+
+	.we(core_write_en && access_rv0_ram),
+	.addr_write(core_addr & 'h7ff),
+	.addr_read(core_addr & 'h7ff),
+	.data_in(core_write_data),
+	.data_out(rv0_ram_read_data)
+);
+
+bram_sdp #(
+	.WIDTH(8), .DEPTH(1536), .INIT_F(EXT_RAM_INIT_F)
+)
+realview_page1_ram (
+	.clk_write(clk),
+	.clk_read(clk),
+
+	.we(core_write_en && access_rv1_ram),
+	.addr_write(core_addr & 'h1fff),
+	.addr_read(core_addr & 'h1fff),
+	.data_in(core_write_data),
+	.data_out(rv1_ram_read_data)
 );
 
 bram_sdp #(
