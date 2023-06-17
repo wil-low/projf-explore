@@ -8,7 +8,10 @@ module mk14_soc #(
 	parameter DISPLAY_REFRESH_MSEC = 50,
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
-	parameter EXT_RAM_INIT_F = ""
+	parameter EXT_RAM_INIT_F = "",
+	parameter VDU_FONT_F = "",
+	parameter VDU_BASE_ADDR = 'h0200,
+	parameter VDU_RAM_F = ""
 )
 (
 	input wire logic rst_n,
@@ -31,7 +34,17 @@ module mk14_soc #(
 	input wire [2:0] btn_bit,
 `endif
 	input wire rx,
-	output logic rx_wait
+	output logic rx_wait,
+
+	input wire logic clk_pix,
+	input wire logic rst_pix,
+	output logic vga_clk,	  // VGA pixel clock
+	output logic vga_hsync,	// VGA horizontal sync
+	output logic vga_vsync,	// VGA vertical sync
+	output logic vga_de,	   // VGA data enable
+	output logic [4:0] vga_r,  // 5-bit VGA red
+	output logic [5:0] vga_g,  // 6-bit VGA green
+	output logic [4:0] vga_b   // 5-bit VGA blue
 );
 
 `ifdef SIMULATION
@@ -44,7 +57,6 @@ module mk14_soc #(
 	localparam RX_TIMEOUT_CYCLES = CLOCK_FREQ_MHZ * 1000 * 2000;
 	localparam RX_EXTEND_CYCLES = CLOCK_FREQ_MHZ * 1000 * 100;
 `endif
-
 
 logic [$clog2(RX_TIMEOUT_CYCLES) - 1: 0] display_refresh_counter;
 
@@ -93,11 +105,25 @@ assign data_in = rx_wait ? ihex_data : core_data_in;
 localparam SEG7_BASE_ADDR	= 'hD00;
 localparam LED_BASE_ADDR	= 'hD09;
 
+logic vdu_read_en_pix;
+logic vdu_read_en_sys;
+
+xd xd_frame (
+	.clk_src(clk_pix),
+	.clk_dst(clk),
+	.flag_src(vdu_read_en_pix),
+	.flag_dst(vdu_read_en_sys)
+);
+
+logic [15:0] vdu_addr;
+logic [7:0] vdu_data_out;
+
 mmu #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
 	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
+	.VDU_RAM_INIT_F(VDU_RAM_F),
 	.LED_BASE_ADDR(LED_BASE_ADDR)
 )
 mmu_inst (
@@ -115,13 +141,16 @@ mmu_inst (
 	.kbd_write_en(btn_dn ^ btn_up),
 	.kbd_addr(btn_addr),
 	.kbd_bit(btn_bit),
-	.kbd_pressed(btn_dn)
+	.kbd_pressed(btn_dn),
 `else
 	.kbd_write_en,
 	.kbd_addr,
 	.kbd_bit,
-	.kbd_pressed
+	.kbd_pressed,
 `endif
+	.vdu_read_en(vdu_read_en_sys),
+	.vdu_addr,
+	.vdu_data_out
 );
 
 tm1638_led_key_memmap #(
@@ -160,6 +189,26 @@ core_inst (
 	.mem_write_en(core_write_en),
 	.mem_write_data(core_data_in),
 	.trace
+);
+
+mk14_vdu #(
+	.FONT_F(VDU_FONT_F),
+	.BASE_ADDR(VDU_BASE_ADDR)
+)
+mk14_vdu_inst (
+	.clk_pix,
+	.rst_pix,
+	.read_en(vdu_read_en_pix),
+	.read_addr(vdu_addr),
+	.display_data(vdu_data_out),
+
+	.vga_clk,
+	.vga_hsync,
+	.vga_vsync,
+	.vga_de,
+	.vga_r,
+	.vga_g,
+	.vga_b
 );
 
 typedef enum {

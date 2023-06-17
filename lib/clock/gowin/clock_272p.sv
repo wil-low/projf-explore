@@ -15,7 +15,7 @@
 //Created Time: Thu Jun 15 22:01:05 2023
 
 module clock_272p (
-    input  wire logic clk_27m,        // input clock (27 MHz)
+    input  wire logic clk,            // input clock (27 MHz)
     input  wire logic rst,            // reset
     output      logic clk_pix,        // pixel clock
     output      logic clk_pix_locked  // pixel clock locked?
@@ -37,7 +37,7 @@ rPLL rpll_inst (
     .CLKOUTD3(clkoutd3_o),
     .RESET(rst),
     .RESET_P(gw_gnd),
-    .CLKIN(clk_27m),
+    .CLKIN(clk),
     .CLKFB(gw_gnd),
     .FBDSEL({gw_gnd,gw_gnd,gw_gnd,gw_gnd,gw_gnd,gw_gnd}),
     .IDSEL({gw_gnd,gw_gnd,gw_gnd,gw_gnd,gw_gnd,gw_gnd}),

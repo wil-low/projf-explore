@@ -8,6 +8,7 @@ module mmu #(
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
 	parameter EXT_RAM_INIT_F = "",
+	parameter VDU_RAM_INIT_F = "",
 	parameter LED_BASE_ADDR = 0
 )
 (
@@ -24,7 +25,11 @@ module mmu #(
 	input wire kbd_write_en,
 	input wire [2:0] kbd_addr,
 	input wire [2:0] kbd_bit,
-	input wire kbd_pressed
+	input wire kbd_pressed,
+
+	input wire vdu_read_en,
+	input wire [15:0] vdu_addr,
+	output logic [7:0] vdu_data_out
 );
 
 logic [15:0] write_data;
@@ -91,15 +96,15 @@ ext_ram (
 );
 
 bram_sdp #(
-	.WIDTH(8), .DEPTH(1536), .INIT_F(EXT_RAM_INIT_F)
+	.WIDTH(8), .DEPTH(1536), .INIT_F(VDU_RAM_INIT_F)
 )
 realview_page0_ram (
 	.clk_write(clk),
 	.clk_read(clk),
 
 	.we(core_write_en && access_rv0_ram),
-	.addr_write(core_addr & 'h7ff),
-	.addr_read(core_addr & 'h7ff),
+	.addr_write((core_addr & 'h7ff) - 'h200),
+	.addr_read(((vdu_read_en ? vdu_addr : core_addr) & 'h7ff) - 'h200),
 	.data_in(core_write_data),
 	.data_out(rv0_ram_read_data)
 );
@@ -180,6 +185,12 @@ always @(posedge clk) begin
 				display_data_out <= 0;
 		end
 	end
+
+	if (vdu_read_en) begin
+		vdu_data_out <= rv0_ram_read_data;
+	end
 end
+
+//assign vdu_data_out = rv0_ram_read_data;
 
 endmodule
