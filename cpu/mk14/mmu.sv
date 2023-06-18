@@ -9,6 +9,7 @@ module mmu #(
 	parameter STD_RAM_INIT_F = "",
 	parameter EXT_RAM_INIT_F = "",
 	parameter VDU_RAM_INIT_F = "",
+	parameter VDU_BASE_ADDR = 'h0200,
 	parameter LED_BASE_ADDR = 0
 )
 (
@@ -49,7 +50,7 @@ assign access_rom = (page < 'h200);
 assign access_std_ram = (page == 'hf00);
 assign access_ext_ram = (page == 'hb00);
 assign access_disp_kbd = (page == 'h900 || page == 'hd00);
-assign access_rv0_ram = (page >= 'h200 && page < 'h800);
+assign access_rv0_ram = (page >= VDU_BASE_ADDR && page < 'h800);
 assign access_rv1_ram = (page >= 'h1200 && page < 'h1800);
 
 logic [7:0] rom_read_data;
@@ -103,14 +104,14 @@ realview_page0_ram (
 	.clk(clk),
 
 	.we0(core_write_en && access_rv0_ram),
-	.addr_write0((core_addr & 'h7ff) - 'h200),
-	.addr_read0((core_addr & 'h7ff) - 'h200),
+	.addr_write0((core_addr & 'h7ff) - VDU_BASE_ADDR),
+	.addr_read0((core_addr & 'h7ff) - VDU_BASE_ADDR),
 	.data_in0(core_write_data),
 	.data_out0(rv0_ram_read_data),
 
 	.we1(0),
 	.addr_write1(),
-	.addr_read1((vdu_addr & 'h7ff) - 'h200),
+	.addr_read1((vdu_addr & 'h7ff) - VDU_BASE_ADDR),
 	.data_in1(),
 	.data_out1(vdu_data_out)
 );

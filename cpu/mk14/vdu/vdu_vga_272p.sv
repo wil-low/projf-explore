@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module mk14_vdu #(
+module vdu_vga272p #(
 	parameter FONT_F = "",
 	parameter BASE_ADDR = 0
 )
@@ -9,7 +9,7 @@ module mk14_vdu #(
 	input wire clk_pix,
 	input wire logic rst_pix,
 
-	output logic read_en,				// read memory enable
+	output logic read_en,			// read memory enable
 	output logic [15:0] read_addr,	// read address
 	input  wire [7:0] display_data,	// display memory data
 

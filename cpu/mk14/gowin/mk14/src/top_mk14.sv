@@ -43,8 +43,9 @@ localparam ROM_INIT_F		= "../../programs/SCIOS_Version_2.mem";
 localparam STD_RAM_INIT_F	= "../../ext_ram.mem";
 localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
 
-localparam FONT_F			= "../../vdu/TI-83.mem";
-localparam DISP_RAM_INIT_F	= "../../vdu/disp_mem.mem";
+localparam VDU_BASE_ADDR	= 'h0200;
+localparam VDU_FONT_F		= "../../vdu/TI-83.mem";
+localparam VDU_RAM_F		= "../../vdu/disp_mem.mem";
 
 
 // generate pixel clock
@@ -65,14 +66,17 @@ always_comb rst_pix = !clk_pix_locked;  // wait for clock lock
 
 assign input_clk_copy = CLK;
 
+logic vdu_read_en;			// read memory enable
+logic [15:0] vdu_addr;		// read address
+logic [7:0] vdu_data_out;	// display memory data
+
 mk14_soc #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
 	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
-	.VDU_FONT_F(FONT_F),
-	.VDU_RAM_F(DISP_RAM_INIT_F),
-	.VDU_BASE_ADDR('h0200)
+	.VDU_RAM_F(VDU_RAM_F),
+	.VDU_BASE_ADDR(VDU_BASE_ADDR)
 )
 mk14_soc_inst (
 	.rst_n,
@@ -87,9 +91,22 @@ mk14_soc_inst (
 	.sout(),
 	.rx(RX),
 	.rx_wait,
+	.vdu_read_en,
+	.vdu_addr,
+	.vdu_data_out
+);
 
+vdu_vga272p #(
+	.FONT_F(VDU_FONT_F),
+	.BASE_ADDR(VDU_BASE_ADDR)
+)
+mk14_vdu_inst (
 	.clk_pix,
 	.rst_pix,
+	.read_en(vdu_read_en),
+	.read_addr(vdu_addr),
+	.display_data(vdu_data_out),
+
 	.vga_clk,
 	.vga_hsync,
 	.vga_vsync,

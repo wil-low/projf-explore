@@ -9,7 +9,6 @@ module mk14_soc #(
 	parameter ROM_INIT_F = "",
 	parameter STD_RAM_INIT_F = "",
 	parameter EXT_RAM_INIT_F = "",
-	parameter VDU_FONT_F = "",
 	parameter VDU_BASE_ADDR = 'h0200,
 	parameter VDU_RAM_F = ""
 )
@@ -36,15 +35,9 @@ module mk14_soc #(
 	input wire rx,
 	output logic rx_wait,
 
-	input wire logic clk_pix,
-	input wire logic rst_pix,
-	output logic vga_clk,	  // VGA pixel clock
-	output logic vga_hsync,	// VGA horizontal sync
-	output logic vga_vsync,	// VGA vertical sync
-	output logic vga_de,	   // VGA data enable
-	output logic [4:0] vga_r,  // 5-bit VGA red
-	output logic [5:0] vga_g,  // 6-bit VGA green
-	output logic [4:0] vga_b   // 5-bit VGA blue
+	input wire vdu_read_en,
+	input wire [15:0] vdu_addr,
+	output logic [7:0] vdu_data_out
 );
 
 `ifdef SIMULATION
@@ -180,26 +173,6 @@ core_inst (
 	.mem_write_en(core_write_en),
 	.mem_write_data(core_data_in),
 	.trace
-);
-
-mk14_vdu #(
-	.FONT_F(VDU_FONT_F),
-	.BASE_ADDR(VDU_BASE_ADDR)
-)
-mk14_vdu_inst (
-	.clk_pix,
-	.rst_pix,
-	.read_en(vdu_read_en),
-	.read_addr(vdu_addr),
-	.display_data(vdu_data_out),
-
-	.vga_clk,
-	.vga_hsync,
-	.vga_vsync,
-	.vga_de,
-	.vga_r,
-	.vga_g,
-	.vga_b
 );
 
 typedef enum {
