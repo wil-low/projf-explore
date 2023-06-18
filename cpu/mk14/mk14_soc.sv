@@ -172,7 +172,7 @@ core #(
 core_inst (
 	.rst_n(rst_n && soft_reset),
 	.clk,
-	.en(core_en && !vdu_read_en),
+	.en(core_en/* && !vdu_read_en*/),
 	.sin,
 	.sout,
 	.mem_addr(core_addr),

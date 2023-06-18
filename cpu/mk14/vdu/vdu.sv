@@ -65,10 +65,8 @@ end
 logic [$clog2(FONT_W * H_CHARS) - 1:0] counter;
 
 enum {
-	s_IDLE, s_FETCH, s_FILL_SCANLINE, s_WAIT_POS, s_LINE
+	s_IDLE, s_PREPARE, s_FETCH, s_FILL_SCANLINE, s_WAIT_POS, s_LINE
 } state;
-
-assign o_read_en = (state == s_FILL_SCANLINE) || (state == s_FETCH);
 
 always_ff @(posedge i_clk) begin
 
@@ -76,11 +74,16 @@ always_ff @(posedge i_clk) begin
 
 	s_IDLE: begin
 		o_drawing <= 0;
-		if (i_en && i_line && spr_active) begin
-			counter <= H_CHARS - 1;
-			o_read_addr <= BASE_ADDR + (spr_diff >> 3) * 16;
-			state <= s_FETCH;
-		end
+		o_read_en <= 0;
+		if (i_en && i_line && spr_active)
+			state <= s_PREPARE;
+	end
+
+	s_PREPARE: begin
+		o_read_en <= 1;
+		counter <= H_CHARS - 1;
+		o_read_addr <= BASE_ADDR + (spr_diff >> 3) * 16;
+		state <= s_FETCH;
 	end
 
 	s_FETCH: begin
@@ -95,6 +98,7 @@ always_ff @(posedge i_clk) begin
 	end
 
 	s_WAIT_POS: begin
+		o_read_en <= 0;
 		if (i_sx >= X_OFFSET) begin
 			state <= s_LINE;
 			cnt_x <= 0;
