@@ -109,6 +109,8 @@ realview_page0_ram (
 	.data_out(rv0_ram_read_data)
 );
 
+assign vdu_data_out = rv0_ram_read_data;
+
 bram_sdp #(
 	.WIDTH(8), .DEPTH(1536), .INIT_F(EXT_RAM_INIT_F)
 )
@@ -185,12 +187,6 @@ always @(posedge clk) begin
 				display_data_out <= 0;
 		end
 	end
-
-	if (vdu_read_en) begin
-		vdu_data_out <= rv0_ram_read_data;
-	end
 end
-
-//assign vdu_data_out = rv0_ram_read_data;
 
 endmodule
