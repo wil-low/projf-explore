@@ -115,7 +115,23 @@ realview_page0_ram (
 	.data_in1(),
 	.data_out1(vdu_data_out)
 );
+/*
+bram_sdp #(
+	.WIDTH(8), .DEPTH(1536), .INIT_F(VDU_RAM_INIT_F)
+)
+realview_page0_ram (
+	.clk_write(clk),
+	.clk_read(clk),
 
+	.we(core_write_en && access_rv0_ram),
+	.addr_write((core_addr & 'h7ff) - VDU_BASE_ADDR),
+	.addr_read(((vdu_read_en ? vdu_addr : core_addr) & 'h7ff) - VDU_BASE_ADDR),
+	.data_in(core_write_data),
+	.data_out(rv0_ram_read_data)
+);
+
+assign vdu_data_out = rv0_ram_read_data;
+*/
 bram_sdp #(
 	.WIDTH(8), .DEPTH(1536), .INIT_F(EXT_RAM_INIT_F)
 )
