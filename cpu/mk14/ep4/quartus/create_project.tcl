@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Sun May 28 06:15:53 2023
+# Generated on: Sun Jun 18 18:47:17 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -75,6 +75,13 @@ if {$make_assignments} {
 	set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 	set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 	set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+	set_global_assignment -name VERILOG_FILE ../../../../lib/clock/ep4/pll_40m.v
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/clock/ep4/clock_600p.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/display/display_600p.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../vdu/vdu_vga_600p.sv
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/memory/rom_async.sv
+	set_global_assignment -name VERILOG_FILE ../../../../lib/clock/ep4/pll_25m.v
+	set_global_assignment -name SYSTEMVERILOG_FILE ../../vdu/vdu.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../ir_keypad.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE ../../../../lib/converter/intel_hex.sv
 	set_global_assignment -name SYSTEMVERILOG_FILE "../../../../lib/uart-2/uart_rx.sv"
@@ -114,6 +121,24 @@ if {$make_assignments} {
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to PROBE
 	set_location_assignment PIN_A9 -to IR
 	set_location_assignment PIN_M2 -to RX
+	set_location_assignment PIN_C3 -to vga_b[0]
+	set_location_assignment PIN_D4 -to vga_b[1]
+	set_location_assignment PIN_D3 -to vga_b[2]
+	set_location_assignment PIN_E5 -to vga_b[3]
+	set_location_assignment PIN_F6 -to vga_b[4]
+	set_location_assignment PIN_F5 -to vga_g[0]
+	set_location_assignment PIN_G5 -to vga_g[1]
+	set_location_assignment PIN_F7 -to vga_g[2]
+	set_location_assignment PIN_K8 -to vga_g[3]
+	set_location_assignment PIN_L8 -to vga_g[4]
+	set_location_assignment PIN_J6 -to vga_g[5]
+	set_location_assignment PIN_K6 -to vga_r[0]
+	set_location_assignment PIN_K5 -to vga_r[1]
+	set_location_assignment PIN_L7 -to vga_r[2]
+	set_location_assignment PIN_L3 -to vga_r[3]
+	set_location_assignment PIN_L4 -to vga_r[4]
+	set_location_assignment PIN_N3 -to vga_vsync
+	set_location_assignment PIN_L6 -to vga_hsync
 	set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 
 	# Commit assignments
