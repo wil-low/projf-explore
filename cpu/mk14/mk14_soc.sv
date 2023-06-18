@@ -105,16 +105,7 @@ assign data_in = rx_wait ? ihex_data : core_data_in;
 localparam SEG7_BASE_ADDR	= 'hD00;
 localparam LED_BASE_ADDR	= 'hD09;
 
-logic vdu_read_en_pix;
-logic vdu_read_en_sys;
-
-xd xd_frame (
-	.clk_src(clk_pix),
-	.clk_dst(clk),
-	.flag_src(vdu_read_en_pix),
-	.flag_dst(vdu_read_en_sys)
-);
-
+logic vdu_read_en;
 logic [15:0] vdu_addr;
 logic [7:0] vdu_data_out;
 
@@ -148,7 +139,7 @@ mmu_inst (
 	.kbd_bit,
 	.kbd_pressed,
 `endif
-	.vdu_read_en(vdu_read_en_sys),
+	.vdu_read_en,
 	.vdu_addr,
 	.vdu_data_out
 );
@@ -181,7 +172,7 @@ core #(
 core_inst (
 	.rst_n(rst_n && soft_reset),
 	.clk,
-	.en(core_en),
+	.en(core_en && !vdu_read_en),
 	.sin,
 	.sout,
 	.mem_addr(core_addr),
@@ -198,7 +189,7 @@ mk14_vdu #(
 mk14_vdu_inst (
 	.clk_pix,
 	.rst_pix,
-	.read_en(vdu_read_en_pix),
+	.read_en(vdu_read_en),
 	.read_addr(vdu_addr),
 	.display_data(vdu_data_out),
 

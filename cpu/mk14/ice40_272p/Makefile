@@ -27,7 +27,7 @@ ADD_SRC += ../core.sv
 ADD_SRC += ../mmu.sv
 ADD_SRC += ../ir_keypad.sv
 ADD_SRC += ../mk14_soc.sv
-ADD_SRC += ../mk14_vdu.sv
+ADD_SRC += ../vdu/mk14_vdu.sv
 ADD_SRC += ../vdu/vdu.sv
 
 mk14: mk14.rpt mk14.bin mk14.link

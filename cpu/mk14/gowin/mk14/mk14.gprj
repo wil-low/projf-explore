@@ -13,7 +13,6 @@
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/vdu/mk14_vdu.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/cpu/mk14/vdu/vdu.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/clock/gowin/clock_272p.sv" type="file.verilog" enable="1"/>
-        <File path="/home/willow/prj/fpga-other/projf-explore/lib/clock/xd.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/converter/intel_hex.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/display/display_272p.sv" type="file.verilog" enable="1"/>
         <File path="/home/willow/prj/fpga-other/projf-explore/lib/essential/sb_inout.sv" type="file.verilog" enable="1"/>

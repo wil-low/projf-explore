@@ -7,11 +7,11 @@ localparam CLK_PERIOD = 2;  // 10 ns == 100 MHz
 
 localparam ROM_INIT_F		= "../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../programs/display.mem";
-localparam STD_RAM_INIT_F		= "../programs/segtris_p1.mem";
-//localparam STD_RAM_INIT_F	= "../programs/clock.mem";
-//localparam STD_RAM_INIT_F	= "../programs/test.mem";
-//localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
-localparam EXT_RAM_INIT_F	= "../programs/segtris_p2.mem";
+localparam STD_RAM_INIT_F	= "../ext_ram.mem";
+localparam EXT_RAM_INIT_F	= "../ext_ram.mem";
+
+localparam FONT_F			= "../vdu/TI-83.mem";
+localparam DISP_RAM_INIT_F	= "../vdu/disp_mem.mem";
 
 logic rst_n;
 logic clk;
@@ -36,7 +36,10 @@ mk14_soc #(
 	.DISPLAY_REFRESH_MSEC(5),
 	.ROM_INIT_F(ROM_INIT_F),
 	.STD_RAM_INIT_F(STD_RAM_INIT_F),
-	.EXT_RAM_INIT_F(EXT_RAM_INIT_F)
+	.EXT_RAM_INIT_F(EXT_RAM_INIT_F),
+	.VDU_FONT_F(FONT_F),
+	.VDU_RAM_F(DISP_RAM_INIT_F),
+	.VDU_BASE_ADDR('h0200)
 )
 mk14_soc_inst (
 	.rst_n,
@@ -49,7 +52,10 @@ mk14_soc_inst (
 	.btn_dn,
 	.btn_up,
 	.btn_addr,
-	.btn_bit
+	.btn_bit,
+
+	.clk_pix(clk),
+	.rst_pix(1)
 );
 
 initial begin
@@ -59,8 +65,8 @@ initial begin
 	clk = 1;
 	//$display("rst_n %b", rst_n);
 
-	#2 rst_n = 1;
-
+	#20 rst_n = 1;
+/*
 	#1920;  // F
 	btn_dn = 1;
 	btn_up = 0;
@@ -102,35 +108,8 @@ initial begin
 	#50 $display("Press GO");
 
 	//$display("rst_n %b", rst_n);
-
-	#800000 $finish;
-end
-
-/*
-logic carry_in = 1;
-logic [7:0] a = 'h55;
-logic [7:0] b = 'h44;
-
-logic [7:0] sum = 0;
-logic carry_out = 0;
-
-always @(posedge clk) begin
-	if (a[3:0] + b[3:0] + carry_in > 9) begin
-		sum[3:0] <= a[3:0] + b[3:0] + carry_in + 6;
-		if (a[7:4] + b[7:4] + 1 > 9)
-			{carry_out, sum[7:4]} <= a[7:4] + b[7:4] + 6 + 1;
-		else
-			{carry_out, sum[7:4]} <= a[7:4] + b[7:4] + 1;
-	end
-	else begin
-		sum[3:0] <= a[3:0] + b[3:0] + carry_in;
-		if (a[7:4] + b[7:4] > 9)
-			{carry_out, sum[7:4]} <= a[7:4] + b[7:4] + 6;
-		else
-			{carry_out, sum[7:4]} <= a[7:4] + b[7:4];
-	end
-	$display("BCD %h add %h (c %b) = %h (c %b)", a, b, carry_in, sum, carry_out);
-end
 */
+	#80000 $finish;
+end
 
 endmodule

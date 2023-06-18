@@ -119,8 +119,8 @@ realview_page1_ram (
 	.clk_read(clk),
 
 	.we(core_write_en && access_rv1_ram),
-	.addr_write(core_addr & 'h1fff),
-	.addr_read(core_addr & 'h1fff),
+	.addr_write((core_addr & 'h1fff) - 'h1200),
+	.addr_read((core_addr & 'h1fff) - 'h1200),
 	.data_in(core_write_data),
 	.data_out(rv1_ram_read_data)
 );
