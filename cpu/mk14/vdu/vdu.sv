@@ -88,7 +88,7 @@ always_ff @(posedge i_clk) begin
 	end
 
 	s_FILL_SCANLINE: begin
-		scanline[8 * counter + 7 -: 8] <= font_rom_data;
+		scanline[8 * counter + 7 -: 8] <= i_display_data[7] ? ~font_rom_data : font_rom_data;
 		o_read_addr <= o_read_addr + 1;
 		counter <= counter - 1;
 		state <= (counter == 0) ? s_WAIT_POS : s_FETCH;
