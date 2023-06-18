@@ -98,10 +98,6 @@ assign data_in = rx_wait ? ihex_data : core_data_in;
 localparam SEG7_BASE_ADDR	= 'hD00;
 localparam LED_BASE_ADDR	= 'hD09;
 
-logic vdu_read_en;
-logic [15:0] vdu_addr;
-logic [7:0] vdu_data_out;
-
 mmu #(
 	.CLOCK_FREQ_MHZ(CLOCK_FREQ_MHZ),
 	.ROM_INIT_F(ROM_INIT_F),
