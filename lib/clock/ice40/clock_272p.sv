@@ -9,7 +9,7 @@
 // iCE40 PLLs are documented in Lattice TN1251 and ICE Technology Library
 
 module clock_272p (
-    input  wire logic clk,            // input clock (12 MHz)
+    input  wire logic clk_12m         // input clock (12 MHz)
     input  wire logic rst,            // reset
     output      logic clk_pix,        // pixel clock
     output      logic clk_pix_locked, // pixel clock locked?
@@ -30,7 +30,7 @@ SB_PLL40_2_PAD #(
     .DIVQ(DIVQ),
     .FILTER_RANGE(FILTER_RANGE)
 ) SB_PLL40_PAD_inst (
-    .PACKAGEPIN(clk),
+    .PACKAGEPIN(clk_12m),
     .PLLOUTGLOBALA(clk_pix),  // use global clock network
     .PLLOUTGLOBALB(input_clk_copy), // use global clock network
     .RESETB(rst),

@@ -54,7 +54,7 @@ logic clk_pix_locked;
 logic input_clk_copy;
 
 clock_272p clock_pix_inst (
-	.clk(CLK),
+	.clk_27m(CLK),
 	.rst(~rst_n),
 	.clk_pix,
 	.clk_pix_locked

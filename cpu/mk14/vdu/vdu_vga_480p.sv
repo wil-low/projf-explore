@@ -23,8 +23,6 @@ module vdu_vga480p #(
 );
 
 // screen dimensions (must match display_inst)
-localparam H_RES = 640;
-localparam V_RES = 480;
 
 localparam SCALE = 0;
 
@@ -44,6 +42,9 @@ display_480p #(.CORDW(CORDW)) display_inst (
 	.frame,
 	.line
 );
+
+localparam H_RES = display_inst.H_RES;// 640;
+localparam V_RES = display_inst.V_RES;//480;
 
 // VDU
 logic drawing;  // drawing at (sx,sy)
