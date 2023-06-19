@@ -13,13 +13,15 @@ ADD_SRC += ${PATH_LIB}/essential/sb_inout.sv
 ADD_SRC += ${PATH_LIB}/infrared/infrared_rx.sv
 ADD_SRC += ${PATH_LIB}/uart-2/uart_rx.sv
 ADD_SRC += ${PATH_LIB}/converter/intel_hex.sv
-ADD_SRC += ${PATH_LIB}/display/display_272p.sv
-ADD_SRC += ${PATH_LIB}/clock/ecp5/clock_272p.sv
+ADD_SRC += ${PATH_LIB}/display/display_480p.sv
+ADD_SRC += ${PATH_LIB}/display/ecp5/OBUFDS.sv
+ADD_SRC += ${PATH_LIB}/display/ecp5/TMDS_encoder.sv
+ADD_SRC += ${PATH_LIB}/clock/ecp5/clock_480p.sv
 ADD_SRC += ../core.sv
 ADD_SRC += ../mmu.sv
 ADD_SRC += ../ir_keypad.sv
 ADD_SRC += ../mk14_soc.sv
-ADD_SRC += ../vdu/vdu_vga_272p.sv
+ADD_SRC += ../vdu/ecp5/vdu_hdmi_480p.sv
 ADD_SRC += ../vdu/vdu.sv
 
 TRELLIS=/usr/local/share/trellis
@@ -29,7 +31,7 @@ all: ${TARGET}.bit
 $(TARGET).json: top_$(TARGET).sv $(ADD_SRC)
 	yosys -ql $(basename $@)-yosys.log -p "synth_ecp5 -top top_$(basename $@) -json $@" $(ADD_SRC)
 
-$(TARGET)_out.config: $(TARGET).json
+$(TARGET)_out.config: $(TARGET).json colorlight_i9.lpf
 	nextpnr-ecp5 -ql $(basename $@)-nextpnr.log --45k --package CABGA381 --speed 6 --json $< --textcfg $@ --lpf colorlight_i9.lpf --freq 25
 
 $(TARGET).bit: $(TARGET)_out.config
