@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module vdu_vga480p #(
+module vdu_vga_480p #(
 	parameter FONT_F = "",
 	parameter BASE_ADDR = 0
 )

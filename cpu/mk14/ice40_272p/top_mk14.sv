@@ -104,7 +104,7 @@ mk14_soc_inst (
 	.vdu_data_out
 );
 
-vdu_vga272p #(
+vdu_vga_272p #(
 	.FONT_F(VDU_FONT_F),
 	.BASE_ADDR(VDU_BASE_ADDR)
 )
