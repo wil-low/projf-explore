@@ -44,7 +44,7 @@ localparam STD_RAM_INIT_F	= "../../ext_ram.mem";
 localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
 
 localparam VDU_BASE_ADDR	= 'h0200;
-localparam VDU_FONT_F		= "../../vdu/TI-83.mem";
+localparam VDU_FONT_F		= "../../vdu/TI-83-portrait.mem";
 localparam VDU_RAM_F		= "../../vdu/disp_mem.mem";
 
 
@@ -96,7 +96,7 @@ mk14_soc_inst (
 	.vdu_data_out
 );
 
-vdu_vga_272p #(
+vdu_vga_272p_portrait #(
 	.FONT_F(VDU_FONT_F),
 	.BASE_ADDR(VDU_BASE_ADDR)
 )
