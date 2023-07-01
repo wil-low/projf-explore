@@ -35,6 +35,8 @@ module mk14_soc #(
 	input wire rx,
 	output logic rx_wait,
 
+	output logic vdu_en,
+	output logic vdu_graphics_mode,
 	input wire vdu_read_en,
 	input wire [15:0] vdu_addr,
 	output logic [7:0] vdu_data_out
@@ -164,6 +166,8 @@ core_inst (
 	.en(core_en/* && !vdu_read_en*/),
 	.sin,
 	.sout,
+	.vdu_en,
+	.vdu_graphics_mode,
 	.mem_addr(core_addr),
 	.mem_read_data(core_data_out),
 	.mem_write_en(core_write_en),

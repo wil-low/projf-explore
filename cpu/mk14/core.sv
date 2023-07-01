@@ -16,6 +16,9 @@ module core #(
 	input wire sin,
 	output logic sout,
 
+	output logic vdu_en,
+	output logic vdu_graphics_mode,
+
 	output logic [15:0] mem_addr,
 	input wire logic [7:0] mem_read_data,
 	output logic mem_write_en,
@@ -57,6 +60,9 @@ logic [15:0] P3 = 0;
 
 logic [16 * 4 - 1:0] REG_WIRE;
 assign REG_WIRE = {P3, P2, P1, PC};
+
+assign vdu_en = F1;
+assign vdu_graphics_mode = F2;
 
 //============ Internal registers ============
 logic [7:0] opcode;	// store current opcode (1st byte)

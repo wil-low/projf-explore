@@ -45,7 +45,7 @@ localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
 
 localparam VDU_BASE_ADDR	= 'h0200;
 localparam VDU_FONT_F		= "../../vdu/TI-83-portrait.mem";
-localparam VDU_RAM_F		= "../../vdu/disp_mem.mem";
+localparam VDU_RAM_F		= "../../vdu/disp_graph.mem";
 
 
 // generate pixel clock
@@ -66,6 +66,8 @@ always_comb rst_pix = !clk_pix_locked;  // wait for clock lock
 
 assign input_clk_copy = CLK;
 
+logic vdu_en;				// enable VDU (F1 = ON)
+logic vdu_graphics_mode;	// graphics mode (F2 = ON)
 logic vdu_read_en;			// read memory enable
 logic [15:0] vdu_addr;		// read address
 logic [7:0] vdu_data_out;	// display memory data
@@ -91,6 +93,8 @@ mk14_soc_inst (
 	.sout(),
 	.rx(RX),
 	.rx_wait,
+	.vdu_en,
+	.vdu_graphics_mode,
 	.vdu_read_en,
 	.vdu_addr,
 	.vdu_data_out
@@ -103,6 +107,8 @@ vdu_vga_272p_portrait #(
 mk14_vdu_inst (
 	.clk_pix,
 	.rst_pix,
+	.en(1'b1/*vdu_en*/),
+	.graphics_mode(vdu_graphics_mode),
 	.read_en(vdu_read_en),
 	.read_addr(vdu_addr),
 	.display_data(vdu_data_out),

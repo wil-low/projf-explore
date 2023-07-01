@@ -10,7 +10,7 @@
 ; *****************************************************************************
 
 RAM	.EQ	0x0F00		;For Variables
-DISP	.EQ	0x0B00		;Display Memory
+DISP	.EQ	0x0200		;Display Memory
 ;
 ;RAM OFFSETS
 ;
@@ -21,8 +21,8 @@ ROW	.EQ	4		;Row count
 	.OR	0x0F20
 
 ENTER:	
-;	LDI	3		;Enable VDU and Graphics mode (F1-ON,F2-ON=Graphics)
-;	CAS
+	LDI	6		;Enable VDU and Graphics mode (F1-ON,F2-ON=Graphics)
+	CAS
 ;	JMP	ENTER
 ;not needed at mo as sendv14 does a reset at the end before the execute?	
 	

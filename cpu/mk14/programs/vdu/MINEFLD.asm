@@ -1,6 +1,6 @@
 	.CR	SCMP
-	.TF	MINEFLD.HEX,INT
-	.LF	MINEFLD.LST
+	.TF	MINEFLD.hex,INT
+	.LF	MINEFLD.lst
 ; *****************************************************************************
 ; MK14 MINEFIELD
 ;
@@ -15,7 +15,7 @@
 ; Version 0p3
 ;
  
-VDU	.EQ	0x0B00		; Section to CLS on VDU
+VDU	.EQ	0x0200		; Section to CLS on VDU
 
  
  	.ORG	0x0F1F		; Was 0x0F1F
