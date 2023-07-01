@@ -22,7 +22,7 @@
 ; *****************************************************************************
 
 CELLST	.EQ	0x0B80		; As original - change to 0B80 or similar if no IO/RAM or on emulator
-GENSPED .EQ	0x7F		; Faster than 0xFF original which was "5 seconds per generation"
+GENSPED .EQ	0x3F		; Faster than 0xFF original which was "5 seconds per generation"
 	
 	.OR	0x0F12
 	

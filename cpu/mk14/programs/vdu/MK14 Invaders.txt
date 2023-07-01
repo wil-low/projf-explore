@@ -1,0 +1,29 @@
+Hi, I've been a bit quiet recently as I've been multi-tasking on the VDU module and a new game. I mentioned some time back that I had started INVADERS for the MK14 and it's now ready to unveil. Got to say I'm pretty pleased with the end result.
+
+- You have 5 lives
+- When you clear all invaders from the screen a new set of invaders appear
+- Hitting an invader gets you 1 point, up to a maximum 99 points
+- The invaders are rotated around the screen (as opposed to zigzagging left/right). After 14 rotations the invaders drop down a row
+- Key 1 to move shooter left
+- Key 2 to shoot a bullet
+- Key 3 to move shooter right
+- Key GO to restart game once all lives are used
+- Key ABORT to exit to monitor at any time
+- All characters on screen are defined by constants, so easy to customise
+
+The game requires continuous memory from 0x0200 to 0x07FF and also uses the MK14 base RAM. The memory map is:
+
+0x200-0x2FF Video RAM top half of screen
+0x300-0x3FF Video RAM lower half of screen
+0x400-0x7FC Game code. Yes there are 4 bytes spare 
+0xF20-0xF36 Game variables
+
+There is also control of the VDU module via the INS8154. For correct operation the VDU TOPPAGE signal needs to be wired to PS1 to properly display the 2 pages of video RAM.
+
+It takes 4 minutes to load using the standard tape interface and about 4 seconds using Coolsnaz2's M5Stick-C based fast loader.
+
+Attached are a couple of screen shots and here's a link to a short video. I just bought a USB video capture device so the screen shots and video are direct from the VDU module.
+
+https://youtu.be/GBNdN9o6Emk?t=5
+
+I will be making the assembly code and hex available shortly - just want to add a few more comments to the code. I'm sure there are areas that can be made more memory efficient but for now it fits and it works.

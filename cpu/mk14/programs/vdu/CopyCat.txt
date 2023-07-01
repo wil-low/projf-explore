@@ -1,0 +1,29 @@
+I'm making the most of being away on holiday and have been working on a new MK14 game in the evenings!
+
+The game is called CopyCat and is a number sequence memory game. On start-up the screen shows the MK14 numeric keypad layout and highlights a sequence of keys to be copied by the player using keys 1 to 9.
+
+The game has 6 levels
+Level 1: 5 number sequence (easy)
+Level 2: 6 number sequence
+Level 3: 7 number sequence
+Level 4: 8 number sequence
+Level 5: 9 number sequence
+Level 6: 10 number sequence (practically impossible for me)
+
+In Levels 1 to 5 you must correctly replicate 7 random number sequences before moving onto the next level. In Level 6 it's as many sequences (of 10 digits) as you can bare. You have 9 lives and if you get a sequence wrong you loose a life. At the end of 9 lives the game is over - press GO to start a new game.
+
+When the game is first loaded you are given the choice of using a VDU module that can display individual inverse video characters (e.g. RealView, MAME, modified SoC VDU, RPi module) or one that only displays 'normal' characters (e.g. original SoC VDU module, replica SoC VDU, OrtonView) - see the attached photo. This modifies the way the number sequence is displayed on the VDU.
+
+The attached CopyCat.zip contains the following files:
+CopyCat.asm : SBASM format assembler
+CopyCat.hex : Intel Hex format file, with start address embedded
+CopyCat.lst : SBASM listing file
+CopyCat.bin : binary file suitable for loading into MAME or converting to .wav
+The load address for the program is 0x200 (yes, into video RAM) and the start address is 0x400. The main screen display is loaded with the program, rather than being generated on the fly, so if you exit in the middle of a game you will need to reload the game to play it again.
+
+The program requires the following resources:
+Extended SRAM from 0x200 to 0x7FF
+Base SRAM at 0xF00 to 0xFFF
+SCIOS V2 or V3 for the keyboard scan routine
+VDU module setup for Character mode, 0x200 - Top half of screen, 0x300 - Bottom half of screen
+I'll create a .wav file for normal tape interface use when I get back home and post a video on YouTube.

@@ -1,0 +1,12 @@
+Please find attached below Solitaire for the MK14 with VDU display. The program requires the MK14 to be fully populated, and with additional memory between 0x0200 and 0x7FF.
+
+Two versions are available, one for the RealView VDU with the enhanced graphics (solitaire_v1r.hex), and the other for the standard MK14 VDU character set (solitaire_v1o.hex).
+
+The program executes at 0x0400 and the VDU memory needs to reside at 0x200.
+
+You play the game using the standard MK14 keyboard. Keys 1 to 7 are used to move cards from the columns, key 8 is used to take a card from the hidden pack, key 9 is used to take a card from the pack, keys A to D are used to move cards to and from the foundation piles.
+
+Limitations:-
+The game has a few limitation, the game does not tell you when you have won or when you have made an illegal move, you are unable to undo a move, and the game will always take one card from the pack. To restart the game you have to hit the Abort key and re-enter the start address 0x400.
+
+I would like to thank Realtime for the random number routine and for testing/playing the game a number of times during the games development.
