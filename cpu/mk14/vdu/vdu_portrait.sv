@@ -7,7 +7,8 @@ module vdu_portrait #(
     parameter CORDW = 16,      			// signed coordinate width (bits)
 	parameter H_RES = 480,     			// horizontal screen resolution (pixels)
 	parameter BASE_ADDR = 'h0200,		// start of display memory
-	parameter SCALE = 3,				// scaling factor 2^n
+	parameter C_SCALE = 3,				// character mode scaling factor 2^n
+	parameter G_SCALE = 3,				// graphics mode scaling factor 2^n
 	parameter FONT_F = ""				// 8x8 font file (64 chars)
 )
 (
@@ -53,15 +54,18 @@ font_rom(
 
 logic signed [CORDW - 1:0]  spr_diff;  // diff vertical screen and sprite positions
 logic spr_active;  // sprite active on this line
-logic [SCALE:0] cnt_x;	// horizontal scale counter
+logic [(G_SCALE > C_SCALE ? G_SCALE : C_SCALE):0] cnt_x;	// horizontal scale counter
 logic line_end;			// end of screen line, corrected for sx offset
 
 always_comb begin
-	spr_diff = (i_sy - i_y_offset) >>> SCALE;  // arithmetic right-shift
-	if (i_graphics_mode)
+	if (i_graphics_mode) begin
+		spr_diff = (i_sy - i_y_offset) >>> G_SCALE;  // arithmetic right-shift
 		spr_active = (spr_diff >= 0) && (spr_diff < 64);
-	else
+	end
+	else begin
+		spr_diff = (i_sy - i_y_offset) >>> C_SCALE;  // arithmetic right-shift
 		spr_active = (spr_diff >= 0) && (spr_diff < FONT_W * H_CHARS);
+	end
 	font_rom_addr = i_display_data * FONT_H + spr_diff[2:0];
 	line_end = (i_sx == H_RES - i_x_offset);
 end
@@ -138,14 +142,26 @@ always_ff @(posedge i_clk) begin
 		if (line_end)
 			state <= s_IDLE;
 		o_drawing <= scanline[counter];
-		if (SCALE == 0 || cnt_x == 2**SCALE - 1) begin
-			if (counter == 0)
-				state <= s_IDLE;
-			counter <= counter - 1;
-			cnt_x <= 0;
+		if (i_graphics_mode) begin
+			if (G_SCALE == 0 || cnt_x == 2**G_SCALE - 1) begin
+				if (counter == 0)
+					state <= s_IDLE;
+				counter <= counter - 1;
+				cnt_x <= 0;
+			end
+			else
+				cnt_x <= cnt_x + 1;
 		end
-		else
-			cnt_x <= cnt_x + 1;
+		else begin
+			if (C_SCALE == 0 || cnt_x == 2**C_SCALE - 1) begin
+				if (counter == 0)
+					state <= s_IDLE;
+				counter <= counter - 1;
+				cnt_x <= 0;
+			end
+			else
+				cnt_x <= cnt_x + 1;
+		end
 	end
 
 	default:

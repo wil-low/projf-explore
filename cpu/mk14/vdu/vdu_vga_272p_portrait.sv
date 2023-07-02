@@ -29,7 +29,8 @@ module vdu_vga_272p_portrait #(
 localparam H_RES = 480;
 localparam V_RES = 272;
 
-localparam SCALE = 1;
+localparam C_SCALE = 1;
+localparam G_SCALE = 2;
 
 // display sync signals and coordinates
 localparam CORDW = 16;  // signed coordinate width (bits)
@@ -60,7 +61,8 @@ logic drawing;  // drawing at (sx,sy)
 
 vdu_portrait #(
 	.BASE_ADDR(BASE_ADDR),
-	.SCALE(SCALE),
+	.C_SCALE(C_SCALE),
+	.G_SCALE(G_SCALE),
 	.FONT_F(FONT_F)
 )
 vdu_inst (
@@ -69,8 +71,8 @@ vdu_inst (
 	.i_graphics_mode(graphics_mode),
 	.i_frame(frame),
 	.i_line(line),
-	.i_x_offset(graphics_mode ? (H_RES - (64 << SCALE)) / 2 : (H_RES - ((30 * 8) << SCALE)) / 2),
-	.i_y_offset(graphics_mode ? (V_RES - (64 << SCALE)) / 2 : 8),
+	.i_x_offset(graphics_mode ? (H_RES - (64 << G_SCALE)) / 2 : (H_RES - ((30 * 8) << C_SCALE)) / 2),
+	.i_y_offset(graphics_mode ? (V_RES - (64 << G_SCALE)) / 2 : (V_RES - ((16 * 8) << C_SCALE)) / 2),
 	.i_sx(sx),
 	.i_sy(sy),
 	.o_read_en(read_enabled),

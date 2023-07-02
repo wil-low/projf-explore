@@ -44,7 +44,8 @@ localparam STD_RAM_INIT_F	= "../../ext_ram.mem";
 localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
 
 localparam VDU_BASE_ADDR	= 'h0200;
-localparam VDU_FONT_F		= "../../vdu/TI-83-portrait.mem";
+localparam VDU_FONT			= "../../vdu/TI-83.mem";
+localparam VDU_FONT_PORTRAIT= "../../vdu/TI-83-portrait.mem";
 localparam VDU_RAM_F		= "../../vdu/disp_graph.mem";
 
 
@@ -100,8 +101,11 @@ mk14_soc_inst (
 	.vdu_data_out
 );
 
+//`define PORTRAIT
+
+`ifdef PORTRAIT
 vdu_vga_272p_portrait #(
-	.FONT_F(VDU_FONT_F),
+	.FONT_F(VDU_FONT_PORTRAIT),
 	.BASE_ADDR(VDU_BASE_ADDR)
 )
 mk14_vdu_inst (
@@ -121,5 +125,28 @@ mk14_vdu_inst (
 	.vga_g,
 	.vga_b
 );
+`else
+vdu_vga_272p #(
+	.FONT_F(VDU_FONT),
+	.BASE_ADDR(VDU_BASE_ADDR)
+)
+mk14_vdu_inst (
+	.clk_pix,
+	.rst_pix,
+	.en(1'b1/*vdu_en*/),
+	.graphics_mode(vdu_graphics_mode),
+	.read_en(vdu_read_en),
+	.read_addr(vdu_addr),
+	.display_data(vdu_data_out),
+
+	.vga_clk,
+	.vga_hsync,
+	.vga_vsync,
+	.vga_de,
+	.vga_r,
+	.vga_g,
+	.vga_b
+);
+`endif
 
 endmodule
