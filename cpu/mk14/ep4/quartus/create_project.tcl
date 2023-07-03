@@ -15,7 +15,7 @@
 
 # Quartus Prime: Generate Tcl File for Project
 # File: create_project.tcl
-# Generated on: Sun Jun 18 18:47:17 2023
+# Generated on: Mon Jul  3 09:14:06 2023
 
 # Load Quartus Prime Tcl Project package
 package require ::quartus::project
@@ -111,10 +111,10 @@ if {$make_assignments} {
 	set_location_assignment PIN_D5 -to LED[5]
 	set_location_assignment PIN_C6 -to LED[6]
 	set_location_assignment PIN_E8 -to LED[7]
-	set_location_assignment PIN_A2 -to LK_CLK
-	set_location_assignment PIN_A4 -to LK_DIO
-	set_location_assignment PIN_B3 -to LK_STB
-	set_location_assignment PIN_B5 -to PROBE
+	set_location_assignment PIN_B3 -to LK_CLK
+	set_location_assignment PIN_B5 -to LK_DIO
+	set_location_assignment PIN_B4 -to LK_STB
+	set_location_assignment PIN_B6 -to PROBE
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_CLK
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_DIO
 	set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LK_STB

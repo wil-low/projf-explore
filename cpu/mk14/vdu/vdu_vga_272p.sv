@@ -72,7 +72,7 @@ vdu_inst (
 	.i_frame(frame),
 	.i_line(line),
 	.i_x_offset(graphics_mode ? (H_RES - (64 << G_SCALE)) / 2 : (H_RES - ((16 * 8) << C_SCALE)) / 2),
-	.i_y_offset(graphics_mode ? (V_RES - (64 << G_SCALE)) / 2 : 8),
+	.i_y_offset(graphics_mode ? (V_RES - (64 << G_SCALE)) / 2 : (V_RES - ((32 * 8) << C_SCALE)) / 2)
 	.i_sx(sx),
 	.i_sy(sy),
 	.o_read_en(read_enabled),
