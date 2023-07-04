@@ -88,9 +88,9 @@ always_ff @(posedge clk_pix) begin
 	dvi_vsync <= vsync;
 	dvi_de    <= de;
 	if (en) begin
-		dvi_red = drawing ? 'b011110 : 'b0010;
-		dvi_green = drawing ? 'b110000 : 'b0110;
-		dvi_blue = drawing ? 'b000000 : 'b1110;
+		dvi_red = drawing ?		8'hff : 8'h00;
+		dvi_green = drawing ?	8'hd7 : 8'h57;
+		dvi_blue = drawing ?	8'h00 : 8'hb8;
 	end
 	else begin
 		dvi_red = 0;
