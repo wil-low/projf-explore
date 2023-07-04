@@ -65,7 +65,8 @@ vdu #(
 )
 vdu_inst (
 	.i_clk(clk_pix),
-	.i_en(1),
+	.i_en(en),
+	.i_graphics_mode(graphics_mode),
 	.i_frame(frame),
 	.i_line(line),
 	.i_x_offset(graphics_mode ? (H_RES - (64 << G_SCALE)) / 2 : (H_RES - ((16 * 8) << C_SCALE)) / 2),

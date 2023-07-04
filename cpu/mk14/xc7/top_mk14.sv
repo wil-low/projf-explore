@@ -41,7 +41,7 @@ assign LED1 = ~rx_wait;
 localparam CLOCK_FREQ_MHZ = 50;
 
 localparam ROM_INIT_F		= "SCIOS_Version_2.mem";
-localparam STD_RAM_INIT_F	= "collatz.mem";
+localparam STD_RAM_INIT_F	= "FALLMAN.mem";
 //localparam STD_RAM_INIT_F	= "test.mem";
 localparam EXT_RAM_INIT_F	= "ext_ram.mem";
 
@@ -92,6 +92,7 @@ mk14_soc_inst (
 	.sout(),
 	.rx(RX),
 	.rx_wait,
+	.vdu_en,
 	.vdu_graphics_mode,
 	.vdu_read_en,
 	.vdu_addr,
