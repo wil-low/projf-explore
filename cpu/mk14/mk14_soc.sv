@@ -172,7 +172,8 @@ core_inst (
 	.mem_read_data(core_data_out),
 	.mem_write_en(core_write_en),
 	.mem_write_data(core_data_in),
-	.trace
+	.trace,
+	.halt_pulse()
 );
 
 typedef enum {
