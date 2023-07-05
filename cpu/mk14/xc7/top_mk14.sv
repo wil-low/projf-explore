@@ -104,6 +104,7 @@ vdu_hdmi_720p #(
 	.BASE_ADDR(VDU_BASE_ADDR)
 )
 mk14_vdu_inst (
+	.clk_sys(CLK),
 	.clk_pix,
 	.clk_pix_5x,
 	.clk_pix_locked,

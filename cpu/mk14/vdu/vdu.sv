@@ -12,7 +12,8 @@ module vdu #(
 	parameter FONT_F = ""				// 8x8 font file (64 chars)
 )
 (
-	input  wire i_clk,
+	input  wire i_clk_sys,				// system clock
+	input  wire i_clk_pix,				// pixel clock
 	input  wire i_en,					// enable VDU
 	input  wire i_graphics_mode,		// 0 - character, 1 - graphics
 	input  wire i_frame,				// start of new frame
@@ -71,22 +72,52 @@ always_comb begin
 end
 
 logic [$clog2(FONT_W * H_CHARS) - 1:0] counter;
+logic [$clog2(FONT_W * H_CHARS) - 1:0] counter_pix;
 
-enum {
+typedef enum {
 	s_IDLE,
 	s_C_PREPARE, s_C_FETCH, s_C_FILL_SCANLINE,
 	s_G_PREPARE, s_G_FETCH, s_G_FILL_SCANLINE,
-	s_WAIT_POS, s_LINE
-} state;
+	s_WAIT_POS, s_C_LINE, s_G_LINE, s_WAIT_NEW_LINE
+} State;
 
-always_ff @(posedge i_clk) begin
+State state = s_IDLE;
+State state_pix = s_IDLE;
+
+// read flags in system clock domain
+logic line_sys;
+xd xd_line (
+	.clk_src(i_clk_pix),
+	.clk_dst(i_clk_sys),
+	.flag_src(i_line),
+	.flag_dst(line_sys)
+);
+/*
+logic lb_en_in, lb_data_in;
+logic lb_en_out, lb_data_out;
+
+linebuffer_simple #(
+	.DATAW(1),
+	.LEN(64)
+) linebuffer_instance (
+	.clk_sys(i_clk_sys),
+	.clk_pix(i_clk_pix),
+	.line(i_line),
+	.line_sys,
+	.en_in(lb_en_in),
+	.en_out(lb_en_out),
+	.scale(i_graphics_mode ? G_SCALE : C_SCALE),
+	.data_in(lb_data_in),
+	.data_out(lb_data_out)
+);
+*/
+always_ff @(posedge i_clk_sys) begin
 
 	case (state)
 
 	s_IDLE: begin
-		o_drawing <= 0;
 		o_read_en <= 0;
-		if (i_en && i_line && spr_active)
+		if (i_en && line_sys && spr_active)
 			state <= i_graphics_mode ? s_G_PREPARE : s_C_PREPARE;
 	end
 
@@ -106,7 +137,7 @@ always_ff @(posedge i_clk) begin
 		scanline[8 * counter + 7 -: 8] <= i_display_data[7] ? ~font_rom_data : font_rom_data;
 		o_read_addr <= o_read_addr + 1;
 		counter <= counter - 1;
-		state <= (counter == 0) ? s_WAIT_POS : s_C_FETCH;
+		state <= (counter == 0) ? s_IDLE : s_C_FETCH;
 	end
 
 	// graphics mode
@@ -126,46 +157,67 @@ always_ff @(posedge i_clk) begin
 		scanline[8 * counter + 7 -: 8] <= i_display_data;
 		o_read_addr <= o_read_addr + 1;
 		counter <= counter - 1;
-		state <= (counter == 0) ? s_WAIT_POS : s_G_FETCH;
+		state <= (counter == 0) ? s_IDLE : s_G_FETCH;
 	end
-	
-	s_WAIT_POS: begin
-		o_read_en <= 0;
-		if (i_sx >= i_x_offset) begin
-			state <= s_LINE;
+
+	endcase
+end
+
+always_ff @(posedge i_clk_pix) begin
+
+	case (state_pix)
+
+	s_IDLE: begin
+		o_drawing <= 0;
+		if (i_en && spr_active && (i_sx >= i_x_offset)) begin
 			cnt_x <= 0;
-			counter <= i_graphics_mode ? 64 - 1 : FONT_H * V_CHARS - 1;
+			if (i_graphics_mode) begin
+				counter_pix <= 64 - 1;
+				state_pix <= s_G_LINE;
+			end
+			else begin
+				counter_pix <= FONT_H * V_CHARS - 1;
+				state_pix <= s_C_LINE;
+			end
 		end
 	end
 
-	s_LINE: begin
+	s_C_LINE: begin
 		if (line_end)
-			state <= s_IDLE;
-		o_drawing <= scanline[counter];
-		if (i_graphics_mode) begin
-			if (G_SCALE == 0 || cnt_x == 2**G_SCALE - 1) begin
-				if (counter == 0)
-					state <= s_IDLE;
-				counter <= counter - 1;
-				cnt_x <= 0;
-			end
-			else
-				cnt_x <= cnt_x + 1;
+			state_pix <= s_WAIT_NEW_LINE;
+		o_drawing <= scanline[counter_pix];
+		if (C_SCALE == 0 || cnt_x == 2**C_SCALE - 1) begin
+			if (counter_pix == 0)
+				state_pix <= s_WAIT_NEW_LINE;
+			counter_pix <= counter_pix - 1;
+			cnt_x <= 0;
 		end
-		else begin
-			if (C_SCALE == 0 || cnt_x == 2**C_SCALE - 1) begin
-				if (counter == 0)
-					state <= s_IDLE;
-				counter <= counter - 1;
-				cnt_x <= 0;
-			end
-			else
-				cnt_x <= cnt_x + 1;
+		else
+			cnt_x <= cnt_x + 1;
+	end
+
+	s_G_LINE: begin
+		if (line_end)
+			state_pix <= s_WAIT_NEW_LINE;
+		o_drawing <= scanline[counter_pix];
+		if (G_SCALE == 0 || cnt_x == 2**G_SCALE - 1) begin
+			if (counter_pix == 0)
+				state_pix <= s_WAIT_NEW_LINE;
+			counter_pix <= counter_pix - 1;
+			cnt_x <= 0;
 		end
+		else
+			cnt_x <= cnt_x + 1;
+	end
+
+	s_WAIT_NEW_LINE: begin
+		o_drawing <= 0;
+		if (i_line)
+			state_pix <= s_IDLE;
 	end
 
 	default:
-		state <= s_IDLE;
+		state_pix <= s_IDLE;
 
 	endcase
 end

@@ -6,6 +6,7 @@ module vdu_vga_600p #(
 	parameter BASE_ADDR = 0
 )
 (
+	input wire clk_sys,
 	input wire clk_pix,
 	input wire logic rst_pix,
 
@@ -67,7 +68,8 @@ vdu #(
 	.FONT_F(FONT_F)
 )
 vdu_inst (
-	.i_clk(clk_pix),
+	.i_clk_sys(clk_sys),
+	.i_clk_pix(clk_pix),
 	.i_en(en),
 	.i_graphics_mode(graphics_mode),
 	.i_frame(frame),

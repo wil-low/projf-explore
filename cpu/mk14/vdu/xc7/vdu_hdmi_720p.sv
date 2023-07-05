@@ -6,6 +6,7 @@ module vdu_hdmi_720p #(
 	parameter BASE_ADDR = 0
 )
 (
+	input wire logic clk_sys,
 	input wire logic clk_pix,
 	input wire logic clk_pix_5x,
 	input wire logic clk_pix_locked,
@@ -64,7 +65,8 @@ vdu #(
 	.FONT_F(FONT_F)
 )
 vdu_inst (
-	.i_clk(clk_pix),
+	.i_clk_sys(clk_sys),
+	.i_clk_pix(clk_pix),
 	.i_en(en),
 	.i_graphics_mode(graphics_mode),
 	.i_frame(frame),

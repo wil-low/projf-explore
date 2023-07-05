@@ -109,6 +109,7 @@ vdu_vga_272p_portrait #(
 	.BASE_ADDR(VDU_BASE_ADDR)
 )
 mk14_vdu_inst (
+	.clk_sys(input_clk_copy),
 	.clk_pix,
 	.rst_pix,
 	.en(1'b1/*vdu_en*/),
@@ -131,6 +132,7 @@ vdu_vga_272p #(
 	.BASE_ADDR(VDU_BASE_ADDR)
 )
 mk14_vdu_inst (
+	.clk_sys(input_clk_copy),
 	.clk_pix,
 	.rst_pix,
 	.en(1'b1/*vdu_en*/),
