@@ -9,7 +9,7 @@
 // iCE40 PLLs are documented in Lattice TN1251 and ICE Technology Library
 
 module clock_272p (
-    input  wire logic clk_12m         // input clock (12 MHz)
+    input  wire logic clk_12m,        // input clock (12 MHz)
     input  wire logic rst,            // reset
     output      logic clk_pix,        // pixel clock
     output      logic clk_pix_locked, // pixel clock locked?

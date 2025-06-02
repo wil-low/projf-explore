@@ -35,7 +35,7 @@ module top_vdu_test (
 	localparam CORDW = 16;  // signed coordinate width (bits)
 	logic signed [CORDW-1:0] sx, sy;
 	logic hsync, vsync;
-	logic de, line;
+	logic de, line, frame;
 	display_272p #(.CORDW(CORDW)) display_inst (
 		.clk_pix,
 		.rst_pix,
@@ -44,23 +44,23 @@ module top_vdu_test (
 		.hsync,
 		.vsync,
 		.de,
-		/* verilator lint_off PINCONNECTEMPTY */
-		.frame(),
-		/* verilator lint_on PINCONNECTEMPTY */
+		.frame,
 		.line
 	);
 
 	// screen dimensions (must match display_inst)
 	localparam H_RES = 480;
+	localparam V_RES = 272;
  
 	// sprite parameters
-	localparam SPRX	   = 32;  // horizontal position
-	localparam SPRY	   = 16;  // vertical position
 	localparam SPR_WIDTH  =  8;  // bitmap width in pixels
 	localparam SPR_HEIGHT =  8;  // bitmap height in pixels
 	localparam SPR_SCALE  =  3;  // 2^3 = 8x scale
 	localparam SPR_DATAW  =  1;  // bits per pixel
 	localparam SPR_FILE = "../../res/sprites/TI-83.mem";  // bitmap file
+
+	logic signed [CORDW-1:0] sprx = 0;  // horizontal position
+	logic signed [CORDW-1:0] spry = 0;  // vertical position
 
 	// sprite
 	logic drawing;  // drawing at (sx,sy)
@@ -79,8 +79,8 @@ module top_vdu_test (
 		.line,
 		.sx,
 		.sy,
-		.sprx(SPRX),
-		.spry(SPRY),
+		.sprx,
+		.spry,
 		.pix,
 		.drawing
 	);
@@ -89,9 +89,9 @@ module top_vdu_test (
 	logic [4:0] paint_r, paint_b;
 	logic [5:0] paint_g;
 	always_comb begin
-		paint_r = (drawing && pix) ? 5'hF << 1 : 5'h1 << 1;
-		paint_g = (drawing && pix) ? 6'hC << 2 : 6'h3 << 2;
-		paint_b = (drawing && pix) ? 5'h0 << 1 : 5'h7 << 1;
+		paint_r = (drawing && pix) ? (5'hF << 1) : (5'h1 << 1);
+		paint_g = (drawing && pix) ? (6'hC << 2) : (6'h3 << 1);
+		paint_b = (drawing && pix) ? (5'h0 << 1) : (5'h7 << 1);
 	end
 
 	// VGA Pmod output
@@ -109,6 +109,18 @@ module top_vdu_test (
 			vga_r <= 0;
 			vga_g <= 0;
 			vga_b <= 0;
+		end
+		if (frame) begin
+			if (sprx < H_RES) begin
+				sprx <=  sprx + (SPR_WIDTH << SPR_SCALE);
+			end
+			else begin
+				sprx <= 0;
+				if (spry < V_RES)
+					spry <= spry + (SPR_HEIGHT << SPR_SCALE);
+				else
+					spry <= 0;
+			end
 		end
 	end
 endmodule

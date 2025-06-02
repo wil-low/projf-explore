@@ -184,7 +184,7 @@ always @(posedge i_clk) begin
 	s_READ_BTN_DONE: begin
 		if (tm1638_idle) begin
 			next_state <= s_IDLE;
-			$display("%t o_btn_state_lk %b", $time, o_btn_state);
+			//$display("%t o_btn_state_lk %b", $time, o_btn_state);
 			state <= s_DELAY;
 		end
 	end

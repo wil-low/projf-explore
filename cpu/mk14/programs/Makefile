@@ -6,7 +6,9 @@ all: \
 	display.mem \
 	clock.mem \
 	segtris.mem \
+	segtris_2ram.mem \
 	ambush.mem \
+	life_fa0.mem \
 	SCIOS_Version_2.mem
 
 %.mem: %.asm

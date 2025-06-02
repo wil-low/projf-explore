@@ -26,7 +26,7 @@ cpu7: cpu7.rpt cpu7.bin cpu7.link
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -dsp -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
-	nextpnr-ice40 --${FPGA_TYPE} --package ${FPGA_PKG} --json $< --pcf ${PCF} --asc $@
+	nextpnr-ice40 -ql $(basename $@)-nextpnr.log --${FPGA_TYPE} --package ${FPGA_PKG} --json $< --pcf ${PCF} --asc $@
 
 %.rpt: %.asc
 	icetime -d ${FPGA_TYPE} -mtr $@ $<

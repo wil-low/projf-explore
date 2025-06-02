@@ -68,8 +68,9 @@ enum {
 	s_IDLE, s_FETCH, s_WAIT_MEM, s_FILL_SCANLINE, s_WAIT_POS, s_LINE
 } state;
 
+assign o_read_en = (state == s_FILL_SCANLINE) || (state == s_WAIT_MEM);
+
 always_ff @(posedge i_clk) begin
-	o_read_en <= 0;
 
 	case (state)
 
@@ -83,7 +84,6 @@ always_ff @(posedge i_clk) begin
 	end
 
 	s_FETCH: begin
-		o_read_en <= 1;
 		state <= s_WAIT_MEM;
 	end
 

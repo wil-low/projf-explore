@@ -99,7 +99,7 @@ always @(posedge i_clk) begin
 			o_tm1638_clk <= 1;
 		end
 		else if (inner_clock == INNER_CLOCK_8TH * 4) begin
-			$display("%t bit_counter %d", $time, bit_counter);
+			//$display("%t bit_counter %d", $time, bit_counter);
 			buffer[bit_counter] <= dio_in;
 		end
 		else if (inner_clock == 0) begin
@@ -114,7 +114,7 @@ always @(posedge i_clk) begin
 	end
 
 	s_READ_STEP: begin
-		$display("%t o_btn_state %b", $time, o_btn_state);
+		//$display("%t o_btn_state %b", $time, o_btn_state);
 		o_btn_state[3] <= buffer[0];
 		o_btn_state[7] <= buffer[4];
 		read_counter <= read_counter - 1;

@@ -40,8 +40,8 @@ localparam CLOCK_FREQ_MHZ = 27;
 
 localparam ROM_INIT_F		= "../../programs/SCIOS_Version_2.mem";
 //localparam ROM_INIT_F		= "../../programs/display.mem";
-localparam STD_RAM_INIT_F	= "../../ext_ram.mem";
-localparam EXT_RAM_INIT_F	= "../../ext_ram.mem";
+localparam STD_RAM_INIT_F	= "../../programs/segtris_p1.mem";
+localparam EXT_RAM_INIT_F	= "../../programs/segtris_p2.mem";
 
 localparam VDU_BASE_ADDR	= 'h0200;
 localparam VDU_FONT			= "../../vdu/TI-83.mem";

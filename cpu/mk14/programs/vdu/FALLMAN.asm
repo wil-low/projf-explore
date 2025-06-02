@@ -18,7 +18,8 @@ COL	.EQ	2		;Column
 CNT	.EQ	3		;Counter
 ROW	.EQ	4		;Row count
 ;
-	.OR	0x0F20
+	.OR	0x0F00
+	.RF 0x0F20-$
 
 ENTER:	
 	LDI	6		;Enable VDU and Graphics mode (F1-ON,F2-ON=Graphics)

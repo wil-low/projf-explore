@@ -26,10 +26,11 @@ logic [7:0] display_data;
 logic [7:0] font_rom_data;
 logic drawing;  // drawing at (sx,sy)
 
-rom_async_b #(
+rom_async #(
 	.WIDTH(8),
 	.DEPTH(8 * 64),
-	.INIT_F(FONT_F)
+	.INIT_F(FONT_F),
+	.BIN_MODE(1)
 )
 font_rom(
 	.addr(display_data),
@@ -67,6 +68,7 @@ initial begin
 	#2 rst_n = 1;
 
 	#2 line = 1;
+	sy = 30;
 
 
 	//$display("rst_n %b", rst_n);

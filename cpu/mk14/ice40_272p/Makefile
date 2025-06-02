@@ -5,6 +5,7 @@ SHELL = /bin/sh
 FPGA_PKG = sg48
 FPGA_TYPE = up5k
 PCF = icebreaker.pcf
+ENV = LD_LIBRARY_PATH=/home/willow/program/oss-cad-suite/lib
 
 # iCELink connection
 ICELINK_DEV = /dev/$(shell lsblk -f | grep iCELink |  cut -d ' ' -f 1)
@@ -24,6 +25,7 @@ ADD_SRC += ${PATH_LIB}/uart-2/uart_rx.sv
 ADD_SRC += ${PATH_LIB}/converter/intel_hex.sv
 ADD_SRC += ${PATH_LIB}/display/display_272p.sv
 ADD_SRC += ${PATH_LIB}/clock/ice40/clock_272p.sv
+ADD_SRC += ${PATH_LIB}/clock/xd.sv
 ADD_SRC += ../core.sv
 ADD_SRC += ../mmu.sv
 ADD_SRC += ../ir_keypad.sv
@@ -37,7 +39,7 @@ mk14: mk14.rpt mk14.bin mk14.link
 	yosys -ql $(basename $@)-yosys.log -p 'synth_ice40 -dsp -noflatten -abc9 -device u -top top_$(basename $@) -json $@' $< $(ADD_SRC)
 
 %.asc: %.json
-	nextpnr-ice40 -ql $(basename $@)-nextpnr.log --${FPGA_TYPE} --package ${FPGA_PKG} --json $< --pcf ${PCF} --asc $@
+	${ENV} nextpnr-ice40 -ql $(basename $@)-nextpnr.log --${FPGA_TYPE} --package ${FPGA_PKG} --json $< --pcf ${PCF} --asc $@
 
 %.rpt: %.asc
 	icetime -d ${FPGA_TYPE} -mtr $@ $<
