@@ -1,4 +1,4 @@
-# 🧮 MC14500B Industrial Controller (1-bit CPU)
+# 🧮 MC14500B Industrial Controller (1-bit CPU) in System Verilog
 
 This project implements a **Motorola MC14500B** industrial control unit in System Verilog. The MC14500B is a simple 1-bit CPU originally used in PLC (Programmable Logic Controller) applications in the late 1970s.
 

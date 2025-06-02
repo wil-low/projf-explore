@@ -1,4 +1,4 @@
-# 🧠 MK14 FPGA Implementation
+# 🧠 MK14 in System Verilog
 
 This project is a hardware recreation of the **Science of Cambridge MK14** microcomputer, implemented in System Verilog for FPGA platforms. It emulates the original 1977 kit computer, featuring the **National Semiconductor SC/MP (INS8060)** CPU, 7-segment LED display, and keypad interface.
 
