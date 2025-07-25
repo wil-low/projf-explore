@@ -38,7 +38,7 @@ This project is a System Verilog implementation of the conceptual **CPU7** archi
 
    ```bash
    iverilog -o cpu7_tb cpu7.v cpu7_tb.v
-````
+   ```
 
 2. Run the simulation:
 
