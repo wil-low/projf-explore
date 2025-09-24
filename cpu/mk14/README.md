@@ -1,6 +1,6 @@
-# 🧠 MK14 in System Verilog
+# 🧠 MK14 in SystemVerilog
 
-This project is a hardware recreation of the **Science of Cambridge MK14** microcomputer, implemented in System Verilog for FPGA platforms. It emulates the original 1977 kit computer, featuring the **National Semiconductor SC/MP (INS8060)** CPU, 7-segment LED display, and keypad interface.
+This project is a hardware recreation of the **Science of Cambridge MK14** microcomputer, implemented in SystemVerilog for FPGA platforms. It emulates the original 1977 kit computer, featuring the **National Semiconductor SC/MP (INS8060)** CPU, 7-segment LED display, and keypad interface.
 
 ---
 
@@ -29,47 +29,11 @@ This FPGA implementation includes:
 
 ---
 
-## 🛠️ Getting Started
-
-### Prerequisites
-
-- FPGA development board (e.g., Lattice iCE40, ECP5, Gowin, or Xilinx Artix-7)
-- Verilog-compatible toolchain (e.g., Yosys, nextpnr, Vivado, Quartus, Gowin IDE)
-- Serial terminal for interaction (optional)
-
-### Build Instructions
-
-1. Clone the repository:
-
-```bash
-   git clone https://github.com/wil-low/projf-explore.git
-   cd projf-explore/cpu/mk14
-````
-
-2. Synthesize and upload the design to your FPGA board using your preferred toolchain.
-
-3. Interact with the MK14 via an infrared controller and observe output on the 7-segment display or VGA output
-
-## 📁 Main modules
-
-* `mk14_soc.sv`: Top-level module integrating CPU, memory, display, and input
-* `mmu.sv`: MK14 Memory Management Unit
-* `core.sv`: MK14 CPU core module
-* `rom.hex`: Monitor program in Intel HEX format
-* `ir_keypad.v`: Infrared controller input handler
-
----
-
 ## 📚 References
 
 * [MK14 on Wikipedia](https://en.wikipedia.org/wiki/MK14)
+* [More resources on MK14](https://www.theoddys.com/acorn/acorn_system_computers/mk14/mk14.html)
 * [Project F: FPGA Learning Resources](https://github.com/projf/projf-explore)
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.
 
 ---
 
