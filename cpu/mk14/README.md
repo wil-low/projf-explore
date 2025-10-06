@@ -23,9 +23,10 @@ This FPGA implementation includes:
 
 - **SC/MP CPU Core**: System Verilog-based emulation of the INS8060 processor
 - **Memory Map**: ROM and RAM layout matching the original MK14
-- **Display**: Multiplexed 7-segment LED driver
+- **Display**: Multiplexed 7-segment LED driver, or TM1680 module; VGA/HDMI drivers for graphical mode
 - **Keypad**: Infrared controller input handling
 - **Monitor ROM**: Original MK14 monitor program in Intel HEX format
+- **ROM Update**: UART driver
 
 ---
 
